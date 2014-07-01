@@ -33,6 +33,8 @@
 #include "math.hpp"
 #include "in_json_2012.hpp"
 
+typedef unsigned int uint;
+
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
@@ -1590,4 +1592,13 @@ double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
   }else{
     return 0.0;
   }
+}
+
+int EventHandler::GetNGenParticles(const int pdgId, const bool check_sign) const{
+  uint count(0);
+  for (uint index(0); index < mc_doc_id->size(); index++) {
+    if (check_sign && (pdgId*mc_doc_id->at(index)<0)) continue;
+    if (pdgId==fabs(mc_doc_id->at(index))) count++;
+  }
+  return count;
 }

@@ -190,6 +190,8 @@ protected:
 
   double GetHighestJetPt(const unsigned int=1) const;
   double GetHighestJetCSV(const unsigned int=1) const;
+
+  int GetNGenParticles(const int, const bool=false) const;
 };
 
 #endif
