@@ -32,8 +32,11 @@
 #include "timer.hpp"
 #include "math.hpp"
 #include "in_json_2012.hpp"
+#include "gen_muon.hpp"
 
-typedef unsigned int uint;
+using std::vector;
+using std::cout;
+using std::endl;
 
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
@@ -42,17 +45,15 @@ const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"));
 const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
 const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
 
+
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
   cfA(fileName, isList),
-  higgsBJetPairing(std::make_pair(TLorentzVector(0.0,0.0,0.0,0.0),TLorentzVector(0.0,0.0,0.0,0.0)),std::make_pair(TLorentzVector(0.0,0.0,0.0,0.0),TLorentzVector(0.0,0.0,0.0,0.0))),
-  sortedBJetCache(0),
-  higgsPairingUpToDate(false),
-  bJetsUpToDate(false),
+  genMuonCache(0),
+  genMuonsUpToDate(false),
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
   beta(0){
   if (fastMode) { // turn off unnecessary branches
-    chainA.SetBranchStatus("els_*",0);
     chainA.SetBranchStatus("triggerobject_*",0);
     chainA.SetBranchStatus("standalone_t*",0);
     chainA.SetBranchStatus("L1trigger_*",0);
@@ -67,56 +68,17 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
     chainB.SetBranchStatus("photons_*",0);
     chainB.SetBranchStatus("Npf_photons",0);
     chainB.SetBranchStatus("pf_photons_*",0);
-    chainB.SetBranchStatus("Nmus",0);
-    chainB.SetBranchStatus("mus_*",0);
-    chainB.SetBranchStatus("Nels",0);
-    chainB.SetBranchStatus("els_*",0);
+    /*
+      chainB.SetBranchStatus("Nmus",0);
+      chainB.SetBranchStatus("mus_*",0);
+      chainB.SetBranchStatus("Nels",0);
+      chainB.SetBranchStatus("els_*",0);
+    */
     chainB.SetBranchStatus("Nmets*",0);
     chainB.SetBranchStatus("mets*",0);
     chainB.SetBranchStatus("mets_AK5_et",1);
     chainB.SetBranchStatus("Njets_AK5PFclean",0);
     chainB.SetBranchStatus("jets_AK5PFclean_*",0);
-    chainB.SetBranchStatus("Nmc*",0);
-    chainB.SetBranchStatus("mc_*",0);
-    chainB.SetBranchStatus("Nmc_doc*",1);
-    chainB.SetBranchStatus("mc_doc*",1);
-  }
-}
-
-void EventHandler::SetScaleFactor(const double crossSection, const double luminosity, int numEntries){
-  const int maxEntriesA(chainA.GetEntries()), maxEntriesB(chainB.GetEntries());
-  if(maxEntriesA!=maxEntriesB){
-    fprintf(stderr,"Error: Chains have different numbers of entries.\n");
-  }
-  if(maxEntriesA==0 || maxEntriesB==0){
-    fprintf(stderr, "Error: Empty chains.\n");
-  }
-  if(numEntries<0){
-    numEntries=maxEntriesA;
-  }
-  if(numEntries>0 && luminosity>0.0 && crossSection>0.0){
-    scaleFactor=luminosity*crossSection/static_cast<double>(numEntries);
-  }else{
-    scaleFactor=1.0;
-  }
-}
-
-void EventHandler::GetEntry(const unsigned int entry){
-  cfA::GetEntry(entry);
-  higgsPairingUpToDate=false;
-  bJetsUpToDate=false;
-  betaUpToDate=false;
-}
-
-int EventHandler::GetcfAVersion() const{
-  size_t pos(sampleName.rfind("_v"));
-  if(pos!=std::string::npos && pos<(sampleName.size()-2)){
-    std::istringstream iss(sampleName.substr(pos+2));
-    int version(0);
-    iss >> version;
-    return version;
-  }else{
-    return 0;
   }
 }
 
@@ -177,6 +139,42 @@ void EventHandler::GetBeta(const std::string which) const{
   }
 }
 
+void EventHandler::SetScaleFactor(const double crossSection, const double luminosity, int numEntries){
+  const int maxEntriesA(chainA.GetEntries()), maxEntriesB(chainB.GetEntries());
+  if(maxEntriesA!=maxEntriesB){
+    fprintf(stderr,"Error: Chains have different numbers of entries.\n");
+  }
+  if(maxEntriesA==0 || maxEntriesB==0){
+    fprintf(stderr, "Error: Empty chains.\n");
+  }
+  if(numEntries<0){
+    numEntries=maxEntriesA;
+  }
+  if(numEntries>0 && luminosity>0.0 && crossSection>0.0){
+    scaleFactor=luminosity*crossSection/static_cast<double>(numEntries);
+  }else{
+    scaleFactor=1.0;
+  }
+}
+
+void EventHandler::GetEntry(const unsigned int entry){
+  cfA::GetEntry(entry);
+  genMuonsUpToDate=false;
+}
+
+int EventHandler::GetcfAVersion() const{
+  size_t pos(sampleName.rfind("_v"));
+  if(pos!=std::string::npos && pos<(sampleName.size()-2)){
+    std::istringstream iss(sampleName.substr(pos+2));
+    int version(0);
+    iss >> version;
+    return version;
+  }else{
+    return 0;
+  }
+}
+
+
 void EventHandler::SetScaleFactor(const double scaleFactorIn){
   scaleFactor=scaleFactorIn;
 }
@@ -209,505 +207,11 @@ bool EventHandler::PassesMETCleaningCut() const{
     && GetPBNR()>=1;
 }
 
-bool EventHandler::PassesTriggerCut() const{
-  for(unsigned int a=0; a<trigger_name->size(); ++a){
-    if((trigger_name->at(a).find("HLT_DiCentralPFJet30_PFMET80_BTagCSV07_v")!=std::string::npos
-        || trigger_name->at(a).find("HLT_PFMET150_v")!=std::string::npos
-        || trigger_name->at(a).find("HLT_DiCentralPFJet30_PFMHT80_v")!=std::string::npos)
-       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
-      return true;
-    }
-  }
-  return false;
-}
-
-bool EventHandler::PassesQCDTriggerCut() const{
-  for(unsigned int a=0; a<trigger_name->size(); ++a){
-    if((trigger_name->at(a).find("HLT_DiCentralPFJet50_PFMET80_v")!=std::string::npos
-        || trigger_name->at(a).find("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v")!=std::string::npos)
-       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
-      return true;
-    }
-  }
-  return false;
-}
-
-bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // just check if a specific trigger fired
-  for(unsigned int a=0; a<trigger_name->size(); ++a){
-    if(trigger_name->at(a).find(trigger)!=std::string::npos
-       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
-      return true;
-    }
-  }
-  return false;
-}
-
-bool EventHandler::PassesNumJetsCut() const{
-  const int numGoodJets(GetNumGoodJets());
-  if(numGoodJets==4 || numGoodJets==5){
-    return true;
-  }else{
-    return false;
-  }
-}
-
-bool EventHandler::PassesJet2PtCut() const{
-  std::vector<double> pts(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i)){
-      pts.push_back(jets_AK5PF_pt->at(i));
-    }
-  }
-  std::sort(pts.begin(), pts.end(), std::greater<double>());
-  if(pts.size()>1 && pts.at(1)>50.0){
-    return true;
-  }else{
-    return false;
-  }
-}
-
-bool EventHandler::PassesHiggsMassCut() const{
-  return PassesHiggsAvgMassCut() && PassesHiggsMassDiffCut();
-}
-
-bool EventHandler::PassesHiggsAvgMassCut() const{
-  const std::pair<double,double> higgsMasses(GetHiggsMasses());
-  const double avg(0.5*(higgsMasses.first+higgsMasses.second));
-  return avg>100.0 && avg<140.0;
-}
-
-bool EventHandler::PassesHiggsMassDiffCut() const{
-  const std::pair<double,double> higgsMasses(GetHiggsMasses());
-  return fabs(higgsMasses.first-higgsMasses.second)<20.0;
-}
-
-bool EventHandler::PassesDRCut() const{
-  return GetMaxDR()<2.2;
-}
-
-bool EventHandler::PassesInvertedDRCut() const{
-  return GetMaxDR()>2.2;
-}
-
-bool EventHandler::PassesMETSig50Cut() const{
-  return pfmets_fullSignif>50.0;
-}
-
-bool EventHandler::PassesMETSig80Cut() const{
-  return pfmets_fullSignif>80.0;
-}
-
-bool EventHandler::PassesMETSig100Cut() const{
-  return pfmets_fullSignif>100.0;
-}
-
-bool EventHandler::PassesMETSig150Cut() const{
-  return pfmets_fullSignif>150.0;
-}
-
-bool EventHandler::PassesJSONCut() const{
-  if(sampleName.find("Run2012")!=std::string::npos){
-    if(sampleName.find("PromptReco")!=std::string::npos
-       &&!inJSON(VRunLumiPrompt, run, lumiblock)) return false;
-    if(sampleName.find("24Aug")!=std::string::npos
-       && !inJSON(VRunLumi24Aug, run, lumiblock)) return false;
-    if(sampleName.find("13Jul")!=std::string::npos
-       && !inJSON(VRunLumi13Jul, run, lumiblock)) return false;
-    return true;
-  }else{
-    return true;
-  }
-}
-
-uint_least32_t EventHandler::GetCutFailCode() const{
-  if(!betaUpToDate) GetBeta();
-  if(!bJetsUpToDate) GetSortedBJets();
-  if(!higgsPairingUpToDate) GetHiggsBJetPairing();
-  uint_least32_t fail_code(kGood);
-  if(!PassesMETSig150Cut()) fail_code |= kMETSig150;
-  if(!PassesMETSig100Cut()) fail_code |= kMETSig100;
-  if(!PassesMETSig50Cut()) fail_code |= kMETSig50;
-  if(!PassesMETSig30Cut()) fail_code |= kMETSig30;
-  if(!PassesDRCut()) fail_code |= kDeltaR;
-  if(!PassesHiggsAvgMassCut()) fail_code |= kHiggsAvgMass;
-  if(!PassesHiggsMassDiffCut()) fail_code |= kHiggsMassDiff;
-  if(!PassesBTaggingCut()) fail_code |= k4thBTag;
-  if(!(GetNumCSVTJets()>=2 && GetNumCSVMJets()>=3)) fail_code |= k3rdBTag;
-  if(!(GetNumCSVTJets()>=2)) fail_code |= k2ndBTag;
-  if(!PassesIsoTrackVetoCut()) fail_code |= kIsoTrackVeto;
-  if(!PassesLeptonVetoCut()) fail_code |= kLeptonVeto;
-  if(!PassesMinDeltaPhiCut()) fail_code |= kMinDeltaPhi;
-  if(!PassesNumJetsCut()) fail_code |= kNumJets;
-  if(!PassesTriggerCut()) fail_code |= kTrigger;
-  if(!PassesJSONCut()) fail_code |= kJSON;
-  if(!PassesMETCleaningCut()) fail_code |= kMETCleaning;
-  if(!PassesPVCut()) fail_code |= kPV;
-  if(!PassesTChiMassCut()) fail_code |= kTChiMassCut;
-  return fail_code;
-}
-
-bool EventHandler::PassesTriggerPlateauCuts() const{
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesBaselineSelection() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonControlCut() const {
-  if(GetNumElectrons(1)+GetNumMuons(1)!=1) return false;
-  if(GetNumTaus()>0) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesQCDControlCut() const {
-  if(!PassesQCDTriggerCut()) return false;
-  if(GetNumCSVMJets()>2) return false;
-  if(GetMinDeltaPhiMET(UINT_MAX)>0.3) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionACut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionBCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionC3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionD3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionC2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()>=3) return false;
-  return true;
-}
-
-bool EventHandler::PassesRegionD2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()>=3) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionACut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionBCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionC3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionD3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionC2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()>=3) return false;
-  return true;
-}
-
-bool EventHandler::PassesInvertedDRRegionD2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesLeptonVetoCut()) return false;
-  if(!PassesIsoTrackVetoCut()) return false;
-  if(!PassesInvertedDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()>=3) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionACut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionBCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || !PassesBTaggingCut()) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionC3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionD3bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()<3 || GetNumCSVLJets()>=4) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionC2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  if(!PassesHiggsMassCut() || GetNumCSVMJets()>=3) return false;
-  return true;
-}
-
-bool EventHandler::PassesSingleLeptonRegionD2bCut() const{
-  if(!PassesJSONCut()) return false;
-  if(!PassesPVCut()) return false;
-  if(!PassesMETCleaningCut()) return false;
-  if(!PassesTriggerCut()) return false;
-  if(!PassesNumJetsCut()) return false;
-  if(!Passes2CSVTCut()) return false;
-  if(!PassesJet2PtCut()) return false;
-  if(!PassesMinDeltaPhiCut()) return false;
-  if(!PassesSingleLeptonCut()) return false;
-  if(!PassesDRCut()) return false;
-  if(!PassesMETSig30Cut()) return false;
-  const std::pair<double, double> higgs_masses(GetHiggsMasses());
-  const double avg(0.5*(higgs_masses.first+higgs_masses.second));
-  const double delta(fabs(higgs_masses.first-higgs_masses.second));
-  if((delta<30.0 && avg>90.0 && avg<150.0) || GetNumCSVMJets()>=3) return false;
-  return true;
+bool EventHandler::isProblemJet(const unsigned int ijet) const{
+  return jets_AK5PF_pt->at(ijet)>50.0
+    && fabs(jets_AK5PF_eta->at(ijet))>0.9
+    && fabs(jets_AK5PF_eta->at(ijet))<1.9
+                                      && jets_AK5PF_chg_Mult->at(ijet)-jets_AK5PF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
@@ -715,16 +219,6 @@ bool EventHandler::PassesBadJetFilter() const{
     if(isGoodJet(i,false,30.0,DBL_MAX) && !isGoodJet(i,true,30.0,DBL_MAX)) return false;
   }
   return true;
-}
-
-bool EventHandler::HasGluonSplitting() const{
-  for(unsigned int jet(0); jet<jets_AK5PF_pt->size(); ++jet){
-    if(TMath::Nint(fabs(jets_AK5PF_parton_Id->at(jet)))==21
-       && TMath::Nint(fabs(jets_AK5PF_partonFlavour->at(jet)))==5){
-      return true;
-    }
-  }
-  return false;
 }
 
 int EventHandler::GetPBNR() const{
@@ -744,420 +238,6 @@ int EventHandler::GetPBNR() const{
   else if (phBad) return -2;
   else if (nhBad) return -1;
   return 1;
-}
-
-double EventHandler::GetHT(const bool useMET, const bool useLeps) const{
-  double HT(0.0);
-  if(useMET && pfTypeImets_et->size()>0) HT+=pfTypeImets_et->at(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i)) HT+=jets_AK5PF_pt->at(i);
-  }
-  if(useLeps){
-    for(unsigned int i(0); i<pf_els_pt->size(); ++i){
-      if(isElectron(i)) HT+=pf_els_pt->at(i);
-    }
-    for(unsigned int i(0); i<pf_mus_pt->size(); ++i){
-      if(isMuon(i)) HT+=pf_mus_pt->at(i);
-    }
-    for(unsigned int i(0); i<taus_pt->size(); ++i){
-      if(isTau(i)) HT+=taus_pt->at(i);
-    }
-  }
-  return HT;
-}
-
-unsigned int EventHandler::GetNumLowPtPfCands(const double ptThresh) const{
-  unsigned int cands(0);
-  for(unsigned int i(0); i<pfcand_pt->size(); ++i){
-    if(pfcand_pt->at(i)<ptThresh) ++cands;
-  }
-  return cands;
-}
-
-double EventHandler::GetMaxDR() const{
-  GetHiggsBJetPairing();
-  if(sortedBJetCache.size()<4){
-    return DBL_MAX;
-  }else{
-    const double dRa(higgsBJetPairing.first.first.DeltaR(higgsBJetPairing.first.second));
-    const double dRb(higgsBJetPairing.second.first.DeltaR(higgsBJetPairing.second.second));
-    return dRa>dRb?dRa:dRb;
-  }
-}
-
-double EventHandler::GetMinDR() const{
-  GetHiggsBJetPairing();
-  if(sortedBJetCache.size()<4){
-    return DBL_MAX;
-  }else{
-    const double dRa(higgsBJetPairing.first.first.DeltaR(higgsBJetPairing.first.second));
-    const double dRb(higgsBJetPairing.second.first.DeltaR(higgsBJetPairing.second.second));
-    return dRa<dRb?dRa:dRb;
-  }
-}
-
-std::pair<double, double> EventHandler::GetHiggsMasses() const{
-  GetHiggsBJetPairing();
-  const double massA((higgsBJetPairing.first.first+higgsBJetPairing.first.second).M());
-  const double massB((higgsBJetPairing.second.first+higgsBJetPairing.second.second).M());
-  return (massA>massB)?(std::make_pair(massA,massB)):(std::make_pair(massB,massA));
-}
-
-double EventHandler::GetMinimaxMbb() const{
-  GetHiggsBJetPairing();
-  const double mass_1a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.first.second).M());
-  const double mass_1b((higgsBJetPairing.second.first
-                        +higgsBJetPairing.second.second).M());
-  const double mass_2a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.second.first).M());
-  const double mass_2b((higgsBJetPairing.first.second
-                        +higgsBJetPairing.second.second).M());
-  const double mass_3a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.second.second).M());
-  const double mass_3b((higgsBJetPairing.first.second
-                        +higgsBJetPairing.second.first).M());
-  const double mass_1(std::max(mass_1a, mass_1b));
-  const double mass_2(std::max(mass_2a, mass_2b));
-  const double mass_3(std::max(mass_3a, mass_3b));
-  return std::min(mass_1, std::min(mass_2, mass_3));
-}
-
-double EventHandler::GetMaximinMbb() const{
-  GetHiggsBJetPairing();
-  const double mass_1a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.first.second).M());
-  const double mass_1b((higgsBJetPairing.second.first
-                        +higgsBJetPairing.second.second).M());
-  const double mass_2a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.second.first).M());
-  const double mass_2b((higgsBJetPairing.first.second
-                        +higgsBJetPairing.second.second).M());
-  const double mass_3a((higgsBJetPairing.first.first
-                        +higgsBJetPairing.second.second).M());
-  const double mass_3b((higgsBJetPairing.first.second
-                        +higgsBJetPairing.second.first).M());
-  const double mass_1(std::min(mass_1a, mass_1b));
-  const double mass_2(std::min(mass_2a, mass_2b));
-  const double mass_3(std::min(mass_3a, mass_3b));
-  return std::max(mass_1, std::max(mass_2, mass_3));
-}
-
-double EventHandler::GetHiggsDeltaR() const{
-  GetHiggsBJetPairing();
-  return (higgsBJetPairing.first.first+higgsBJetPairing.first.second).DeltaR(higgsBJetPairing.second.first+higgsBJetPairing.second.second);
-}
-
-double EventHandler::GetMETOfLowPtPfCands(const double ptThresh) const{
-  double px(0.0), py(0.0);
-  for(unsigned int i(0); i<pfcand_pt->size(); ++i){
-    if(pfcand_pt->at(i)<ptThresh){
-      px+=pfcand_px->at(i);
-      py+=pfcand_py->at(i);
-    }
-  }
-  return sqrt(px*px+py*py);
-}
-
-void EventHandler::GetSortedBJets() const{
-  if(!bJetsUpToDate){
-    sortedBJetCache.clear();
-    for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-      if(isGoodJet(i)){
-        sortedBJetCache.push_back(BJet(TLorentzVector(jets_AK5PF_px->at(i),jets_AK5PF_py->at(i),jets_AK5PF_pz->at(i),jets_AK5PF_energy->at(i)),jets_AK5PF_btag_secVertexCombined->at(i),i,static_cast<unsigned int>(jets_AK5PF_parton_Id->at(i)),static_cast<unsigned int>(jets_AK5PF_parton_motherId->at(i))));
-      }
-    }
-    std::sort(sortedBJetCache.begin(),sortedBJetCache.end(), std::greater<BJet>());
-    bJetsUpToDate=true;
-  }
-}
-
-void EventHandler::GetHiggsBJetPairing() const{
-  if(!higgsPairingUpToDate){
-    if(!bJetsUpToDate) GetSortedBJets();
-    if(sortedBJetCache.size()<4){
-      higgsBJetPairing=std::make_pair(std::make_pair(TLorentzVector(0.0,0.0,0.0,0.0),TLorentzVector(0.0,0.0,0.0,0.0)),std::make_pair(TLorentzVector(0.0,0.0,0.0,0.0),TLorentzVector(0.0,0.0,0.0,0.0)));
-    }else{
-      // Compute Higgs masses
-      // Three pairings
-      const double m1a((sortedBJetCache.at(0).GetLorentzVector()+sortedBJetCache.at(1).GetLorentzVector()).M());
-      const double m1b((sortedBJetCache.at(2).GetLorentzVector()+sortedBJetCache.at(3).GetLorentzVector()).M());
-      const double m2a((sortedBJetCache.at(0).GetLorentzVector()+sortedBJetCache.at(2).GetLorentzVector()).M());
-      const double m2b((sortedBJetCache.at(1).GetLorentzVector()+sortedBJetCache.at(3).GetLorentzVector()).M());
-      const double m3a((sortedBJetCache.at(0).GetLorentzVector()+sortedBJetCache.at(3).GetLorentzVector()).M());
-      const double m3b((sortedBJetCache.at(1).GetLorentzVector()+sortedBJetCache.at(2).GetLorentzVector()).M());
-      
-      const double delta1(fabs(m1a-m1b)), delta2(fabs(m2a-m2b)), delta3(fabs(m3a-m3b));
-      
-      if(delta1<=delta2 && delta1<=delta3){
-        higgsBJetPairing=std::make_pair(std::make_pair(sortedBJetCache.at(0).GetLorentzVector(),sortedBJetCache.at(1).GetLorentzVector()),std::make_pair(sortedBJetCache.at(2).GetLorentzVector(),sortedBJetCache.at(3).GetLorentzVector()));
-      }else if(delta2<=delta1 && delta2<=delta3){
-        higgsBJetPairing=std::make_pair(std::make_pair(sortedBJetCache.at(0).GetLorentzVector(),sortedBJetCache.at(2).GetLorentzVector()),std::make_pair(sortedBJetCache.at(1).GetLorentzVector(),sortedBJetCache.at(3).GetLorentzVector()));
-      }else if(delta3<=delta1 && delta3<=delta2){
-        higgsBJetPairing=std::make_pair(std::make_pair(sortedBJetCache.at(0).GetLorentzVector(),sortedBJetCache.at(3).GetLorentzVector()),std::make_pair(sortedBJetCache.at(1).GetLorentzVector(),sortedBJetCache.at(2).GetLorentzVector()));
-      }
-    }
-  }
-  higgsPairingUpToDate=true;
-}
-
-double EventHandler::GetHighestCSV(unsigned int pos) const{
-  GetSortedBJets();
-  --pos;
-  if(pos>=sortedBJetCache.size()){
-    return -DBL_MAX;
-  }else{
-    return sortedBJetCache.at(pos).GetBTag();
-  }
-}
-
-int EventHandler::GetPartonIdBin(float partonId) const{
-  if (fabs(partonId)>=1.&&fabs(partonId)<=3.) return 2;
-  else if (fabs(partonId)==4.) return 3;
-  else if (fabs(partonId)==5.) return 4;
-  else if (fabs(partonId)==21.) return 5;
-  else return 1;
-}
-
-bool EventHandler::PassesTChiMassCut(int mChi, int mLSP) const{
-  if (mChi<0||mLSP<0) return true;
-  // parse the model_params string in the new signal samples for mass points
-  char s_mChi[64], s_mLSP[64];
-  sprintf(s_mChi, "chargino%d_", mChi);
-  sprintf(s_mLSP, "bino%d_", mLSP);
-
-  if(sampleName.find("SMS-TChiHH")==std::string::npos
-     && sampleName.find("SMS_TChiZH")){
-    return true;
-  }
-  if(model_params->find(s_mChi)==std::string::npos) return false;
-  if(model_params->find(s_mLSP)==std::string::npos) return false;
-  return true;
-}
-
-int EventHandler::GetCharginoMass() const{
-  return GetMass("chargino");
-}
-
-int EventHandler::GetLSPMass() const{
-  return GetMass("bino");
-}
-
-int EventHandler::GetMass(const std::string& token) const{
-  std::string::size_type pos(model_params->find(token));
-  if(pos==std::string::npos){
-    return -1;
-  }else{
-    pos+=token.size();
-    const std::string::size_type end(model_params->find("_",pos));
-    if(end==std::string::npos){
-      return -1;
-    }else{
-      return atoi((model_params->substr(pos, end-pos+1)).c_str());
-    }
-  }
-}
-
-int GetSimpleParticle(const double &id){
-  const int iid(static_cast<int>(fabs(id)));
-  switch(iid){
-  case 1:
-  case 2:
-  case 3:
-    return 1;
-  case 4:
-    return 4;
-  case 5:
-    return 5;
-  case 6:
-    return 6;
-  case 11:
-    return 11;
-  case 13:
-    return 13;
-  case 15:
-    return 15;
-  case 12:
-  case 14:
-  case 16:
-    return 12;
-  case 21:
-    return 21;
-  case 22:
-    return 22;
-  case 23:
-    return 23;
-  case 24:
-    return 24;
-  case 25:
-    return 25;
-  default:
-    return 0;
-  }
-}
-
-std::vector<std::pair<int, int> > EventHandler::GetBOrigins_new() const{
-  if(!bJetsUpToDate) GetSortedBJets();
-  std::vector<std::pair<int, int> > x(0);
-  for(unsigned int jet(0); jet<sortedBJetCache.size(); ++jet){
-    /*
-      printf("i: %d, CSV: %3.2f, Id: %d, momId: %d\n", 
-      sortedBJetCache[jet].GetIndex(), sortedBJetCache[jet].GetBTag(),
-      sortedBJetCache[jet].GetPartonId(), sortedBJetCache[jet].GetMotherId());
-    */
-    const unsigned int id(sortedBJetCache.at(jet).GetPartonId());
-    const unsigned int mom(sortedBJetCache.at(jet).GetMotherId());
-    x.push_back(std::pair<int,int>(id, mom));
-  }
-  return x;
-}
-
-std::vector<std::pair<int, int> > EventHandler::GetBOrigins() const{
-  if(!bJetsUpToDate) GetSortedBJets();
-  std::vector<std::pair<int, int> > x(0);
-  for(unsigned int jet(0); jet<sortedBJetCache.size(); ++jet){
-    double minDeltaR(DBL_MAX);
-    unsigned int bestJet(-1);
-    for(unsigned int mc(0); mc<mc_doc_pt->size(); ++mc){
-      const double thisDeltaR(Math::GetDeltaR(sortedBJetCache.at(jet).GetLorentzVector().Phi(),
-                                              sortedBJetCache.at(jet).GetLorentzVector().Eta(),
-                                              mc_doc_phi->at(mc),
-                                              mc_doc_eta->at(mc)));
-      if(thisDeltaR<minDeltaR){
-        minDeltaR=thisDeltaR;
-        bestJet=mc;
-      }
-    }
-    if(bestJet<mc_doc_id->size()){
-      const int id(GetSimpleParticle(mc_doc_id->at(bestJet)));
-      const int mom(GetSimpleParticle(mc_doc_mother_id->at(bestJet)));
-      x.push_back(std::pair<int,int>(id, mom));
-    }else{
-      x.push_back(std::pair<int, int>(0,0));
-    }
-  }
-  return x;
-}
-
-bool EventHandler::Passes2CSVTCut() const{
-  return GetNumCSVTJets()>=2;
-}
-
-bool EventHandler::PassesMETSig30Cut() const{
-  return pfmets_fullSignif>30.0;
-}
-
-bool EventHandler::PassesLeptonVetoCut() const{
-  return GetNumElectrons()==0 && GetNumMuons()==0 && GetNumTaus()==0;
-}
-bool EventHandler::PassesSingleLeptonCut() const{
-  return GetNumElectrons()+GetNumMuons()==1 && GetNumTaus()==0;
-}
-
-bool EventHandler::PassesIsoTrackVetoCut() const{
-  return NewGetNumIsoTracks(10.0)==0;
-}
-
-bool EventHandler::PassesBTaggingCut() const{
-  return GetNumCSVTJets()>=2 && GetNumCSVMJets()>=3 && GetNumCSVLJets()>=4;
-}
-
-int EventHandler::GetNumGoodJets() const{
-  int numGoodJets(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i)) ++numGoodJets;
-  }
-  return numGoodJets;
-}
-
-int EventHandler::GetNumCSVTJets() const{
-  int numPassing(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AK5PF_btag_secVertexCombined->at(i)>CSVTCut){
-      ++numPassing;
-    }
-  }
-  return numPassing;
-}
-
-int EventHandler::GetNumCSVMJets() const{
-  int numPassing(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AK5PF_btag_secVertexCombined->at(i)>CSVMCut){
-      ++numPassing;
-    }
-  }
-  return numPassing;
-}
-
-int EventHandler::GetNumCSVLJets() const{
-  int numPassing(0);
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AK5PF_btag_secVertexCombined->at(i)>CSVLCut){
-      ++numPassing;
-    }
-  }
-  return numPassing;
-}
-
-int EventHandler::GetNumBTaggedJets() const{
-  std::vector<double> csvs(0);
-  for(unsigned int jet(0); jet<jets_AK5PF_pt->size(); ++jet){
-    if(isGoodJet(jet)){
-      csvs.push_back(jets_AK5PF_btag_secVertexCombined->at(jet));
-    }
-  }
-  std::sort(csvs.begin(), csvs.end(), std::greater<double>());
-  if(csvs.size()<=0 || csvs.at(0)<CSVTCut){
-    return 0;
-  }else if(csvs.size()<=1 || csvs.at(1)<CSVTCut){
-    return 1;
-  }else if(csvs.size()<=2 || csvs.at(2)<CSVMCut){
-    return 2;
-  }else if(csvs.size()<=3 || csvs.at(3)<CSVLCut){
-    return 3;
-  }else{
-    unsigned int jet(3);
-    for(; jet<csvs.size() && csvs.at(jet)>CSVLCut; ++jet){
-    }
-    return jet;
-  }
-}
-
-double EventHandler::GetMinDeltaPhiMET(const unsigned int maxjets) const{
-  std::vector<std::pair<double, double> > jets(0);
-  for(unsigned int i(0); i<jets_AK5PF_phi->size(); ++i){
-    if(isGoodJet(i, false, 20.0, 5.0, false)){
-      jets.push_back(std::make_pair(jets_AK5PF_pt->at(i),jets_AK5PF_phi->at(i)));
-    }
-  }
-
-  std::sort(jets.begin(), jets.end(), std::greater<std::pair<double, double> >());
-
-  double mindp(DBL_MAX);
-  for(unsigned int i(0); i<jets.size() && i<maxjets; ++i){
-    const double thisdp(fabs((Math::GetAbsDeltaPhi(jets.at(i).second, pfTypeImets_phi->at(0)))));
-    if(thisdp<mindp){
-      mindp=thisdp;
-    }
-  }
-  
-  return mindp;
-}
-
-bool EventHandler::PassesMinDeltaPhiCut() const{
-  if(pfmets_fullSignif<50.0){ 
-    return GetMinDeltaPhiMET(UINT_MAX)>0.5;
-  }else{
-    return GetMinDeltaPhiMET(UINT_MAX)>0.3;
-  }
-}
-
-bool EventHandler::isProblemJet(const unsigned int ijet) const{
-  return jets_AK5PF_pt->at(ijet)>50.0
-    && fabs(jets_AK5PF_eta->at(ijet))>0.9
-    && fabs(jets_AK5PF_eta->at(ijet))<1.9
-                                      && jets_AK5PF_chg_Mult->at(ijet)-jets_AK5PF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool doBeta) const{
@@ -1190,7 +270,18 @@ bool EventHandler::jetPassLooseID(const unsigned int ijet) const{
   return false;
 }
 
-bool EventHandler::isElectron(const unsigned int k,
+bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // just check if a specific trigger fired
+  for(unsigned int a=0; a<trigger_name->size(); ++a){
+    if(trigger_name->at(a).find(trigger)!=std::string::npos
+       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
+      return true;
+    }
+  }
+  return false;
+}
+
+
+bool EventHandler::isRA2bElectron(const unsigned int k,
 			      const unsigned short level,
 			      const bool use_iso) const{
   //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
@@ -1275,7 +366,7 @@ double EventHandler::GetElectronRelIso(const unsigned int k) const{
   return ( pf_els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/pf_els_pt->at(k);
 }
 
-bool EventHandler::isMuon(const unsigned int k,
+bool EventHandler::isRA2bMuon(const unsigned int k,
 			  const unsigned short level,
 			  const bool use_iso) const{
   double pt_thresh(10.0);
@@ -1301,7 +392,7 @@ bool EventHandler::isMuon(const unsigned int k,
   return true;
 }
 
-bool EventHandler::isTau(const unsigned int k,
+bool EventHandler::isRA2bTau(const unsigned int k,
 			 const unsigned short level,
 			 const bool require_iso) const{
   double pt_cut(20.0);
@@ -1313,59 +404,35 @@ bool EventHandler::isTau(const unsigned int k,
   return true;
 }
 
-int EventHandler::GetNumElectrons(const unsigned short level, const bool use_iso) const{
+int EventHandler::GetNumRA2bElectrons(const unsigned short level, const bool use_iso) const{
   int count(0);
   for(unsigned int i(0); i<pf_els_pt->size(); ++i){
-    if(isElectron(i,level, use_iso)) ++count;
+    if(isRA2bElectron(i,level, use_iso)) ++count;
   }
   return count;
 }
 
-int EventHandler::GetNumMuons(const unsigned short level, const bool use_iso) const{
+int EventHandler::GetNumRA2bMuons(const unsigned short level, const bool use_iso) const{
   int count(0);
   for(unsigned int i(0); i<pf_mus_pt->size(); ++i){
-    if(isMuon(i,level,use_iso)) ++count;
+    if(isRA2bMuon(i,level,use_iso)) ++count;
   }
   return count;
 }
 
-int EventHandler::GetNumTaus(const unsigned short level, const bool use_iso) const{
+int EventHandler::GetNumRA2bTaus(const unsigned short level, const bool use_iso) const{
   int count(0);
   for(unsigned int i(0); i<taus_pt->size(); ++i){
-    if(isTau(i,level,use_iso)) ++count;
+    if(isRA2bTau(i,level,use_iso)) ++count;
   }
   return count;
 }
 
-bool EventHandler::isIsoTrack(const unsigned int itracks, const double ptThresh) const{
-  if(!isQualityTrack(itracks)) return false;
-  if (fabs(tracks_vz->at(itracks) - pv_z->at(0) ) >= 0.05) return false;
-  if(tracks_pt->at(itracks)<ptThresh) return false;
-  double isosum=0;
-  for (unsigned int jtracks=0; jtracks<tracks_chi2->size(); jtracks++) {
-    if (itracks==jtracks) continue;  //don't count yourself
-    if (!isQualityTrack(jtracks)) continue;
-    if(Math::GetDeltaR(tracks_phi->at(itracks),tracks_eta->at(itracks),tracks_phi->at(jtracks),tracks_eta->at(jtracks))>0.3) continue;
-    //cut on dz of this track
-    if ( fabs( tracks_vz->at(jtracks) - pv_z->at(0)) >= 0.05) continue;
-    isosum += tracks_pt->at(jtracks);
-  }
-  if ( isosum / tracks_pt->at(itracks) > 0.05) return false;
-  return true;
-}
 
 bool EventHandler::isQualityTrack(const unsigned int k) const{
   if (fabs(tracks_eta->at(k))>2.4 ) return false;
   if (!(tracks_highPurity->at(k)>0)) return false;
   return true;  
-}
-
-int EventHandler::GetNumIsoTracks(const double ptThresh) const{
-  int count(0);
-  for(unsigned int i(0); i<tracks_pt->size(); ++i){
-    if(isIsoTrack(i,ptThresh)) ++count;
-  }
-  return count;
 }
 
 int EventHandler::NewGetNumIsoTracks(const double ptThresh) const{
@@ -1411,19 +478,6 @@ double EventHandler::GetPUWeight(reweight::LumiReWeighting &lumiWeights) const{
   return lumiWeights.weight(GetNumInteractions());
 }
 
-double EventHandler::GetSbinWeight() const{
-  if(sampleName.find("Run2012")!=std::string::npos){
-    return 1.0;
-  }else if(pfmets_fullSignif<50.0){
-    return 0.804;
-  }else if(pfmets_fullSignif>50.0 && pfmets_fullSignif<100.0){
-    return 0.897;
-  }else if(pfmets_fullSignif>100.0){
-    return 0.944;
-  }else{
-    return 1.0;
-  }
-}
 
 double EventHandler::GetTopPtWeight() const{
   double topPt(-1.0);
@@ -1454,69 +508,6 @@ double EventHandler::GetTopPtWeight() const{
   }
 
   return 1;
-}
-
-double EventHandler::look_up_scale_factor() const{
-  if(GetLSPMass()!=1) return scaleFactor;
-  std::string::size_type last_decimal(model_params->rfind("."));
-  std::string::size_type last_space(model_params->rfind(" ",last_decimal));
-  std::string cross_section_str(model_params->substr(last_space+1));
-  double cross_section(atof(cross_section_str.c_str()));
-  double num_events(0);
-  switch(GetCharginoMass()){
-  case 130:
-    num_events=47890.0;
-    break;
-  case 150:
-    num_events=415152.0;
-    break;
-  case 175:
-    num_events=399589.0;
-    break;
-  case 200:
-    num_events=387968.0;
-    break;
-  case 225:
-    num_events=379120.0;
-    break;
-  case 250:
-    num_events=152428.0;
-    break;
-  case 275:
-    num_events=150227.0;
-    break;
-  case 300:
-    num_events=146559.0;
-    break;
-  case 325:
-    num_events=142987.0;
-    break;
-  case 350:
-    num_events=80305.0;
-    break;
-  case 375:
-    num_events=78645.0;
-    break;
-  case 400:
-    num_events=78026.0;
-    break;
-  case 425:
-    num_events=77734.0;
-    break;
-  case 450:
-    num_events=77444.0;
-    break;
-  case 475:
-    num_events=77069.0;
-    break;
-  case 500:
-    num_events=76193.0;
-    break;
-  default:
-    return scaleFactor;
-  }
-  //Should probably not hard code the lumi but this requires changing a few other things...
-  return 19.399*cross_section/num_events;
 }
 
 double EventHandler::GetTopPt() const {
@@ -1564,41 +555,171 @@ double EventHandler::GetTopPtWeightOfficial() const{ // New 11/07
   return topweight;
 }
 
-double EventHandler::GetHighestJetPt(const unsigned int nth_highest) const{
-  std::vector<double> pts(0);
-  for(unsigned int jet(0); jet<jets_AK5PF_pt->size(); ++jet){
-    if(isGoodJet(jet)){
-      pts.push_back(jets_AK5PF_pt->at(jet));
+
+int EventHandler::GetGenParticleIndex(const int pdgId, const int skip) const{
+  int count(0);
+  int index(-1);
+  for (uint j(0); j < mc_doc_id->size(); j++) {
+    if (pdgId!=fabs(mc_doc_id->at(j))) continue;
+    count++;
+    if (count<=skip) continue; // e.g. if you wanted the second object of this type listed in the chain
+    index=j;
+    break;
+  }
+  return index;
+}
+
+bool EventHandler::isGenMuon(const int index) const{
+  if (fabs(mc_mus_id->at(index))!=13) return false;
+  if (mc_mus_pt->at(index)<=0) return false;
+  if (mc_mus_eta->at(index)>5) return false;
+  return true;
+}
+
+double EventHandler::GetGenMuonMinDR(const int genLep, const std::vector<float> reco_eta, const std::vector<float> reco_phi) const {
+  double gen_eta(genMuonCache.at(genLep).GetLorentzVector().Eta()), gen_phi(genMuonCache.at(genLep).GetLorentzVector().Phi());
+  double minDeltaR(FLT_MAX);
+   //printf("nRecoObjects: %lu\n",reco_eta.size());
+  unsigned int nReco(reco_eta.size());
+  if (nReco==0) return -FLT_MAX;
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, reco_phi.at(reco), reco_eta.at(reco)) );
+    if(thisDeltaR<minDeltaR){
+      minDeltaR=thisDeltaR;
     }
   }
-  std::sort(pts.begin(), pts.end(), std::greater<double>());
-  if(nth_highest<=pts.size()){
-    return pts.at(nth_highest-1);
-  }else{
-    return 0.0;
+  return minDeltaR;
+}
+
+void EventHandler::SetupGenMuons() const {
+  //std::cout << "GetGenMuons" << std::endl;
+  GetGenMuons();
+  for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
+    int flavor = fabs(genMuonCache.at(genLep).GetPDGId());
+    switch (flavor) {
+      /*
+	case 11:
+	genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *pf_els_eta, *pf_els_phi));
+	break;
+      */
+    case 13:
+      //std::cout << "SetMinDR" << std::endl;
+      genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *mus_eta, *mus_phi));
+      break;
+      /*
+	case 15:
+	genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *taus_eta, *taus_phi));
+	break;
+      */
+    default:
+      break;
+    }
+     //printf("size/flavor/minDR: %d/%d/%3.2f\n",genMuonCache.size(),flavor,genMuonCache.at(genLep).GetMinDR());
+  }    
+}
+
+void EventHandler::GetGenMuons() const{
+  if (!genMuonsUpToDate) {
+    genMuonCache.clear();
+    for (unsigned int gen(0); gen<mc_mus_id->size(); gen++) {
+      if(isGenMuon(gen)) {
+	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,mc_mus_id->at(gen),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
+      }
+    }
+    genMuonsUpToDate=true;
   }
 }
 
-double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
-  std::vector<double> csvs(0);
-  for(unsigned int jet(0); jet<jets_AK5PF_btag_secVertexCombined->size(); ++jet){
-    if(isGoodJet(jet)){
-      csvs.push_back(jets_AK5PF_btag_secVertexCombined->at(jet));
-    }
-  }
-  std::sort(csvs.begin(), csvs.end(), std::greater<double>());
-  if(nth_highest<=csvs.size()){
-    return csvs.at(nth_highest-1);
-  }else{
-    return 0.0;
-  }
+double EventHandler::ReadMuonCacheDR(uint which) const {
+  if(!genMuonsUpToDate) SetupGenMuons();
+   //printf("which/size: %d/%d\n",which,genMuonCache.size());
+  if (genMuonCache.size()<which) return -FLT_MAX;
+   //printf("minDR: %3.2f\n", genMuonCache[which-1].GetMinDR());
+  return genMuonCache[which-1].GetMinDR();
 }
 
 int EventHandler::GetNGenParticles(const int pdgId, const bool check_sign) const{
+  if(!genMuonsUpToDate) SetupGenMuons();
   uint count(0);
-  for (uint index(0); index < mc_doc_id->size(); index++) {
-    if (check_sign && (pdgId*mc_doc_id->at(index)<0)) continue;
-    if (pdgId==fabs(mc_doc_id->at(index))) count++;
+  for (uint index(0); index < genMuonCache.size(); index++) {
+    if (check_sign && (pdgId*genMuonCache[index].GetPDGId()<0)) continue;
+    if (pdgId==fabs(genMuonCache[index].GetPDGId())) count++;
   }
   return count;
 }
+
+/*
+vector<int> EventHandler::GetRecoMuons(bool veto) {
+  vector<int> muons;
+  for(uint index=0; index<mus_pt->size(); index++)
+    if(veto){
+       if(passedRA4MuonVeto(index)) muons.push_back(index);
+    }	else {
+      if(passedRA4MuonSelection(index)) muons.push_back(index);
+    }
+  return muons;
+}
+
+bool EventHandler::passedRA4MuonSelection(uint imu){
+  if(imu >= mus_pt->size()) return false;
+
+  float relIso = GetMuonIsolation(imu);  
+  return (passedBaseMuonSelection(imu) && relIso < 0.12); 
+}
+
+bool EventHandler::passedBaseMuonSelection(uint imu){
+  if(imu >= mus_pt->size()) return false;
+
+  float d0PV = mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
+  int pfIdx=-1;
+  
+  return (mus_isGlobalMuon->at(imu) > 0
+	  && mus_isPFMuon->at(imu) > 0
+	  && mus_id_GlobalMuonPromptTight->at(imu)> 0 
+	  && mus_tk_LayersWithMeasurement->at(imu) > 5
+	  && mus_tk_numvalPixelhits->at(imu) > 0
+	  && mus_numberOfMatchedStations->at(imu) > 1
+	  //&& fabs(mus_dB->at(imu)) < 0.02
+	  && fabs(d0PV) < 0.02
+	  && fabs(getDZ(mus_tk_vx->at(imu), mus_tk_vy->at(imu), mus_tk_vz->at(imu), mus_tk_px->at(imu), 
+			mus_tk_py->at(imu), mus_tk_pz->at(imu), 0)) < 0.5
+	  && mus_pt->at(imu) >= MuonPTThreshold
+	  && hasPFMatch(imu, particleId::muon, pfIdx)
+	  && fabs(mus_eta->at(imu)) <= 2.4);
+}
+
+bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx){
+  double deltaRVal = 999.;
+  double deltaPT = 999.;
+  double leptonEta = 0, leptonPhi = 0, leptonPt = 0;
+  if(type == particleId::muon ) {
+    leptonEta = mus_eta->at(index);
+    leptonPhi = mus_phi->at(index);
+    leptonPt = mus_pt->at(index);
+  }  else if(type == particleId::electron) {
+    leptonEta = els_scEta->at(index);
+    leptonPhi = els_phi->at(index);
+    leptonPt = els_pt->at(index);
+  }
+  
+  for(unsigned iCand=0; iCand<pfcand_pt->size(); iCand++) {
+    //     cout<<"Repetition "<<iCand<<": particleId "<<pfcand_particleId->at(iCand)
+    // 	<<", deltaRVal "<<deltaRVal<<", deltaPT "<<deltaPT
+    // 	<<", eta "<<pfcand_eta->at(iCand)<<", phi "<<pfcand_phi->at(iCand)<<endl;
+    if(pfcand_particleId->at(iCand)==type) {
+      double tempDeltaR = dR(leptonEta, pfcand_eta->at(iCand), leptonPhi, pfcand_phi->at(iCand));
+      if(tempDeltaR < deltaRVal) {
+	deltaRVal = tempDeltaR;
+	deltaPT = fabs(leptonPt-pfcand_pt->at(iCand));
+	pfIdx=iCand;
+      }
+    }
+  }
+ 
+  //   cout<<"Lepton "<<index<<" => type "<<type
+  //       <<", leptonEta "<< leptonEta<<", leptonPhi "<< leptonPhi
+  //       <<", leptonPt "<< leptonPt<<", deltaPT "<< deltaPT<<endl;
+  if(type == particleId::electron) return (deltaPT<10);
+  else return (deltaPT<5);
+}
+*/
