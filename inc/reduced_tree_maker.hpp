@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include "event_handler.hpp"
-#include "gen_muon.hpp"
 
 using std::vector;
 typedef unsigned int uint;
@@ -20,6 +19,28 @@ typedef struct
   int loss_code;
 } genMuInfo;
 
+typedef struct 
+{
+  float pt;
+  float eta;
+  float phi;
+  float minDR;
+  float minDPt;
+  int taus_match;
+  int loss_code;
+} genTauInfo;
+
+typedef struct 
+{
+  float pt;
+  float eta;
+  float phi;
+  float minDR;
+  float minDPt;
+  int els_match;
+  int loss_code;
+} genElInfo;
+
 
 class ReducedTreeMaker : public EventHandler{
 public:
@@ -30,6 +51,8 @@ public:
   void MakeReducedTree(const std::string& out_file_name);
   // void SaveToVector(vector<float> *save, vector<float> *branch, vector<int> selection);
   void SetMuonValues(uint, genMuInfo&);
+  void SetTauValues(uint, genTauInfo&);
+  void SetElectronValues(uint, genElInfo&);
 
 };
 

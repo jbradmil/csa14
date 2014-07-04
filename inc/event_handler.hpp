@@ -16,6 +16,8 @@
 #include "b_jet.hpp"
 #include "event_number.hpp"
 #include "gen_muon.hpp"
+#include "gen_electron.hpp"
+#include "gen_tau.hpp"
 
 typedef unsigned int uint;
 using std::vector;
@@ -40,8 +42,12 @@ public:
   void SetScaleFactor(const double, const double, const int);
 
 protected:
-  mutable std::vector<GenMuon>genMuonCache;//caching for efficiency
+  mutable std::vector<GenMuon>genMuonCache;
   mutable bool genMuonsUpToDate;
+  mutable std::vector<GenElectron>genElectronCache;
+  mutable bool genElectronsUpToDate; 
+  mutable std::vector<GenTau>genTauCache;
+  mutable bool genTausUpToDate;
   mutable bool betaUpToDate;
   static const double CSVTCut, CSVMCut, CSVLCut;
   double scaleFactor;
@@ -98,6 +104,21 @@ protected:
   std::pair <int, double> GetGenMuonMinDPt(const int, const vector<uint> ) const;
   void SetupGenMuons() const;
   int GetGenMuonLossCode(const int) const;
+
+  bool isGenElectron(const int) const;
+  void GetGenElectrons() const;
+  std::pair <int, double> GetGenElectronMinDR(const int, const vector<uint> ) const;
+  std::pair <int, double> GetGenElectronMinDPt(const int, const vector<uint> ) const;
+  void SetupGenElectrons() const;
+  int GetGenElectronLossCode(const int) const;
+
+  bool isGenTau(const int) const;
+  void GetGenTaus() const;
+  int GetNumIgnoredGenTaus() const;
+  std::pair <int, double> GetGenTauMinDR(const int, const vector<uint> ) const;
+  std::pair <int, double> GetGenTauMinDPt(const int, const vector<uint> ) const;
+  void SetupGenTaus() const;
+  int GetGenTauLossCode(const int) const;
 
   vector<int> GetRecoMuons(bool veto, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   bool hasPFMatch(int index, particleId::leptonType type, int &pfIdx);

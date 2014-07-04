@@ -32,7 +32,6 @@
 #include "timer.hpp"
 #include "math.hpp"
 #include "in_json_2012.hpp"
-#include "gen_muon.hpp"
 
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
@@ -46,6 +45,10 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   cfA(fileName, isList),
   genMuonCache(0),
   genMuonsUpToDate(false),
+  genElectronCache(0),
+  genElectronsUpToDate(false),
+  genTauCache(0),
+  genTausUpToDate(false),
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
   beta(0){
@@ -155,7 +158,10 @@ void EventHandler::SetScaleFactor(const double crossSection, const double lumino
 
 void EventHandler::GetEntry(const unsigned int entry){
   cfA::GetEntry(entry);
+  betaUpToDate=false;
   genMuonsUpToDate=false;
+  genElectronsUpToDate=false;
+  genTausUpToDate=false;
 }
 
 int EventHandler::GetcfAVersion() const{
@@ -574,7 +580,7 @@ bool EventHandler::isGenMuon(const int index) const{
 }
 
 std::pair <int, double> EventHandler::GetGenMuonMinDR(const int genLep, const vector<uint> matched) const {
-  double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta()), gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
+  double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt()), gen_eta(genMuonCache[genLep].GetLorentzVector().Eta()), gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
   //printf("genMu/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",genMuonCache[genLep].GetMCMusIndex(),genMuonCache[genLep].GetLorentzVector().Pt(),gen_eta,gen_phi);
   double minDeltaR(FLT_MAX);
   //printf("nRecoObjects: %lu\n",reco_eta.size());
@@ -594,6 +600,8 @@ std::pair <int, double> EventHandler::GetGenMuonMinDR(const int genLep, const ve
       }
     }
     if (already_matched) continue; // avoid double-counting
+    const double thisDPt( fabs(gen_pt-mus_pt->at(reco)) );
+    if (thisDPt>10.) continue; // wouldn't want this one anyway
     const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, mus_phi->at(reco), mus_eta->at(reco)) );
     if(thisDeltaR<minDeltaR){
       minDeltaR=thisDeltaR;
@@ -606,7 +614,7 @@ std::pair <int, double> EventHandler::GetGenMuonMinDR(const int genLep, const ve
 }
 
 std::pair <int, double> EventHandler::GetGenMuonMinDPt(const int genLep, const vector<uint> matched) const {
-  double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
+  double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt()), gen_eta(genMuonCache[genLep].GetLorentzVector().Eta()), gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
   double minDPt(FLT_MAX);
   //printf("nRecoObjects: %lu\n",reco_eta.size());
   int closest(-1);
@@ -622,6 +630,8 @@ std::pair <int, double> EventHandler::GetGenMuonMinDPt(const int genLep, const v
       }
     }
     if (already_matched) continue; // avoid double-counting
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, mus_phi->at(reco), mus_eta->at(reco)) );
+    if (thisDeltaR>1.) continue; // wouldn't want this one anyway
     const double thisDPt( fabs(gen_pt-mus_pt->at(reco)) );
     if(thisDPt<minDPt){
       minDPt=thisDPt;
@@ -690,6 +700,245 @@ int EventHandler::GetNumIgnoredGenMuons() const{
     if(!isGenMuon(gen)) ignored++;
   }
   return ignored;
+}
+
+bool EventHandler::isGenElectron(const int index) const{
+  if (fabs(mc_electrons_id->at(index))!=11) return false;
+  //if (mc_electrons_pt->at(index)<3.) return false;
+  //if (fabs(mc_electrons_eta->at(index))>5.) return false;
+  if (mc_electrons_numOfDaughters->at(index)>0.) return false; // in the case of Brem, remove the inital electron
+  return true;
+}
+
+std::pair <int, double> EventHandler::GetGenElectronMinDR(const int genLep, const vector<uint> matched) const {
+  double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt()), gen_eta(genElectronCache[genLep].GetLorentzVector().Eta()), gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
+  //printf("genEl/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",genElectronCache[genLep].GetMCElsIndex(),genElectronCache[genLep].GetLorentzVector().Pt(),gen_eta,gen_phi);
+  double minDeltaR(FLT_MAX);
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  unsigned int nReco(els_eta->size());
+  //cout << "n_els: " << nReco << endl;
+  if (nReco==0) return std::make_pair(-1,-1.);
+  int closest(-1);
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    // printf("recoEl/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",reco,els_pt->at(reco),els_eta->at(reco),els_phi->at(reco));
+    //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+    //if (els_pt->at(reco)<3||fabs(els_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDPt( fabs(gen_pt-els_pt->at(reco)) );
+    if (thisDPt>10.) continue; // wouldn't want this one anyway
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(reco), els_eta->at(reco)) );
+    if(thisDeltaR<minDeltaR){
+      minDeltaR=thisDeltaR;
+      closest=reco;
+    }
+  }
+  //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+  if (minDeltaR>1.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDeltaR);
+}
+
+std::pair <int, double> EventHandler::GetGenElectronMinDPt(const int genLep, const vector<uint> matched) const {
+  double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt()), gen_eta(genElectronCache[genLep].GetLorentzVector().Eta()), gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
+  double minDPt(FLT_MAX);
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  int closest(-1);
+  unsigned int nReco(els_eta->size());
+  if (nReco==0) return std::make_pair(-1,-1.);
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    //if (els_pt->at(reco)<3||fabs(els_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(reco), els_eta->at(reco)) );
+    if (thisDeltaR>1.) continue; // wouldn't want this one anyway
+    const double thisDPt( fabs(gen_pt-els_pt->at(reco)) );
+    if(thisDPt<minDPt){
+      minDPt=thisDPt;
+      closest=reco;
+    }
+  }
+  if (minDPt>10.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDPt);
+}
+
+void EventHandler::SetupGenElectrons() const {
+  //std::cout << "GetGenElectrons" << std::endl;
+  GetGenElectrons();
+  //std::cout << "Calculate dR and dPts" << std::endl;
+  vector<uint> els_matched;
+  for(unsigned int genLep(0); genLep<genElectronCache.size(); ++genLep){
+    double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt());
+    double gen_eta(genElectronCache[genLep].GetLorentzVector().Eta());
+    double gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
+    std::pair <int,double> min_dR = GetGenElectronMinDR(genLep, els_matched);
+    std::pair <int,double> min_dPt = GetGenElectronMinDPt(genLep, els_matched);
+    genElectronCache[genLep].SetMinDR(min_dR);
+    genElectronCache[genLep].SetMinDPt(min_dPt);
+    int dR_ind(genElectronCache[genLep].GetMinDR().first), dPt_ind(genElectronCache[genLep].GetMinDPt().first);
+    if (dR_ind==dPt_ind) genElectronCache[genLep].SetElsMatch(min_dR.first);
+    else if (dR_ind<0&&dPt_ind>=0) genElectronCache[genLep].SetElsMatch(min_dPt.first);
+    else if (dR_ind>=0&&dPt_ind<0) genElectronCache[genLep].SetElsMatch(min_dR.first);
+    else {
+      //  cout << "Ambiguous case:" << endl;
+      //  cout << "MinDR: " << dR_ind << ", MinDPt: " << dPt_ind << endl;
+      //cout << "JERR" << endl;
+      double d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-els_pt->at(dR_ind))/2.5,2));
+      //cout << "JERR1" << endl;
+      double d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(dPt_ind), els_eta->at(dPt_ind))/0.07,2));
+      d1<d2 ? genElectronCache[genLep].SetElsMatch(min_dR.first) : genElectronCache[genLep].SetElsMatch(min_dPt.first);
+    } 
+    if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back((uint)genElectronCache[genLep].GetElsMatch());
+    //  cout << "Gen electron " << genElectronCache[genLep].GetMCElsIndex() << " matched to reco electron " << genElectronCache[genLep].GetElsMatch() << endl;
+    // Determine if/where/why we lost the electron
+    genElectronCache[genLep].SetLossCode(GetGenElectronLossCode(genLep));
+  }    
+}
+
+int EventHandler::GetGenElectronLossCode(const int genLep) const {
+  if (genElectronCache[genLep].GetElsMatch()>=0) return 0; // not lost
+  if (els_eta->size()==0) return 1; // didn't make it to els
+  else return -1;
+}
+
+void EventHandler::GetGenElectrons() const{
+  if (!genElectronsUpToDate) {
+    genElectronCache.clear();
+    for (unsigned int gen(0); gen<mc_electrons_id->size(); gen++) {
+      if(isGenElectron(gen)) {
+	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,mc_electrons_id->at(gen),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
+      }
+    }
+    std::sort(genElectronCache.begin(),genElectronCache.end(), std::greater<GenElectron>());
+    genElectronsUpToDate=true;
+  }
+}
+
+bool EventHandler::isGenTau(const int index) const{
+  if (fabs(mc_taus_id->at(index))!=15) return false;
+  return true;
+}
+
+std::pair <int, double> EventHandler::GetGenTauMinDR(const int genLep, const vector<uint> matched) const {
+  double gen_eta(genTauCache[genLep].GetLorentzVector().Eta()), gen_phi(genTauCache[genLep].GetLorentzVector().Phi());
+  //printf("genTau/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",genTauCache[genLep].GetMCTausIndex(),genTauCache[genLep].GetLorentzVector().Pt(),gen_eta,gen_phi);
+  double minDeltaR(FLT_MAX);
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  unsigned int nReco(taus_eta->size());
+  //cout << "n_taus: " << nReco << endl;
+  if (nReco==0) return std::make_pair(-1,-1.);
+  int closest(-1);
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    // printf("recoTau/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",reco,taus_pt->at(reco),taus_eta->at(reco),taus_phi->at(reco));
+    //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+    //if (taus_pt->at(reco)<3||fabs(taus_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, taus_phi->at(reco), taus_eta->at(reco)) );
+    if(thisDeltaR<minDeltaR){
+      minDeltaR=thisDeltaR;
+      closest=reco;
+    }
+  }
+  //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+  if (minDeltaR>2.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDeltaR);
+}
+
+std::pair <int, double> EventHandler::GetGenTauMinDPt(const int genLep, const vector<uint> matched) const {
+  double gen_pt(genTauCache[genLep].GetLorentzVector().Pt());
+  double minDPt(FLT_MAX);
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  int closest(-1);
+  unsigned int nReco(taus_eta->size());
+  if (nReco==0) return std::make_pair(-1,-1.);
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    //if (taus_pt->at(reco)<3||fabs(taus_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDPt( fabs(gen_pt-taus_pt->at(reco)) );
+    if(thisDPt<minDPt){
+      minDPt=thisDPt;
+      closest=reco;
+    }
+  }
+  if (minDPt>20.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDPt);
+}
+
+void EventHandler::SetupGenTaus() const {
+  //std::cout << "GetGenTaus" << std::endl;
+  GetGenTaus();
+  // std::cout << "Calculate dR and dPts" << std::endl;
+  vector<uint> taus_matched;
+  for(unsigned int genLep(0); genLep<genTauCache.size(); ++genLep){
+    double gen_pt(genTauCache[genLep].GetLorentzVector().Pt());
+    double gen_eta(genTauCache[genLep].GetLorentzVector().Eta());
+    double gen_phi(genTauCache[genLep].GetLorentzVector().Phi());
+    std::pair <int,double> min_dR = GetGenTauMinDR(genLep, taus_matched);
+    std::pair <int,double> min_dPt = GetGenTauMinDPt(genLep, taus_matched);
+    genTauCache[genLep].SetMinDR(min_dR);
+    genTauCache[genLep].SetMinDPt(min_dPt);
+    int dR_ind(genTauCache[genLep].GetMinDR().first), dPt_ind(genTauCache[genLep].GetMinDPt().first);
+    if (dR_ind==dPt_ind) genTauCache[genLep].SetTausMatch(min_dR.first);
+    else if (dR_ind<0&&dPt_ind>=0) genTauCache[genLep].SetTausMatch(min_dPt.first);
+    else if (dR_ind>=0&&dPt_ind<0) genTauCache[genLep].SetTausMatch(min_dR.first);
+    else {
+      //    cout << "Ambiguous case:" << endl;
+      //    cout << "MinDR: " << dR_ind << ", MinDPt: " << dPt_ind << endl;
+      // cout << "JERR" << endl;
+      double d1 = sqrt(pow(genTauCache[genLep].GetMinDR().second/0.2,2)+pow(fabs(gen_pt-taus_pt->at(dR_ind))/3.,2));
+      // cout << "JERR1" << endl;
+      double d2 = sqrt(pow(genTauCache[genLep].GetMinDPt().second/3.,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, taus_phi->at(dPt_ind), taus_eta->at(dPt_ind))/0.2,2));
+      d1<d2 ? genTauCache[genLep].SetTausMatch(min_dR.first) : genTauCache[genLep].SetTausMatch(min_dPt.first);
+    } 
+    if (genTauCache[genLep].GetTausMatch()>=0) taus_matched.push_back((uint)genTauCache[genLep].GetTausMatch());
+    // cout << "Gen tau " << genTauCache[genLep].GetMCTausIndex() << " matched to reco tau " << genTauCache[genLep].GetTausMatch() << " (" << genTauCache[genLep].GetMinDR().second << "/" << genTauCache[genLep].GetMinDPt().second << ")" << endl;
+    // Determine if/where/why we lost the tau
+    genTauCache[genLep].SetLossCode(GetGenTauLossCode(genLep));
+  }    
+}
+
+int EventHandler::GetGenTauLossCode(const int genLep) const {
+  if (genTauCache[genLep].GetTausMatch()>=0) return 0; // not lost
+  if (taus_eta->size()==0) return 1; // didn't make it to taus
+  else return -1;
+}
+
+void EventHandler::GetGenTaus() const{
+  if (!genTausUpToDate) {
+    genTauCache.clear();
+    for (unsigned int gen(0); gen<mc_taus_id->size(); gen++) {
+      if(isGenTau(gen)) {
+	genTauCache.push_back(GenTau(TLorentzVector(mc_taus_px->at(gen),mc_taus_py->at(gen),mc_taus_pz->at(gen),mc_taus_energy->at(gen)),gen,mc_taus_id->at(gen),static_cast<unsigned int>(mc_taus_mother_id->at(gen))));
+      }
+    }
+    std::sort(genTauCache.begin(),genTauCache.end(), std::greater<GenTau>());
+    genTausUpToDate=true;
+  }
 }
 
 int EventHandler::GetNGenParticles(const int pdgId, const float pt, const bool check_sign) const{
