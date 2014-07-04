@@ -18,6 +18,19 @@
 #include "gen_muon.hpp"
 
 typedef unsigned int uint;
+using std::vector;
+using std::cout;
+using std::endl;
+
+namespace particleId {
+  enum leptonType { 
+    X=0,
+    electron=2,
+    muon=3,
+    electronVeto=4,
+    muonVeto=5
+  };
+}
 
 class EventHandler : public cfA{
 public:
@@ -75,14 +88,24 @@ protected:
   double GetTopPt() const;
   double GetTopPtWeightOfficial() const;
 
-  int GetNGenParticles(const int, const bool=false) const;
+  int GetNGenParticles(const int, const float=0., const bool=false) const;
   int GetGenParticleIndex(const int, const int=0) const;
 
   bool isGenMuon(const int) const;
   void GetGenMuons() const;
-  double GetGenMuonMinDR(const int, const std::vector<float>, const std::vector<float>) const;
+  int GetNumIgnoredGenMuons() const;
+  std::pair <int, double> GetGenMuonMinDR(const int, const vector<uint> ) const;
+  std::pair <int, double> GetGenMuonMinDPt(const int, const vector<uint> ) const;
   void SetupGenMuons() const;
-  double ReadMuonCacheDR(uint) const;
+  int GetGenMuonLossCode(const int) const;
+
+  vector<int> GetRecoMuons(bool veto, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  bool hasPFMatch(int index, particleId::leptonType type, int &pfIdx);
+  bool passedRA4MuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  bool passedRA4MuonVeto(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
+  bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  float GetRA4MuonIsolation(uint imu);
 
 };
 

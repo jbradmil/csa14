@@ -34,10 +34,6 @@
 #include "in_json_2012.hpp"
 #include "gen_muon.hpp"
 
-using std::vector;
-using std::cout;
-using std::endl;
-
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
@@ -282,8 +278,8 @@ bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // ju
 
 
 bool EventHandler::isRA2bElectron(const unsigned int k,
-			      const unsigned short level,
-			      const bool use_iso) const{
+				  const unsigned short level,
+				  const bool use_iso) const{
   //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
@@ -367,8 +363,8 @@ double EventHandler::GetElectronRelIso(const unsigned int k) const{
 }
 
 bool EventHandler::isRA2bMuon(const unsigned int k,
-			  const unsigned short level,
-			  const bool use_iso) const{
+			      const unsigned short level,
+			      const bool use_iso) const{
   double pt_thresh(10.0);
   if(level>=1) pt_thresh=20.0;
 
@@ -393,8 +389,8 @@ bool EventHandler::isRA2bMuon(const unsigned int k,
 }
 
 bool EventHandler::isRA2bTau(const unsigned int k,
-			 const unsigned short level,
-			 const bool require_iso) const{
+			     const unsigned short level,
+			     const bool require_iso) const{
   double pt_cut(20.0);
   if(level>0) pt_cut=30.0;
 
@@ -571,51 +567,108 @@ int EventHandler::GetGenParticleIndex(const int pdgId, const int skip) const{
 
 bool EventHandler::isGenMuon(const int index) const{
   if (fabs(mc_mus_id->at(index))!=13) return false;
-  if (mc_mus_pt->at(index)<=0) return false;
-  if (mc_mus_eta->at(index)>5) return false;
+  //if (mc_mus_pt->at(index)<3.) return false;
+  //if (fabs(mc_mus_eta->at(index))>5.) return false;
+  if (mc_mus_numOfDaughters->at(index)>0.) return false; // in the case of Brem, remove the inital muon
   return true;
 }
 
-double EventHandler::GetGenMuonMinDR(const int genLep, const std::vector<float> reco_eta, const std::vector<float> reco_phi) const {
-  double gen_eta(genMuonCache.at(genLep).GetLorentzVector().Eta()), gen_phi(genMuonCache.at(genLep).GetLorentzVector().Phi());
+std::pair <int, double> EventHandler::GetGenMuonMinDR(const int genLep, const vector<uint> matched) const {
+  double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta()), gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
+  //printf("genMu/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",genMuonCache[genLep].GetMCMusIndex(),genMuonCache[genLep].GetLorentzVector().Pt(),gen_eta,gen_phi);
   double minDeltaR(FLT_MAX);
-   //printf("nRecoObjects: %lu\n",reco_eta.size());
-  unsigned int nReco(reco_eta.size());
-  if (nReco==0) return -FLT_MAX;
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  unsigned int nReco(mus_eta->size());
+  //cout << "n_mus: " << nReco << endl;
+  if (nReco==0) return std::make_pair(-1,-1.);
+  int closest(-1);
   for(unsigned int reco(0); reco<nReco; ++reco){
-    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, reco_phi.at(reco), reco_eta.at(reco)) );
+    // printf("recoMu/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",reco,mus_pt->at(reco),mus_eta->at(reco),mus_phi->at(reco));
+    //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+    //if (mus_pt->at(reco)<3||fabs(mus_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDeltaR( Math::GetDeltaR(gen_phi, gen_eta, mus_phi->at(reco), mus_eta->at(reco)) );
     if(thisDeltaR<minDeltaR){
       minDeltaR=thisDeltaR;
+      closest=reco;
     }
   }
-  return minDeltaR;
+  //printf("minDR: %d/%.2f\n",closest,minDeltaR);
+  if (minDeltaR>1.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDeltaR);
+}
+
+std::pair <int, double> EventHandler::GetGenMuonMinDPt(const int genLep, const vector<uint> matched) const {
+  double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
+  double minDPt(FLT_MAX);
+  //printf("nRecoObjects: %lu\n",reco_eta.size());
+  int closest(-1);
+  unsigned int nReco(mus_eta->size());
+  if (nReco==0) return std::make_pair(-1,-1.);
+  for(unsigned int reco(0); reco<nReco; ++reco){
+    //if (mus_pt->at(reco)<3||fabs(mus_eta->at(reco))>5) continue;
+    bool already_matched(false);
+    for (uint i(0); i<matched.size(); i++) {
+      if (reco==matched[i]) {
+	already_matched=true;
+	break;
+      }
+    }
+    if (already_matched) continue; // avoid double-counting
+    const double thisDPt( fabs(gen_pt-mus_pt->at(reco)) );
+    if(thisDPt<minDPt){
+      minDPt=thisDPt;
+      closest=reco;
+    }
+  }
+  if (minDPt>10.||closest==-1) return std::make_pair(-1,-1.);
+  return std::make_pair(closest,minDPt);
 }
 
 void EventHandler::SetupGenMuons() const {
   //std::cout << "GetGenMuons" << std::endl;
   GetGenMuons();
+  //std::cout << "Calculate dR and dPts" << std::endl;
+  vector<uint> mus_matched;
   for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
-    int flavor = fabs(genMuonCache.at(genLep).GetPDGId());
-    switch (flavor) {
-      /*
-	case 11:
-	genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *pf_els_eta, *pf_els_phi));
-	break;
-      */
-    case 13:
-      //std::cout << "SetMinDR" << std::endl;
-      genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *mus_eta, *mus_phi));
-      break;
-      /*
-	case 15:
-	genMuonCache.at(genLep).SetMinDR(GetGenMuonMinDR(genLep, *taus_eta, *taus_phi));
-	break;
-      */
-    default:
-      break;
-    }
-     //printf("size/flavor/minDR: %d/%d/%3.2f\n",genMuonCache.size(),flavor,genMuonCache.at(genLep).GetMinDR());
+    double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
+    double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
+    double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
+    std::pair <int,double> min_dR = GetGenMuonMinDR(genLep, mus_matched);
+    std::pair <int,double> min_dPt = GetGenMuonMinDPt(genLep, mus_matched);
+    genMuonCache[genLep].SetMinDR(min_dR);
+    genMuonCache[genLep].SetMinDPt(min_dPt);
+    int dR_ind(genMuonCache[genLep].GetMinDR().first), dPt_ind(genMuonCache[genLep].GetMinDPt().first);
+    if (dR_ind==dPt_ind) genMuonCache[genLep].SetMusMatch(min_dR.first);
+    else if (dR_ind<0&&dPt_ind>=0) genMuonCache[genLep].SetMusMatch(min_dPt.first);
+    else if (dR_ind>=0&&dPt_ind<0) genMuonCache[genLep].SetMusMatch(min_dR.first);
+    else {
+      //cout << "Ambiguous case:" << endl;
+      //cout << "MinDR: " << dR_ind << ", MinDPt: " << dPt_ind << endl;
+      //cout << "JERR" << endl;
+      double d1 = sqrt(pow(genMuonCache[genLep].GetMinDR().second/0.05,2)+pow(fabs(gen_pt-mus_pt->at(dR_ind))/0.5,2));
+      //cout << "JERR1" << endl;
+      double d2 = sqrt(pow(genMuonCache[genLep].GetMinDPt().second/0.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, mus_phi->at(dPt_ind), mus_eta->at(dPt_ind))/0.05,2));
+      d1<d2 ? genMuonCache[genLep].SetMusMatch(min_dR.first) : genMuonCache[genLep].SetMusMatch(min_dPt.first);
+    } 
+    if (genMuonCache[genLep].GetMusMatch()>=0) mus_matched.push_back((uint)genMuonCache[genLep].GetMusMatch());
+    //cout << "Gen muon " << genMuonCache[genLep].GetMCMusIndex() << " matched to reco muon " << genMuonCache[genLep].GetMusMatch() << endl;
+    // Determine if/where/why we lost the muon
+    genMuonCache[genLep].SetLossCode(GetGenMuonLossCode(genLep));
   }    
+}
+
+int EventHandler::GetGenMuonLossCode(const int genLep) const {
+  if (genMuonCache[genLep].GetMusMatch()>=0) return 0; // not lost
+  if (mus_eta->size()==0) return 1; // didn't make it to mus
+  else return -1;
 }
 
 void EventHandler::GetGenMuons() const{
@@ -626,48 +679,67 @@ void EventHandler::GetGenMuons() const{
 	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,mc_mus_id->at(gen),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
       }
     }
+    std::sort(genMuonCache.begin(),genMuonCache.end(), std::greater<GenMuon>());
     genMuonsUpToDate=true;
   }
 }
 
-double EventHandler::ReadMuonCacheDR(uint which) const {
-  if(!genMuonsUpToDate) SetupGenMuons();
-   //printf("which/size: %d/%d\n",which,genMuonCache.size());
-  if (genMuonCache.size()<which) return -FLT_MAX;
-   //printf("minDR: %3.2f\n", genMuonCache[which-1].GetMinDR());
-  return genMuonCache[which-1].GetMinDR();
+int EventHandler::GetNumIgnoredGenMuons() const{
+  int ignored(0);
+  for (uint gen(0); gen<mc_mus_id->size(); gen++) {
+    if(!isGenMuon(gen)) ignored++;
+  }
+  return ignored;
 }
 
-int EventHandler::GetNGenParticles(const int pdgId, const bool check_sign) const{
+int EventHandler::GetNGenParticles(const int pdgId, const float pt, const bool check_sign) const{
   if(!genMuonsUpToDate) SetupGenMuons();
   uint count(0);
   for (uint index(0); index < genMuonCache.size(); index++) {
     if (check_sign && (pdgId*genMuonCache[index].GetPDGId()<0)) continue;
+    if (genMuonCache[index].GetLorentzVector().Pt()<pt) continue;
     if (pdgId==fabs(genMuonCache[index].GetPDGId())) count++;
   }
   return count;
 }
 
-/*
-vector<int> EventHandler::GetRecoMuons(bool veto) {
+vector<int> EventHandler::GetRecoMuons(bool veto, float MuonPTThreshold, float MuonETAThreshold) {
   vector<int> muons;
   for(uint index=0; index<mus_pt->size(); index++)
     if(veto){
-       if(passedRA4MuonVeto(index)) muons.push_back(index);
+      if(passedRA4MuonVeto(index, MuonPTThreshold, MuonETAThreshold)) muons.push_back(index);
     }	else {
-      if(passedRA4MuonSelection(index)) muons.push_back(index);
+      if(passedRA4MuonSelection(index, MuonPTThreshold, MuonETAThreshold)) muons.push_back(index);
     }
   return muons;
 }
 
-bool EventHandler::passedRA4MuonSelection(uint imu){
+bool EventHandler::passedRA4MuonVeto(uint imu, float MuonPTThreshold, float MuonETAThreshold){
   if(imu >= mus_pt->size()) return false;
 
-  float relIso = GetMuonIsolation(imu);  
-  return (passedBaseMuonSelection(imu) && relIso < 0.12); 
+  float relIso = GetRA4MuonIsolation(imu);
+  
+  return ((mus_isGlobalMuon->at(imu) >0 || mus_isTrackerMuon->at(imu) >0)
+	  && mus_isPFMuon->at(imu) > 0
+	  && fabs(getDZ(mus_tk_vx->at(imu), mus_tk_vy->at(imu), mus_tk_vz->at(imu), mus_tk_px->at(imu), 
+			mus_tk_py->at(imu), mus_tk_pz->at(imu), 0)) < 0.5 
+	  && mus_pt->at(imu) >= MuonPTThreshold
+	  && fabs(mus_eta->at(imu)) <= MuonETAThreshold
+	  && relIso < 0.2);
 }
 
-bool EventHandler::passedBaseMuonSelection(uint imu){
+double EventHandler::getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex){
+  return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
+}
+
+bool EventHandler::passedRA4MuonSelection(uint imu, float MuonPTThreshold, float MuonETAThreshold){
+  if(imu >= mus_pt->size()) return false;
+
+  float relIso = GetRA4MuonIsolation(imu);  
+  return (passedBaseMuonSelection(imu, MuonPTThreshold, MuonETAThreshold) && relIso < 0.12); 
+}
+
+bool EventHandler::passedBaseMuonSelection(uint imu, float MuonPTThreshold, float MuonETAThreshold){
   if(imu >= mus_pt->size()) return false;
 
   float d0PV = mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
@@ -685,7 +757,7 @@ bool EventHandler::passedBaseMuonSelection(uint imu){
 			mus_tk_py->at(imu), mus_tk_pz->at(imu), 0)) < 0.5
 	  && mus_pt->at(imu) >= MuonPTThreshold
 	  && hasPFMatch(imu, particleId::muon, pfIdx)
-	  && fabs(mus_eta->at(imu)) <= 2.4);
+	  && fabs(mus_eta->at(imu)) <= MuonETAThreshold);
 }
 
 bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx){
@@ -707,7 +779,7 @@ bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx
     // 	<<", deltaRVal "<<deltaRVal<<", deltaPT "<<deltaPT
     // 	<<", eta "<<pfcand_eta->at(iCand)<<", phi "<<pfcand_phi->at(iCand)<<endl;
     if(pfcand_particleId->at(iCand)==type) {
-      double tempDeltaR = dR(leptonEta, pfcand_eta->at(iCand), leptonPhi, pfcand_phi->at(iCand));
+      double tempDeltaR = Math::GetDeltaR(leptonPhi, leptonEta, pfcand_phi->at(iCand), pfcand_eta->at(iCand));
       if(tempDeltaR < deltaRVal) {
 	deltaRVal = tempDeltaR;
 	deltaPT = fabs(leptonPt-pfcand_pt->at(iCand));
@@ -722,4 +794,11 @@ bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx
   if(type == particleId::electron) return (deltaPT<10);
   else return (deltaPT<5);
 }
-*/
+
+float EventHandler::GetRA4MuonIsolation(uint imu){
+  if(imu >= mus_pt->size()) return -999;
+  double sumEt = mus_pfIsolationR03_sumNeutralHadronEt->at(imu) + mus_pfIsolationR03_sumPhotonEt->at(imu) 
+    - 0.5*mus_pfIsolationR03_sumPUPt->at(imu);
+  if(sumEt<0.0) sumEt=0.0;
+  return (mus_pfIsolationR03_sumChargedHadronPt->at(imu) + sumEt)/mus_pt->at(imu);
+}
