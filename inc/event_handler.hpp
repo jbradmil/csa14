@@ -120,10 +120,10 @@ protected:
   void SetupGenTaus() const;
   int GetGenTauLossCode(const int) const;
 
-  vector<int> GetRecoMuons(bool veto, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  vector<int> GetRecoMuons(bool veto, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
   bool hasPFMatch(int index, particleId::leptonType type, int &pfIdx);
-  bool passedRA4MuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
-  bool passedRA4MuonVeto(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
+  bool passedRA4MuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
+  bool passedRA4MuonVeto(uint imu, float MuonPTThreshold=15., float MuonETAThreshold=2.5);
   double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRA4MuonIsolation(uint imu);

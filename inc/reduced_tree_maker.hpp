@@ -16,7 +16,15 @@ typedef struct
   float minDR;
   float minDPt;
   int mus_match;
-  int loss_code;
+  int signal_muon;
+  int veto_muon;
+  float reco_pt;
+  float reco_eta;
+  float reco_phi;
+  float reco_dZ;
+  float reco_d0PV;
+  float reco_relIso;
+  int reco_hasPFMatch;
 } genMuInfo;
 
 typedef struct 
