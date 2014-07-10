@@ -10,9 +10,11 @@ typedef unsigned int uint;
 
 typedef struct 
 {
+  int is_iso;
   float pt;
   float eta;
   float phi;
+  int mother_id;
   float minDR;
   float minDPt;
   int mus_match;
@@ -29,6 +31,27 @@ typedef struct
 
 typedef struct 
 {
+  int is_iso;
+  float pt;
+  float eta;
+  float phi;
+  int mother_id;
+  float minDR;
+  float minDPt;
+  int els_match;
+  int signal_electron;
+  int veto_electron;
+  float reco_pt;
+  float reco_eta;
+  float reco_phi;
+  float reco_dZ;
+  float reco_d0PV;
+  float reco_relIso;
+  int reco_hasPFMatch;
+} genElInfo;
+
+typedef struct 
+{
   float pt;
   float eta;
   float phi;
@@ -38,16 +61,6 @@ typedef struct
   int loss_code;
 } genTauInfo;
 
-typedef struct 
-{
-  float pt;
-  float eta;
-  float phi;
-  float minDR;
-  float minDPt;
-  int els_match;
-  int loss_code;
-} genElInfo;
 
 
 class ReducedTreeMaker : public EventHandler{

@@ -42,9 +42,9 @@ public:
   void SetScaleFactor(const double, const double, const int);
 
 protected:
-  mutable std::vector<GenMuon>genMuonCache;
+  mutable std::vector<GenMuon> genMuonCache;
   mutable bool genMuonsUpToDate;
-  mutable std::vector<GenElectron>genElectronCache;
+  mutable std::vector<GenElectron> genElectronCache;
   mutable bool genElectronsUpToDate; 
   mutable std::vector<GenTau>genTauCache;
   mutable bool genTausUpToDate;
@@ -98,6 +98,7 @@ protected:
   int GetGenParticleIndex(const int, const int=0) const;
 
   bool isGenMuon(const int) const;
+  bool isIsoGenMuon(const int) const;
   void GetGenMuons() const;
   int GetNumIgnoredGenMuons() const;
   std::pair <int, double> GetGenMuonMinDR(const int, const vector<uint> ) const;
@@ -106,6 +107,7 @@ protected:
   int GetGenMuonLossCode(const int) const;
 
   bool isGenElectron(const int) const;
+  bool isIsoGenElectron(const int) const;
   void GetGenElectrons() const;
   std::pair <int, double> GetGenElectronMinDR(const int, const vector<uint> ) const;
   std::pair <int, double> GetGenElectronMinDPt(const int, const vector<uint> ) const;
@@ -120,13 +122,22 @@ protected:
   void SetupGenTaus() const;
   int GetGenTauLossCode(const int) const;
 
-  vector<int> GetRecoMuons(bool veto, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
+  vector<int> GetRA4Muons(bool veto, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
   bool hasPFMatch(int index, particleId::leptonType type, int &pfIdx);
   bool passedRA4MuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
   bool passedRA4MuonVeto(uint imu, float MuonPTThreshold=15., float MuonETAThreshold=2.5);
   double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRA4MuonIsolation(uint imu);
+
+  vector<int> GetRA4Electrons(bool veto);
+  bool passedRA4ElectronSelection(uint iel, float ElectronPTThreshold=20.);
+  bool passedRA4ElectronVeto(uint iel, float ElectronPTThreshold=15.);
+  bool passedBaseElectronSelection(uint iel, float ElectronPTThreshold=20.);
+  float GetRA4ElectronIsolation(uint iel);
+  float GetEffectiveArea(float SCEta, bool isMC);
+ 
+  bool IsMC();
 
 };
 

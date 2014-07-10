@@ -579,6 +579,17 @@ bool EventHandler::isGenMuon(const int index) const{
   return true;
 }
 
+bool EventHandler::isIsoGenMuon(const int index) const{
+  if (fabs(mc_mus_id->at(index))!=13) return false;
+  if (fabs(mc_mus_mother_id->at(index))==24) return true;
+  if (fabs(mc_mus_id->at(index))==fabs(mc_mus_mother_id->at(index)) && fabs(mc_mus_grandmother_id->at(index))==24) return true;
+  if (fabs(mc_mus_id->at(index))==fabs(mc_mus_mother_id->at(index)) && 
+      fabs(mc_mus_mother_id->at(index))==fabs(mc_mus_grandmother_id->at(index)) &&
+      fabs(mc_mus_ggrandmother_id->at(index))==24) return true;
+  // For now, not counting W->tau->mu events
+  return false;
+}
+
 std::pair <int, double> EventHandler::GetGenMuonMinDR(const int genLep, const vector<uint> matched) const {
   double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt()), gen_eta(genMuonCache[genLep].GetLorentzVector().Eta()), gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
   //printf("genMu/pt/eta/phi: %d/%.2f/%.2f/%.2f\n",genMuonCache[genLep].GetMCMusIndex(),genMuonCache[genLep].GetLorentzVector().Pt(),gen_eta,gen_phi);
@@ -648,6 +659,8 @@ void EventHandler::SetupGenMuons() const {
   //std::cout << "Calculate dR and dPts" << std::endl;
   vector<uint> mus_matched;
   for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
+    int gen_index(genMuonCache[genLep].GetMCMusIndex());
+    genMuonCache[genLep].SetIsIso(isIsoGenMuon(gen_index));
     double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
@@ -708,6 +721,17 @@ bool EventHandler::isGenElectron(const int index) const{
   //if (fabs(mc_electrons_eta->at(index))>5.) return false;
   if (mc_electrons_numOfDaughters->at(index)>0.) return false; // in the case of Brem, remove the inital electron
   return true;
+}
+
+bool EventHandler::isIsoGenElectron(const int index) const{
+  if (fabs(mc_electrons_id->at(index))!=11) return false;
+  if (fabs(mc_electrons_mother_id->at(index))==24) return true;
+  if (fabs(mc_electrons_id->at(index))==fabs(mc_electrons_mother_id->at(index)) && fabs(mc_electrons_grandmother_id->at(index))==24) return true;
+  if (fabs(mc_electrons_id->at(index))==fabs(mc_electrons_mother_id->at(index)) && 
+      fabs(mc_electrons_mother_id->at(index))==fabs(mc_electrons_grandmother_id->at(index)) &&
+      fabs(mc_electrons_ggrandmother_id->at(index))==24) return true;
+  // For now, not counting W->tau->e events
+  return false;
 }
 
 std::pair <int, double> EventHandler::GetGenElectronMinDR(const int genLep, const vector<uint> matched) const {
@@ -779,6 +803,8 @@ void EventHandler::SetupGenElectrons() const {
   //std::cout << "Calculate dR and dPts" << std::endl;
   vector<uint> els_matched;
   for(unsigned int genLep(0); genLep<genElectronCache.size(); ++genLep){
+    int gen_index(genElectronCache[genLep].GetMCElsIndex());
+    genElectronCache[genLep].SetIsIso(isIsoGenElectron(gen_index));  
     double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genElectronCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
@@ -952,7 +978,7 @@ int EventHandler::GetNGenParticles(const int pdgId, const float pt, const bool c
   return count;
 }
 
-vector<int> EventHandler::GetRecoMuons(bool veto, float MuonPTThreshold, float MuonETAThreshold) {
+vector<int> EventHandler::GetRA4Muons(bool veto, float MuonPTThreshold, float MuonETAThreshold) {
   vector<int> muons;
   for(uint index=0; index<mus_pt->size(); index++)
     if(veto){
@@ -1024,9 +1050,6 @@ bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx
   }
   
   for(unsigned iCand=0; iCand<pfcand_pt->size(); iCand++) {
-    //     cout<<"Repetition "<<iCand<<": particleId "<<pfcand_particleId->at(iCand)
-    // 	<<", deltaRVal "<<deltaRVal<<", deltaPT "<<deltaPT
-    // 	<<", eta "<<pfcand_eta->at(iCand)<<", phi "<<pfcand_phi->at(iCand)<<endl;
     if(pfcand_particleId->at(iCand)==type) {
       double tempDeltaR = Math::GetDeltaR(leptonPhi, leptonEta, pfcand_phi->at(iCand), pfcand_eta->at(iCand));
       if(tempDeltaR < deltaRVal) {
@@ -1036,10 +1059,6 @@ bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx
       }
     }
   }
- 
-  //   cout<<"Lepton "<<index<<" => type "<<type
-  //       <<", leptonEta "<< leptonEta<<", leptonPhi "<< leptonPhi
-  //       <<", leptonPt "<< leptonPt<<", deltaPT "<< deltaPT<<endl;
   if(type == particleId::electron) return (deltaPT<10);
   else return (deltaPT<5);
 }
@@ -1050,4 +1069,112 @@ float EventHandler::GetRA4MuonIsolation(uint imu){
     - 0.5*mus_pfIsolationR03_sumPUPt->at(imu);
   if(sumEt<0.0) sumEt=0.0;
   return (mus_pfIsolationR03_sumChargedHadronPt->at(imu) + sumEt)/mus_pt->at(imu);
+}
+
+vector<int> EventHandler::GetRA4Electrons(bool veto){
+  vector<int> electrons;
+  for(uint index=0; index<els_pt->size(); index++)
+    if(!veto){
+      if(passedRA4ElectronSelection(index)) electrons.push_back(index);
+    }	else {
+      if(passedRA4ElectronVeto(index)) electrons.push_back(index);
+    }
+  return electrons;
+}
+
+float EventHandler::GetRA4ElectronIsolation(uint iel){
+  double sumEt = els_PFphotonIsoR03->at(iel) + els_PFneutralHadronIsoR03->at(iel) 
+    - rho_kt6PFJetsForIsolation2011 * GetEffectiveArea(els_scEta->at(iel), IsMC());
+  if(sumEt<0.0) sumEt=0;
+  return (els_PFchargedHadronIsoR03->at(iel) + sumEt)/els_pt->at(iel);
+}
+
+bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThreshold){
+  if(iel >= els_pt->size()) return false;
+
+  float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
+  int pfIdx=-1;
+  
+  return (els_pt->at(iel) > ElectronPTThreshold
+	  && fabs(els_scEta->at(iel)) < 2.5
+	  && !els_hasMatchedConversion->at(iel)
+	  && els_n_inner_layer->at(iel) <= 1
+	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
+			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
+	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
+	  && hasPFMatch(iel, particleId::electron, pfIdx) 
+	  && fabs(d0PV) < 0.02 
+	  && ((els_isEB->at(iel) // Endcap selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.004
+	       && fabs(els_dPhiIn->at(iel)) < 0.06
+	       && els_sigmaIEtaIEta->at(iel) < 0.01
+	       && els_hadOverEm->at(iel) < 0.12 ) ||
+	      (els_isEE->at(iel)  // Barrel selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.007
+	       && fabs(els_dPhiIn->at(iel)) < 0.03
+	       && els_sigmaIEtaIEta->at(iel) < 0.03
+	       && els_hadOverEm->at(iel) < 0.10 ))
+	  );
+}
+
+bool EventHandler::passedRA4ElectronSelection(uint iel, float ElectronPTThreshold){
+  if(iel >= els_pt->size()) return false;
+
+  double relIso = GetRA4ElectronIsolation(iel);
+  return (passedBaseElectronSelection(iel, ElectronPTThreshold) && relIso < 0.15);
+}
+
+bool EventHandler::passedRA4ElectronVeto(uint iel, float ElectronPTThreshold){
+  if(iel >= els_pt->size()) return false;
+
+  float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
+  double relIso = GetRA4ElectronIsolation(iel);
+  
+  return (els_pt->at(iel) > ElectronPTThreshold
+	  && fabs(els_scEta->at(iel)) < 2.5
+	  && relIso < 0.15
+	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
+			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.2
+	  && fabs(d0PV) < 0.04 
+	  && ((els_isEB->at(iel) // Endcap selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.007
+	       && fabs(els_dPhiIn->at(iel)) < 0.8
+	       && els_sigmaIEtaIEta->at(iel) < 0.01
+	       && els_hadOverEm->at(iel) < 0.15) ||
+	      (els_isEE->at(iel)  // Barrel selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.01
+	       && fabs(els_dPhiIn->at(iel)) < 0.7
+	       && els_sigmaIEtaIEta->at(iel) < 0.03))
+	  );  
+}
+
+float EventHandler::GetEffectiveArea(float SCEta, bool isMC){
+  float EffectiveArea;
+  
+  if(isMC) {
+    if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.110;
+    if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.130;
+    if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.089;
+    if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.130;
+    if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.150;
+    if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.160;
+    if (fabs(SCEta) >= 2.4) EffectiveArea = 0.190;
+  }
+  else {
+    //kEleGammaAndNeutralHadronIso03 from 2011 data
+    //obtained from http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/EGamma/EGammaAnalysisTools/interface/ElectronEffectiveArea.h?revision=1.3&view=markup
+    if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.100;
+    if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.120;
+    if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.085;
+    if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.110;
+    if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.120;
+    if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.120;
+    if (fabs(SCEta) >= 2.4) EffectiveArea = 0.130;
+  }
+  return EffectiveArea;
+}
+
+bool EventHandler::IsMC(){
+  std::string sampleName(chainA.GetFile()->GetName());
+  return (sampleName.find("Run201") == std::string::npos);
 }

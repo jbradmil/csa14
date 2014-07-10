@@ -17,6 +17,10 @@ void GenMuon::SetMotherId(const int momIdIn){
   momId=momIdIn;
 }
 
+void GenMuon::SetIsIso(const bool isIsoIn){
+  is_iso=isIsoIn;
+}
+
 void GenMuon::SetMinDR(const std::pair <int,double> minDRIn){
   minDR=minDRIn;
 }
@@ -47,6 +51,10 @@ int GenMuon::GetPDGId() const{
 
 int GenMuon::GetMotherId() const{
   return momId;
+}
+
+bool GenMuon::IsIso() const{
+  return is_iso;
 }
 
 std::pair <int,double> GenMuon::GetMinDR() const{

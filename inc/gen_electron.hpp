@@ -13,6 +13,7 @@ public:
   void SetPDGId(const int pIdIn);
   void SetMotherId(const int momIdIn);
   void SetMCElsIndex(const double  mc_els_indexIn);
+  void SetIsIso(const bool isIsoIn);
   void SetMinDR(const std::pair<int, double>);
   void SetMinDPt(const std::pair<int, double>);
   void SetElsMatch(const int);
@@ -22,6 +23,7 @@ public:
   unsigned int GetMCElsIndex() const;
   int GetPDGId() const;
   int GetMotherId() const;
+  bool IsIso() const;
   std::pair<int, double> GetMinDR() const;
   std::pair<int, double> GetMinDPt() const;
   int GetElsMatch() const;
@@ -39,6 +41,7 @@ private:
   int mc_els_index;
   int pId;
   int momId;
+  bool is_iso;
   std::pair<int, double> minDR;
   std::pair<int, double> minDPt;
   int els_match;

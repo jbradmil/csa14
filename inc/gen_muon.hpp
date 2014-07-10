@@ -12,7 +12,8 @@ public:
   void SetLorentzVector(const TLorentzVector vecIn);
   void SetPDGId(const int pIdIn);
   void SetMotherId(const int momIdIn);
-  void SetMCMusIndex(const double  mc_mus_indexIn);
+  void SetMCMusIndex(const double mc_mus_indexIn);
+  void SetIsIso(const bool isIsoIn);
   void SetMinDR(const std::pair<int, double>);
   void SetMinDPt(const std::pair<int, double>);
   void SetMusMatch(const int);
@@ -22,6 +23,7 @@ public:
   unsigned int GetMCMusIndex() const;
   int GetPDGId() const;
   int GetMotherId() const;
+  bool IsIso() const;
   std::pair<int, double> GetMinDR() const;
   std::pair<int, double> GetMinDPt() const;
   int GetMusMatch() const;
@@ -39,6 +41,7 @@ private:
   int mc_mus_index;
   int pId;
   int momId;
+  bool is_iso;
   std::pair<int, double> minDR;
   std::pair<int, double> minDPt;
   int mus_match;

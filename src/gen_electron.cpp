@@ -17,6 +17,14 @@ void GenElectron::SetMotherId(const int momIdIn){
   momId=momIdIn;
 }
 
+unsigned int GenElectron::GetMCElsIndex() const{
+  return mc_els_index;
+}
+
+void GenElectron::SetIsIso(const bool isIsoIn){
+  is_iso=isIsoIn;
+}
+
 void GenElectron::SetMinDR(const std::pair <int,double> minDRIn){
   minDR=minDRIn;
 }
@@ -37,16 +45,16 @@ TLorentzVector GenElectron::GetLorentzVector() const{
   return vec;
 }
 
-unsigned int GenElectron::GetMCElsIndex() const{
-  return mc_els_index;
-}
-
 int GenElectron::GetPDGId() const{
   return pId;
 }
 
 int GenElectron::GetMotherId() const{
   return momId;
+}
+
+bool GenElectron::IsIso() const{
+  return is_iso;
 }
 
 std::pair <int,double> GenElectron::GetMinDR() const{
