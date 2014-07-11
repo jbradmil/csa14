@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <math.h>
 #include "object_printer.hpp"
-#include "cfa.hpp"
 
 using std::cout;
 using std::endl;

@@ -23,11 +23,11 @@ all: make_reduced_tree.exe print_collections.exe
 
 # List any object files your executable oneed to be linked with
 $(EXEDIR)/generate_cfa_class.exe: generate_cfa_class.o
-$(EXEDIR)/make_reduced_tree.exe: make_reduced_tree.o event_handler.o event_number.o b_jet.o math.o pu_constants.o timer.o cfa.o weights.o in_json_2012.o reduced_tree_maker.o gen_muon.o gen_electron.o gen_tau.o
-$(EXEDIR)/print_collections.exe: print_collections.o object_printer.o cfa.o
+$(EXEDIR)/make_reduced_tree.exe: make_reduced_tree.o event_handler.o event_number.o b_jet.o math.o pu_constants.o timer.o cfa2014.o weights.o in_json_2012.o reduced_tree_maker.o gen_muon.o gen_electron.o gen_tau.o
+$(EXEDIR)/print_collections.exe: print_collections.o object_printer.o cfa2014.o
 
 -include $(addsuffix .d,$(addprefix $(MAKEDIR)/,$(notdir $(basename $(wildcard $(SRCDIR)/*.cpp)))))
--include $(MAKEDIR)/cfa.d
+-include $(MAKEDIR)/cfa2014.d
 
 # Note: you need a space after sed -i for Max OSX.  You must NOT have a space for linux.
 $(MAKEDIR)/%.d: $(SRCDIR)/%.cpp

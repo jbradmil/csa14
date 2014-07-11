@@ -26,7 +26,6 @@
 #include "TCanvas.h"
 #include "pu_constants.hpp"
 #include "lumi_reweighting_stand_alone.hpp"
-#include "cfa.hpp"
 #include "event_number.hpp"
 #include "b_jet.hpp"
 #include "timer.hpp"
@@ -52,7 +51,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
   beta(0){
-  if (fastMode) { // turn off unnecessary branches
+  if (fastMode&&cmEnergy<=8) { // turn off unnecessary branches
     chainA.SetBranchStatus("triggerobject_*",0);
     chainA.SetBranchStatus("standalone_t*",0);
     chainA.SetBranchStatus("L1trigger_*",0);
@@ -67,15 +66,6 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
     chainB.SetBranchStatus("photons_*",0);
     chainB.SetBranchStatus("Npf_photons",0);
     chainB.SetBranchStatus("pf_photons_*",0);
-    /*
-      chainB.SetBranchStatus("Nmus",0);
-      chainB.SetBranchStatus("mus_*",0);
-      chainB.SetBranchStatus("Nels",0);
-      chainB.SetBranchStatus("els_*",0);
-    */
-    chainB.SetBranchStatus("Nmets*",0);
-    chainB.SetBranchStatus("mets*",0);
-    chainB.SetBranchStatus("mets_AK5_et",1);
     chainB.SetBranchStatus("Njets_AK5PFclean",0);
     chainB.SetBranchStatus("jets_AK5PFclean_*",0);
   }
@@ -88,13 +78,13 @@ void EventHandler::GetBeta(const std::string which) const{
   beta.clear();
 
   if (GetcfAVersion()<69){
-    beta.resize(jets_AK5PF_pt->size(), 0.0);
+    beta.resize(jets_AKPF_pt->size(), 0.0);
   }else{
     int totjet = 0;
     int matches = 0;
-    for (unsigned int ijet=0; ijet<jets_AK5PF_pt->size(); ++ijet) {
-      const float pt = jets_AK5PF_pt->at(ijet);
-      const float eta = fabs(jets_AK5PF_eta->at(ijet));
+    for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
+      const float pt = jets_AKPF_pt->at(ijet);
+      const float eta = fabs(jets_AKPF_eta->at(ijet));
       
       int i = 0;
       totjet++;
@@ -190,7 +180,7 @@ bool EventHandler::PassesPVCut() const{
 }
 
 bool EventHandler::PassesMETCleaningCut() const{
-  for(unsigned int jet(0); jet<jets_AK5PF_pt->size(); ++jet){
+  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
     if(isProblemJet(jet)) return false;
   }
   //if(pfTypeImets_et->at(0)>2.0*pfmets_et->at(0)) return false;
@@ -210,14 +200,14 @@ bool EventHandler::PassesMETCleaningCut() const{
 }
 
 bool EventHandler::isProblemJet(const unsigned int ijet) const{
-  return jets_AK5PF_pt->at(ijet)>50.0
-    && fabs(jets_AK5PF_eta->at(ijet))>0.9
-    && fabs(jets_AK5PF_eta->at(ijet))<1.9
-                                      && jets_AK5PF_chg_Mult->at(ijet)-jets_AK5PF_neutral_Mult->at(ijet)>=40;
+  return jets_AKPF_pt->at(ijet)>50.0
+    && fabs(jets_AKPF_eta->at(ijet))>0.9
+    && fabs(jets_AKPF_eta->at(ijet))<1.9
+                                      && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
-  for(unsigned int i(0); i<jets_AK5PF_pt->size(); ++i){
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i,false,30.0,DBL_MAX) && !isGoodJet(i,true,30.0,DBL_MAX)) return false;
   }
   return true;
@@ -228,10 +218,10 @@ int EventHandler::GetPBNR() const{
 
   bool nhBad=false;
   bool phBad=false;
-  for (unsigned int it = 0; it<jets_AK5PF_pt->size(); it++) {
+  for (unsigned int it = 0; it<jets_AKPF_pt->size(); it++) {
     //cfA version from Keith                                                                                                                                                     
-    double NHF = jets_AK5PF_neutralHadE->at(it)/(jets_AK5PF_energy->at(it)*jets_AK5PF_corrFactorRaw->at(it));
-    double PEF = jets_AK5PF_photonEnergy->at(it)/(jets_AK5PF_energy->at(it)*jets_AK5PF_corrFactorRaw->at(it));
+    double NHF = jets_AKPF_neutralHadE->at(it)/(jets_AKPF_energy->at(it)*jets_AKPF_corrFactorRaw->at(it));
+    double PEF = jets_AKPF_photonEnergy->at(it)/(jets_AKPF_energy->at(it)*jets_AKPF_corrFactorRaw->at(it));
     if (NHF > 0.9)  nhBad = true;
     if (PEF > 0.95) phBad = true;
   }
@@ -243,29 +233,28 @@ int EventHandler::GetPBNR() const{
 }
 
 bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool doBeta) const{
-  if(jets_AK5PF_pt->at(ijet)<ptThresh || fabs(jets_AK5PF_eta->at(ijet))>etaThresh) return false;
+  if(jets_AKPF_pt->at(ijet)<ptThresh || fabs(jets_AKPF_eta->at(ijet))>etaThresh) return false;
   if( jetid && !jetPassLooseID(ijet) ) return false;
-  if(GetcfAVersion()<69||sampleName.find("SMS-TChiHH")!=std::string::npos) return true;
-  if(!betaUpToDate) GetBeta();
-  if(beta.at(ijet)<0.2 && doBeta) return false;
+  // if(!betaUpToDate) GetBeta();
+  //  if(beta.at(ijet)<0.2 && doBeta) return false;
   return true;
 }
 
 bool EventHandler::jetPassLooseID(const unsigned int ijet) const{
   //want the uncorrected energy
-  const double jetenergy = jets_AK5PF_energy->at(ijet) * jets_AK5PF_corrFactorRaw->at(ijet);
-  const int numConst = static_cast<int>(jets_AK5PF_mu_Mult->at(ijet)+jets_AK5PF_neutral_Mult->at(ijet)+jets_AK5PF_chg_Mult->at(ijet)); //stealing from Keith
+  const double jetenergy = jets_AKPF_energy->at(ijet) * jets_AKPF_corrFactorRaw->at(ijet);
+  const int numConst = static_cast<int>(jets_AKPF_mu_Mult->at(ijet)+jets_AKPF_neutral_Mult->at(ijet)+jets_AKPF_chg_Mult->at(ijet)); //stealing from Keith
   
   if (jetenergy>0.0) {
-    if (jets_AK5PF_neutralHadE->at(ijet) /jetenergy <= 0.99
-        && jets_AK5PF_neutralEmE->at(ijet) / jetenergy <= 0.99
+    if (jets_AKPF_neutralHadE->at(ijet) /jetenergy <= 0.99
+        && jets_AKPF_neutralEmE->at(ijet) / jetenergy <= 0.99
         && numConst >= 2
-        && ( fabs(jets_AK5PF_eta->at(ijet))>=2.4
-             || (fabs(jets_AK5PF_eta->at(ijet))<2.4 && jets_AK5PF_chgHadE->at(ijet)/jetenergy>0))
-        && ( fabs(jets_AK5PF_eta->at(ijet))>=2.4
-             || (fabs(jets_AK5PF_eta->at(ijet))<2.4 && jets_AK5PF_chgEmE->at(ijet)/jetenergy<0.99))
-        && ( fabs(jets_AK5PF_eta->at(ijet))>=2.4
-             || (fabs(jets_AK5PF_eta->at(ijet))<2.4 && jets_AK5PF_chg_Mult->at(ijet)>0))){
+        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgHadE->at(ijet)/jetenergy>0))
+        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgEmE->at(ijet)/jetenergy<0.99))
+        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chg_Mult->at(ijet)>0))){
       return true;
     }
   }

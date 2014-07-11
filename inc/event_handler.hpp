@@ -12,7 +12,7 @@
 #include "TLorentzVector.h"
 #include "pu_constants.hpp"
 #include "lumi_reweighting_stand_alone.hpp"
-#include "cfa.hpp"
+#include "cfa2014.hpp"
 #include "b_jet.hpp"
 #include "event_number.hpp"
 #include "gen_muon.hpp"
