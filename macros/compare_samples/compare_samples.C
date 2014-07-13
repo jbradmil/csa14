@@ -1,0 +1,34 @@
+#include "TH1.h"
+#include "TFile.h"
+#include "TChain.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TMath.h"
+
+void compare_samples(TString var, TString cuts, TString title, int nbinsx, float low, float high) {
+
+  TChain* chain8 = new TChain("reduced_tree");
+  chain8->Add("../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root");
+  TChain* chain13 = new TChain("reduced_tree");
+  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v1-MINIAODSIM.list.root");
+
+  TH1F* h8 = new TH1F("h8",title, nbinsx, low, high);
+  TH1F* h13 = new TH1F("h13",title, nbinsx, low, high);
+  h8->SetStats(0);
+  h8->GetYaxis()->SetLabelSize(0.04);
+  h13->SetStats(0);
+  h13->SetLineColor(2);
+
+  chain8->Project("h8", var, cuts);
+  chain13->Project("h13", var, cuts);
+
+  TCanvas* c1 = new TCanvas();
+  float max = TMath::Max(h8->GetMaximum(), h13->GetMaximum());
+  h8->SetMaximum(max*1.1);
+  h8->Draw("hist");
+  h13->Draw("hist,same");
+
+
+  TString plotTitle = var+"_compare8and13TeV.pdf";
+  c1->Print(plotTitle);
+}
