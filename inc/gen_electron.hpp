@@ -18,12 +18,14 @@ public:
   void SetMinDPt(const std::pair<int, double>);
   void SetElsMatch(const int);
   void SetLossCode(const int);
+  void SetIsVeto(bool isVetoIn);
 
   TLorentzVector GetLorentzVector() const;
   unsigned int GetMCElsIndex() const;
   int GetPDGId() const;
   int GetMotherId() const;
   bool IsIso() const;
+  bool IsVeto() const;
   std::pair<int, double> GetMinDR() const;
   std::pair<int, double> GetMinDPt() const;
   int GetElsMatch() const;
@@ -42,6 +44,7 @@ private:
   int pId;
   int momId;
   bool is_iso;
+  bool is_veto;
   std::pair<int, double> minDR;
   std::pair<int, double> minDPt;
   int els_match;

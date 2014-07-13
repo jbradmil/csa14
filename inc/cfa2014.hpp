@@ -287,6 +287,11 @@ protected:
   std::vector<float> *els_pz;
   std::vector<float> *els_status;
   std::vector<float> *els_theta;
+  std::vector<float> *els_pfIsolationR03_sumChargedHadronPt;
+  std::vector<float> *els_pfIsolationR03_sumNeutralHadronEt;
+  std::vector<float> *els_pfIsolationR03_sumPhotonEt;
+  std::vector<float> *els_pfIsolationR03_sumPUPt;
+  std::vector<float> *els_full5x5_sigmaIetaIeta;
   std::vector<float> *els_gen_id;
   std::vector<float> *els_gen_phi;
   std::vector<float> *els_gen_pt;
@@ -1615,6 +1620,11 @@ protected:
   TBranch *b_els_pz;
   TBranch *b_els_status;
   TBranch *b_els_theta;
+  TBranch *b_els_pfIsolationR03_sumChargedHadronPt;
+  TBranch *b_els_pfIsolationR03_sumNeutralHadronEt;
+  TBranch *b_els_pfIsolationR03_sumPhotonEt;
+  TBranch *b_els_pfIsolationR03_sumPUPt;
+  TBranch *b_els_full5x5_sigmaIetaIeta;
   TBranch *b_els_gen_id;
   TBranch *b_els_gen_phi;
   TBranch *b_els_gen_pt;

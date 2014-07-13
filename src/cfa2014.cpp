@@ -268,6 +268,11 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   els_pz(0),
   els_status(0),
   els_theta(0),
+  els_pfIsolationR03_sumChargedHadronPt(0),
+  els_pfIsolationR03_sumNeutralHadronEt(0),
+  els_pfIsolationR03_sumPhotonEt(0),
+  els_pfIsolationR03_sumPUPt(0),
+  els_full5x5_sigmaIetaIeta(0),
   els_gen_id(0),
   els_gen_phi(0),
   els_gen_pt(0),
@@ -1594,6 +1599,11 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_els_pz(),
   b_els_status(),
   b_els_theta(),
+  b_els_pfIsolationR03_sumChargedHadronPt(),
+  b_els_pfIsolationR03_sumNeutralHadronEt(),
+  b_els_pfIsolationR03_sumPhotonEt(),
+  b_els_pfIsolationR03_sumPUPt(),
+  b_els_full5x5_sigmaIetaIeta(),
   b_els_gen_id(),
   b_els_gen_phi(),
   b_els_gen_pt(),
@@ -2922,7 +2932,7 @@ void cfA::GetCMEnergy(){
 }
 
 void cfA::PrepareNewChains(){
-  if (cmEnergy<=8) InitializeA();
+  InitializeA();
   InitializeB();
   CalcTotalEntries();
 }
@@ -2932,37 +2942,32 @@ void cfA::AddFiles(const std::string& fileIn, const bool isList){
     std::ifstream infile(fileIn.c_str());
     std::string file("");
     while(infile >> file){
-      if (cmEnergy<=8) chainA.Add((file+"/configurableAnalysis/eventA").c_str());
+      chainA.Add((file+"/configurableAnalysis/eventA").c_str());
       chainB.Add((file+"/configurableAnalysis/eventB").c_str());
     }
     infile.close();
   }else{
-    if (cmEnergy<=8) chainA.Add((fileIn+"/configurableAnalysis/eventA").c_str());
+    chainA.Add((fileIn+"/configurableAnalysis/eventA").c_str());
     chainB.Add((fileIn+"/configurableAnalysis/eventB").c_str());
   }
 }
 
 void cfA::SetFile(const std::string& fileIn, const bool isList){
-  if (cmEnergy<=8) chainA.Reset(); 
+  chainA.Reset(); 
   chainB.Reset();
   AddFiles(fileIn, isList);
 }
 
 int cfA::GetEntry(const unsigned int entryIn){
-  if (cmEnergy<=8) return chainA.GetEntry(entryIn)+chainB.GetEntry(entryIn);
-  else return chainB.GetEntry(entryIn);
+  return chainA.GetEntry(entryIn)+chainB.GetEntry(entryIn);
 }
 
 void cfA::CalcTotalEntries(){
-  const int nEntriesB(chainB.GetEntries());
-  if (cmEnergy>8) totalEntries=nEntriesB;
-  else {
-    const int nEntriesA(chainA.GetEntries());
-    if (nEntriesA!=nEntriesB){
-      totalEntries=-1;
-    }else{
-      totalEntries=nEntriesA;
-    }
+  const int nEntriesA(chainA.GetEntries()), nEntriesB(chainB.GetEntries());
+  if (nEntriesA!=nEntriesB){
+    totalEntries=-1;
+  }else{
+    totalEntries=nEntriesA;
   }
 }
 
@@ -3100,117 +3105,119 @@ void cfA::InitializeA(){
   chainA.SetBranchAddress("trigger_prescalevalue", &trigger_prescalevalue, &b_trigger_prescalevalue);
   chainA.SetBranchAddress("trigger_name", &trigger_name, &b_trigger_name);
   chainA.SetBranchAddress("trigger_decision", &trigger_decision, &b_trigger_decision);
-  chainA.SetBranchAddress("trigger_lastfiltername", &trigger_lastfiltername, &b_trigger_lastfiltername);
-  chainA.SetBranchAddress("triggerobject_pt", &triggerobject_pt, &b_triggerobject_pt);
-  chainA.SetBranchAddress("triggerobject_px", &triggerobject_px, &b_triggerobject_px);
-  chainA.SetBranchAddress("triggerobject_py", &triggerobject_py, &b_triggerobject_py);
-  chainA.SetBranchAddress("triggerobject_pz", &triggerobject_pz, &b_triggerobject_pz);
-  chainA.SetBranchAddress("triggerobject_et", &triggerobject_et, &b_triggerobject_et);
-  chainA.SetBranchAddress("triggerobject_energy", &triggerobject_energy, &b_triggerobject_energy);
-  chainA.SetBranchAddress("triggerobject_phi", &triggerobject_phi, &b_triggerobject_phi);
-  chainA.SetBranchAddress("triggerobject_eta", &triggerobject_eta, &b_triggerobject_eta);
-  chainA.SetBranchAddress("triggerobject_collectionname", &triggerobject_collectionname, &b_triggerobject_collectionname);
-  chainA.SetBranchAddress("standalone_triggerobject_pt", &standalone_triggerobject_pt, &b_standalone_triggerobject_pt);
-  chainA.SetBranchAddress("standalone_triggerobject_px", &standalone_triggerobject_px, &b_standalone_triggerobject_px);
-  chainA.SetBranchAddress("standalone_triggerobject_py", &standalone_triggerobject_py, &b_standalone_triggerobject_py);
-  chainA.SetBranchAddress("standalone_triggerobject_pz", &standalone_triggerobject_pz, &b_standalone_triggerobject_pz);
-  chainA.SetBranchAddress("standalone_triggerobject_et", &standalone_triggerobject_et, &b_standalone_triggerobject_et);
-  chainA.SetBranchAddress("standalone_triggerobject_energy", &standalone_triggerobject_energy, &b_standalone_triggerobject_energy);
-  chainA.SetBranchAddress("standalone_triggerobject_phi", &standalone_triggerobject_phi, &b_standalone_triggerobject_phi);
-  chainA.SetBranchAddress("standalone_triggerobject_eta", &standalone_triggerobject_eta, &b_standalone_triggerobject_eta);
-  chainA.SetBranchAddress("standalone_triggerobject_collectionname", &standalone_triggerobject_collectionname, &b_standalone_triggerobject_collectionname);
-  chainA.SetBranchAddress("L1trigger_bit", &L1trigger_bit, &b_L1trigger_bit);
-  chainA.SetBranchAddress("L1trigger_techTrigger", &L1trigger_techTrigger, &b_L1trigger_techTrigger);
-  chainA.SetBranchAddress("L1trigger_prescalevalue", &L1trigger_prescalevalue, &b_L1trigger_prescalevalue);
-  chainA.SetBranchAddress("L1trigger_name", &L1trigger_name, &b_L1trigger_name);
-  chainA.SetBranchAddress("L1trigger_alias", &L1trigger_alias, &b_L1trigger_alias);
-  chainA.SetBranchAddress("L1trigger_decision", &L1trigger_decision, &b_L1trigger_decision);
-  chainA.SetBranchAddress("L1trigger_decision_nomask", &L1trigger_decision_nomask, &b_L1trigger_decision_nomask);
-  chainA.SetBranchAddress("els_conversion_dist", &els_conversion_dist, &b_els_conversion_dist);
-  chainA.SetBranchAddress("els_conversion_dcot", &els_conversion_dcot, &b_els_conversion_dcot);
-  chainA.SetBranchAddress("els_PFchargedHadronIsoR03", &els_PFchargedHadronIsoR03, &b_els_PFchargedHadronIsoR03);
-  chainA.SetBranchAddress("els_PFphotonIsoR03", &els_PFphotonIsoR03, &b_els_PFphotonIsoR03);
-  chainA.SetBranchAddress("els_PFneutralHadronIsoR03", &els_PFneutralHadronIsoR03, &b_els_PFneutralHadronIsoR03);
-  chainA.SetBranchAddress("els_hasMatchedConversion", &els_hasMatchedConversion, &b_els_hasMatchedConversion);
-  chainA.SetBranchAddress("pf_els_PFchargedHadronIsoR03", &pf_els_PFchargedHadronIsoR03, &b_pf_els_PFchargedHadronIsoR03);
-  chainA.SetBranchAddress("pf_els_PFphotonIsoR03", &pf_els_PFphotonIsoR03, &b_pf_els_PFphotonIsoR03);
-  chainA.SetBranchAddress("pf_els_PFneutralHadronIsoR03", &pf_els_PFneutralHadronIsoR03, &b_pf_els_PFneutralHadronIsoR03);
-  chainA.SetBranchAddress("pf_els_hasMatchedConversion", &pf_els_hasMatchedConversion, &b_pf_els_hasMatchedConversion);
-  chainA.SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_trk_nTOBTEC);
-  chainA.SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
-  chainA.SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
-  chainA.SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
-  chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
-  chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
-  chainA.SetBranchAddress("ecalTPfilter_decision", &ecalTPfilter_decision, &b_ecalTPfilter_decision);
-  chainA.SetBranchAddress("ecalBEfilter_decision", &ecalBEfilter_decision, &b_ecalBEfilter_decision);
-  chainA.SetBranchAddress("scrapingVeto_decision", &scrapingVeto_decision, &b_scrapingVeto_decision);
-  chainA.SetBranchAddress("greedymuonfilter_decision", &greedymuonfilter_decision, &b_greedymuonfilter_decision);
-  chainA.SetBranchAddress("inconsistentPFmuonfilter_decision", &inconsistentPFmuonfilter_decision, &b_inconsistentPFmuonfilter_decision);
-  chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
-  chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
-  chainA.SetBranchAddress("eenoisefilter_decision", &eenoisefilter_decision, &b_eenoisefilter_decision);
-  chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
-  chainA.SetBranchAddress("trackercoherentnoisefilter1_decision", &trackercoherentnoisefilter1_decision, &b_trackercoherentnoisefilter1_decision);
-  chainA.SetBranchAddress("trackercoherentnoisefilter2_decision", &trackercoherentnoisefilter2_decision, &b_trackercoherentnoisefilter2_decision);
-  chainA.SetBranchAddress("trackertoomanyclustersfilter_decision", &trackertoomanyclustersfilter_decision, &b_trackertoomanyclustersfilter_decision);
-  chainA.SetBranchAddress("trackertoomanytripletsfilter_decision", &trackertoomanytripletsfilter_decision, &b_trackertoomanytripletsfilter_decision);
-  chainA.SetBranchAddress("trackertoomanyseedsfilter_decision", &trackertoomanyseedsfilter_decision, &b_trackertoomanyseedsfilter_decision);
-  chainA.SetBranchAddress("passprescalePFHT350filter_decision", &passprescalePFHT350filter_decision, &b_passprescalePFHT350filter_decision);
-  chainA.SetBranchAddress("passprescaleHT250filter_decision", &passprescaleHT250filter_decision, &b_passprescaleHT250filter_decision);
-  chainA.SetBranchAddress("passprescaleHT300filter_decision", &passprescaleHT300filter_decision, &b_passprescaleHT300filter_decision);
-  chainA.SetBranchAddress("passprescaleHT350filter_decision", &passprescaleHT350filter_decision, &b_passprescaleHT350filter_decision);
-  chainA.SetBranchAddress("passprescaleHT400filter_decision", &passprescaleHT400filter_decision, &b_passprescaleHT400filter_decision);
-  chainA.SetBranchAddress("passprescaleHT450filter_decision", &passprescaleHT450filter_decision, &b_passprescaleHT450filter_decision);
-  chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
-  chainA.SetBranchAddress("MPT", &MPT, &b_MPT);
-  chainA.SetBranchAddress("genHT", &genHT, &b_genHT);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3", &jets_AK5PFclean_corrL2L3, &b_jets_AK5PFclean_corrL2L3);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3Residual", &jets_AK5PFclean_corrL2L3Residual, &b_jets_AK5PFclean_corrL2L3Residual);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL1FastL2L3", &jets_AK5PFclean_corrL1FastL2L3, &b_jets_AK5PFclean_corrL1FastL2L3);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL1L2L3", &jets_AK5PFclean_corrL1L2L3, &b_jets_AK5PFclean_corrL1L2L3);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL1FastL2L3Residual", &jets_AK5PFclean_corrL1FastL2L3Residual, &b_jets_AK5PFclean_corrL1FastL2L3Residual);
-  chainA.SetBranchAddress("jets_AK5PFclean_corrL1L2L3Residual", &jets_AK5PFclean_corrL1L2L3Residual, &b_jets_AK5PFclean_corrL1L2L3Residual);
-  chainA.SetBranchAddress("jets_AK5PFclean_Uncert", &jets_AK5PFclean_Uncert, &b_jets_AK5PFclean_Uncert);
-  chainA.SetBranchAddress("PU_zpositions", &PU_zpositions, &b_PU_zpositions);
-  chainA.SetBranchAddress("PU_sumpT_lowpT", &PU_sumpT_lowpT, &b_PU_sumpT_lowpT);
-  chainA.SetBranchAddress("PU_sumpT_highpT", &PU_sumpT_highpT, &b_PU_sumpT_highpT);
-  chainA.SetBranchAddress("PU_ntrks_lowpT", &PU_ntrks_lowpT, &b_PU_ntrks_lowpT);
-  chainA.SetBranchAddress("PU_ntrks_highpT", &PU_ntrks_highpT, &b_PU_ntrks_highpT);
-  chainA.SetBranchAddress("PU_NumInteractions", &PU_NumInteractions, &b_PU_NumInteractions);
-  chainA.SetBranchAddress("PU_bunchCrossing", &PU_bunchCrossing, &b_PU_bunchCrossing);
-  chainA.SetBranchAddress("PU_TrueNumInteractions", &PU_TrueNumInteractions, &b_PU_TrueNumInteractions);
-  chainA.SetBranchAddress("rho_kt6PFJetsForIsolation2011", &rho_kt6PFJetsForIsolation2011, &b_rho_kt6PFJetsForIsolation2011);
-  chainA.SetBranchAddress("rho_kt6PFJetsForIsolation2012", &rho_kt6PFJetsForIsolation2012, &b_rho_kt6PFJetsForIsolation2012);
-  chainA.SetBranchAddress("pfmets_fullSignif", &pfmets_fullSignif, &b_pfmets_fullSignif);
-  chainA.SetBranchAddress("pfmets_fullSignifCov00", &pfmets_fullSignifCov00, &b_pfmets_fullSignifCov00);
-  chainA.SetBranchAddress("pfmets_fullSignifCov10", &pfmets_fullSignifCov10, &b_pfmets_fullSignifCov10);
-  chainA.SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
-  chainA.SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
-  chainA.SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
-  chainA.SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
-  chainA.SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
-  chainA.SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
-  chainA.SetBranchAddress("photon_chIsoValues", &photon_chIsoValues, &b_photon_chIsoValues);
-  chainA.SetBranchAddress("photon_phIsoValues", &photon_phIsoValues, &b_photon_phIsoValues);
-  chainA.SetBranchAddress("photon_nhIsoValues", &photon_nhIsoValues, &b_photon_nhIsoValues);
-  chainA.SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
-  chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
-  chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
-  chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
-  chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
-  chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
-  chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
-  chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
-  chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
-  chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
-  chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
-  chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
-  chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
-  chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
-  chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
-  chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
-  chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  if (cmEnergy<=8) {
+    chainA.SetBranchAddress("trigger_lastfiltername", &trigger_lastfiltername, &b_trigger_lastfiltername);
+    chainA.SetBranchAddress("triggerobject_pt", &triggerobject_pt, &b_triggerobject_pt);
+    chainA.SetBranchAddress("triggerobject_px", &triggerobject_px, &b_triggerobject_px);
+    chainA.SetBranchAddress("triggerobject_py", &triggerobject_py, &b_triggerobject_py);
+    chainA.SetBranchAddress("triggerobject_pz", &triggerobject_pz, &b_triggerobject_pz);
+    chainA.SetBranchAddress("triggerobject_et", &triggerobject_et, &b_triggerobject_et);
+    chainA.SetBranchAddress("triggerobject_energy", &triggerobject_energy, &b_triggerobject_energy);
+    chainA.SetBranchAddress("triggerobject_phi", &triggerobject_phi, &b_triggerobject_phi);
+    chainA.SetBranchAddress("triggerobject_eta", &triggerobject_eta, &b_triggerobject_eta);
+    chainA.SetBranchAddress("triggerobject_collectionname", &triggerobject_collectionname, &b_triggerobject_collectionname);
+    chainA.SetBranchAddress("standalone_triggerobject_pt", &standalone_triggerobject_pt, &b_standalone_triggerobject_pt);
+    chainA.SetBranchAddress("standalone_triggerobject_px", &standalone_triggerobject_px, &b_standalone_triggerobject_px);
+    chainA.SetBranchAddress("standalone_triggerobject_py", &standalone_triggerobject_py, &b_standalone_triggerobject_py);
+    chainA.SetBranchAddress("standalone_triggerobject_pz", &standalone_triggerobject_pz, &b_standalone_triggerobject_pz);
+    chainA.SetBranchAddress("standalone_triggerobject_et", &standalone_triggerobject_et, &b_standalone_triggerobject_et);
+    chainA.SetBranchAddress("standalone_triggerobject_energy", &standalone_triggerobject_energy, &b_standalone_triggerobject_energy);
+    chainA.SetBranchAddress("standalone_triggerobject_phi", &standalone_triggerobject_phi, &b_standalone_triggerobject_phi);
+    chainA.SetBranchAddress("standalone_triggerobject_eta", &standalone_triggerobject_eta, &b_standalone_triggerobject_eta);
+    chainA.SetBranchAddress("standalone_triggerobject_collectionname", &standalone_triggerobject_collectionname, &b_standalone_triggerobject_collectionname);
+    chainA.SetBranchAddress("L1trigger_bit", &L1trigger_bit, &b_L1trigger_bit);
+    chainA.SetBranchAddress("L1trigger_techTrigger", &L1trigger_techTrigger, &b_L1trigger_techTrigger);
+    chainA.SetBranchAddress("L1trigger_prescalevalue", &L1trigger_prescalevalue, &b_L1trigger_prescalevalue);
+    chainA.SetBranchAddress("L1trigger_name", &L1trigger_name, &b_L1trigger_name);
+    chainA.SetBranchAddress("L1trigger_alias", &L1trigger_alias, &b_L1trigger_alias);
+    chainA.SetBranchAddress("L1trigger_decision", &L1trigger_decision, &b_L1trigger_decision);
+    chainA.SetBranchAddress("L1trigger_decision_nomask", &L1trigger_decision_nomask, &b_L1trigger_decision_nomask);
+    chainA.SetBranchAddress("els_conversion_dist", &els_conversion_dist, &b_els_conversion_dist);
+    chainA.SetBranchAddress("els_conversion_dcot", &els_conversion_dcot, &b_els_conversion_dcot);
+    chainA.SetBranchAddress("els_PFchargedHadronIsoR03", &els_PFchargedHadronIsoR03, &b_els_PFchargedHadronIsoR03);
+    chainA.SetBranchAddress("els_PFphotonIsoR03", &els_PFphotonIsoR03, &b_els_PFphotonIsoR03);
+    chainA.SetBranchAddress("els_PFneutralHadronIsoR03", &els_PFneutralHadronIsoR03, &b_els_PFneutralHadronIsoR03);
+    chainA.SetBranchAddress("els_hasMatchedConversion", &els_hasMatchedConversion, &b_els_hasMatchedConversion);
+    chainA.SetBranchAddress("pf_els_PFchargedHadronIsoR03", &pf_els_PFchargedHadronIsoR03, &b_pf_els_PFchargedHadronIsoR03);
+    chainA.SetBranchAddress("pf_els_PFphotonIsoR03", &pf_els_PFphotonIsoR03, &b_pf_els_PFphotonIsoR03);
+    chainA.SetBranchAddress("pf_els_PFneutralHadronIsoR03", &pf_els_PFneutralHadronIsoR03, &b_pf_els_PFneutralHadronIsoR03);
+    chainA.SetBranchAddress("pf_els_hasMatchedConversion", &pf_els_hasMatchedConversion, &b_pf_els_hasMatchedConversion);
+    chainA.SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_trk_nTOBTEC);
+    chainA.SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
+    chainA.SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
+    chainA.SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
+    chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
+    chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
+    chainA.SetBranchAddress("ecalTPfilter_decision", &ecalTPfilter_decision, &b_ecalTPfilter_decision);
+    chainA.SetBranchAddress("ecalBEfilter_decision", &ecalBEfilter_decision, &b_ecalBEfilter_decision);
+    chainA.SetBranchAddress("scrapingVeto_decision", &scrapingVeto_decision, &b_scrapingVeto_decision);
+    chainA.SetBranchAddress("greedymuonfilter_decision", &greedymuonfilter_decision, &b_greedymuonfilter_decision);
+    chainA.SetBranchAddress("inconsistentPFmuonfilter_decision", &inconsistentPFmuonfilter_decision, &b_inconsistentPFmuonfilter_decision);
+    chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+    chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
+    chainA.SetBranchAddress("eenoisefilter_decision", &eenoisefilter_decision, &b_eenoisefilter_decision);
+    chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
+    chainA.SetBranchAddress("trackercoherentnoisefilter1_decision", &trackercoherentnoisefilter1_decision, &b_trackercoherentnoisefilter1_decision);
+    chainA.SetBranchAddress("trackercoherentnoisefilter2_decision", &trackercoherentnoisefilter2_decision, &b_trackercoherentnoisefilter2_decision);
+    chainA.SetBranchAddress("trackertoomanyclustersfilter_decision", &trackertoomanyclustersfilter_decision, &b_trackertoomanyclustersfilter_decision);
+    chainA.SetBranchAddress("trackertoomanytripletsfilter_decision", &trackertoomanytripletsfilter_decision, &b_trackertoomanytripletsfilter_decision);
+    chainA.SetBranchAddress("trackertoomanyseedsfilter_decision", &trackertoomanyseedsfilter_decision, &b_trackertoomanyseedsfilter_decision);
+    chainA.SetBranchAddress("passprescalePFHT350filter_decision", &passprescalePFHT350filter_decision, &b_passprescalePFHT350filter_decision);
+    chainA.SetBranchAddress("passprescaleHT250filter_decision", &passprescaleHT250filter_decision, &b_passprescaleHT250filter_decision);
+    chainA.SetBranchAddress("passprescaleHT300filter_decision", &passprescaleHT300filter_decision, &b_passprescaleHT300filter_decision);
+    chainA.SetBranchAddress("passprescaleHT350filter_decision", &passprescaleHT350filter_decision, &b_passprescaleHT350filter_decision);
+    chainA.SetBranchAddress("passprescaleHT400filter_decision", &passprescaleHT400filter_decision, &b_passprescaleHT400filter_decision);
+    chainA.SetBranchAddress("passprescaleHT450filter_decision", &passprescaleHT450filter_decision, &b_passprescaleHT450filter_decision);
+    chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
+    chainA.SetBranchAddress("MPT", &MPT, &b_MPT);
+    chainA.SetBranchAddress("genHT", &genHT, &b_genHT);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3", &jets_AK5PFclean_corrL2L3, &b_jets_AK5PFclean_corrL2L3);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3Residual", &jets_AK5PFclean_corrL2L3Residual, &b_jets_AK5PFclean_corrL2L3Residual);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL1FastL2L3", &jets_AK5PFclean_corrL1FastL2L3, &b_jets_AK5PFclean_corrL1FastL2L3);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL1L2L3", &jets_AK5PFclean_corrL1L2L3, &b_jets_AK5PFclean_corrL1L2L3);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL1FastL2L3Residual", &jets_AK5PFclean_corrL1FastL2L3Residual, &b_jets_AK5PFclean_corrL1FastL2L3Residual);
+    chainA.SetBranchAddress("jets_AK5PFclean_corrL1L2L3Residual", &jets_AK5PFclean_corrL1L2L3Residual, &b_jets_AK5PFclean_corrL1L2L3Residual);
+    chainA.SetBranchAddress("jets_AK5PFclean_Uncert", &jets_AK5PFclean_Uncert, &b_jets_AK5PFclean_Uncert);
+    chainA.SetBranchAddress("PU_zpositions", &PU_zpositions, &b_PU_zpositions);
+    chainA.SetBranchAddress("PU_sumpT_lowpT", &PU_sumpT_lowpT, &b_PU_sumpT_lowpT);
+    chainA.SetBranchAddress("PU_sumpT_highpT", &PU_sumpT_highpT, &b_PU_sumpT_highpT);
+    chainA.SetBranchAddress("PU_ntrks_lowpT", &PU_ntrks_lowpT, &b_PU_ntrks_lowpT);
+    chainA.SetBranchAddress("PU_ntrks_highpT", &PU_ntrks_highpT, &b_PU_ntrks_highpT);
+    chainA.SetBranchAddress("PU_NumInteractions", &PU_NumInteractions, &b_PU_NumInteractions);
+    chainA.SetBranchAddress("PU_bunchCrossing", &PU_bunchCrossing, &b_PU_bunchCrossing);
+    chainA.SetBranchAddress("PU_TrueNumInteractions", &PU_TrueNumInteractions, &b_PU_TrueNumInteractions);
+    chainA.SetBranchAddress("rho_kt6PFJetsForIsolation2011", &rho_kt6PFJetsForIsolation2011, &b_rho_kt6PFJetsForIsolation2011);
+    chainA.SetBranchAddress("rho_kt6PFJetsForIsolation2012", &rho_kt6PFJetsForIsolation2012, &b_rho_kt6PFJetsForIsolation2012);
+    chainA.SetBranchAddress("pfmets_fullSignif", &pfmets_fullSignif, &b_pfmets_fullSignif);
+    chainA.SetBranchAddress("pfmets_fullSignifCov00", &pfmets_fullSignifCov00, &b_pfmets_fullSignifCov00);
+    chainA.SetBranchAddress("pfmets_fullSignifCov10", &pfmets_fullSignifCov10, &b_pfmets_fullSignifCov10);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
+    chainA.SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
+    chainA.SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
+    chainA.SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
+    chainA.SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
+    chainA.SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
+    chainA.SetBranchAddress("photon_chIsoValues", &photon_chIsoValues, &b_photon_chIsoValues);
+    chainA.SetBranchAddress("photon_phIsoValues", &photon_phIsoValues, &b_photon_phIsoValues);
+    chainA.SetBranchAddress("photon_nhIsoValues", &photon_nhIsoValues, &b_photon_nhIsoValues);
+    chainA.SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
+    chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
+    chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
+    chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
+    chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
+    chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
+    chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
+    chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
+    chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
+    chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
+    chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  }
 }
 
 void cfA::InitializeB(){
@@ -3242,6 +3249,11 @@ void cfA::InitializeB(){
   els_pz=0;
   els_status=0;
   els_theta=0;
+  els_pfIsolationR03_sumChargedHadronPt=0;
+  els_pfIsolationR03_sumNeutralHadronEt=0;
+  els_pfIsolationR03_sumPhotonEt=0;
+  els_pfIsolationR03_sumPUPt=0;
+  els_full5x5_sigmaIetaIeta=0;
   els_gen_id=0;
   els_gen_phi=0;
   els_gen_pt=0;
@@ -4568,6 +4580,13 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("els_pz", &els_pz, &b_els_pz);
   chainB.SetBranchAddress("els_status", &els_status, &b_els_status);
   chainB.SetBranchAddress("els_theta", &els_theta, &b_els_theta);
+  if (cmEnergy>8) {
+    chainB.SetBranchAddress("els_pfIsolationR03_sumChargedHadronPt", &els_pfIsolationR03_sumChargedHadronPt, &b_els_pfIsolationR03_sumChargedHadronPt);
+    chainB.SetBranchAddress("els_pfIsolationR03_sumNeutralHadronEt", &els_pfIsolationR03_sumNeutralHadronEt, &b_els_pfIsolationR03_sumNeutralHadronEt);
+    chainB.SetBranchAddress("els_pfIsolationR03_sumPhotonEt", &els_pfIsolationR03_sumPhotonEt, &b_els_pfIsolationR03_sumPhotonEt);
+    chainB.SetBranchAddress("els_pfIsolationR03_sumPUPt", &els_pfIsolationR03_sumPUPt, &b_els_pfIsolationR03_sumPUPt);
+    chainB.SetBranchAddress("els_full5x5_sigmaIetaIeta", &els_full5x5_sigmaIetaIeta, &b_els_full5x5_sigmaIetaIeta);
+  }
   chainB.SetBranchAddress("els_gen_id", &els_gen_id, &b_els_gen_id);
   chainB.SetBranchAddress("els_gen_phi", &els_gen_phi, &b_els_gen_phi);
   chainB.SetBranchAddress("els_gen_pt", &els_gen_pt, &b_els_gen_pt);
@@ -5758,7 +5777,7 @@ void cfA::InitializeB(){
     }
     chainB.SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
     chainB.SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
-    chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
+    if (cmEnergy<=8) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
     chainB.SetBranchAddress("pfcand_pt", &pfcand_pt, &b_pfcand_pt);
     chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
     chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);

@@ -41,6 +41,10 @@ void GenElectron::SetLossCode(const int lossCodeIn){
   loss_code=lossCodeIn;
 }
 
+void GenElectron::SetIsVeto(bool isVetoIn){
+  is_veto=isVetoIn;
+}
+
 TLorentzVector GenElectron::GetLorentzVector() const{
   return vec;
 }
@@ -55,6 +59,10 @@ int GenElectron::GetMotherId() const{
 
 bool GenElectron::IsIso() const{
   return is_iso;
+}
+
+bool GenElectron::IsVeto() const{
+  return is_veto;
 }
 
 std::pair <int,double> GenElectron::GetMinDR() const{

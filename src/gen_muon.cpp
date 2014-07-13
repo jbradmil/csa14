@@ -37,6 +37,10 @@ void GenMuon::SetLossCode(const int lossCodeIn){
   loss_code=lossCodeIn;
 }
 
+void GenMuon::SetIsVeto(bool isVetoIn){
+  is_veto=isVetoIn;
+}
+
 TLorentzVector GenMuon::GetLorentzVector() const{
   return vec;
 }
@@ -55,6 +59,10 @@ int GenMuon::GetMotherId() const{
 
 bool GenMuon::IsIso() const{
   return is_iso;
+}
+
+bool GenMuon::IsVeto() const{
+  return is_veto;
 }
 
 std::pair <int,double> GenMuon::GetMinDR() const{

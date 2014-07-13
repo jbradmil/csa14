@@ -6,15 +6,18 @@
 
 int main(int argc, char *argv[]){
   std::string inFilename("");
-  bool iscfA(false);
+  bool iscfA(false), isList(false);
   int c(0);
-  while((c=getopt(argc, argv, "i:c"))!=-1){
+  while((c=getopt(argc, argv, "i:cl"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
       break;
     case 'c':
       iscfA=true;
+      break;
+    case 'l':
+      isList=true;
       break;
     default:
       break;
@@ -44,6 +47,6 @@ int main(int argc, char *argv[]){
   }
 
   WeightCalculator w(19399);
-  ReducedTreeMaker rtm(inFilename, false, w.GetWeight(inFilename));
+  ReducedTreeMaker rtm(inFilename, isList, w.GetWeight(inFilename));
   rtm.MakeReducedTree(outFilename);
 }

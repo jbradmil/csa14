@@ -203,7 +203,7 @@ bool EventHandler::isProblemJet(const unsigned int ijet) const{
   return jets_AKPF_pt->at(ijet)>50.0
     && fabs(jets_AKPF_eta->at(ijet))>0.9
     && fabs(jets_AKPF_eta->at(ijet))<1.9
-                                      && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
+				     && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
@@ -277,11 +277,11 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
 				  const bool use_iso) const{
   //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
   const double dmax(std::numeric_limits<double>::max());
-  double pt_cut(10.0); //Not actually part of the EGamma ID
+  double pt_cut(5.0); //Not actually part of the EGamma ID
   double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
   switch(level){
   case 1:
-    pt_cut=20.0;
+    pt_cut=5.0;
     if(pf_els_isEB->at(k)){
       eta_cut=0.007; phi_cut=0.15; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.2; iso_cut=0.15;
@@ -291,7 +291,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
     }
     break;
   case 2:
-    pt_cut=20.0;
+    pt_cut=5.0;
     if(pf_els_isEB->at(k)){
       eta_cut=0.004; phi_cut=0.06; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.1; iso_cut=0.15;
@@ -301,7 +301,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
     }
     break;
   case 3:
-    pt_cut=20.0;
+    pt_cut=5.0;
     if(pf_els_isEB->at(k)){
       eta_cut=0.004; phi_cut=0.03; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.1; iso_cut=0.10;
@@ -322,9 +322,11 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
     }
     break;
   }
-  //if(k>pf_else_pt->size()) return false;
-  if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false;
-  if (pf_els_pt->at(k) < pt_cut) return false;
+  // if(k>pf_else_pt->size()) return false;
+  if (level>0) {
+    if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false;
+    if (pf_els_pt->at(k) < pt_cut) return false;
+  }
 
   if ( fabs(pf_els_dEtaIn->at(k)) > eta_cut)  return false;
   if ( fabs(pf_els_dPhiIn->at(k)) > phi_cut)  return false;
@@ -340,7 +342,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
   return true;
 }
 
-double EventHandler::GetElectronRelIso(const unsigned int k) const{
+double EventHandler::GetRA2bElectronRelIso(const unsigned int k) const{
   const double rho(rho_kt6PFJetsForIsolation2012);
   // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
   double AE(0.10); 
@@ -360,11 +362,14 @@ double EventHandler::GetElectronRelIso(const unsigned int k) const{
 bool EventHandler::isRA2bMuon(const unsigned int k,
 			      const unsigned short level,
 			      const bool use_iso) const{
-  double pt_thresh(10.0);
+  double pt_thresh(5.0);
   if(level>=1) pt_thresh=20.0;
+  double eta_thresh(3.0);
+  if(level>=1) eta_thresh=2.4;
 
-  if (fabs(pf_mus_eta->at(k)) >= 2.4 ) return false;
-  if (pf_mus_pt->at(k) < pt_thresh) return false;
+
+  if (fabs(pf_mus_eta->at(k)) >= eta_thresh ) return false;
+  if (pf_mus_pt->at(k) < pt_thresh) return false; // keep this--not already applied to slimmedMuons collection
   if ( !pf_mus_id_GlobalMuonPromptTight->at(k)) return false;
   // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
   if ( pf_mus_numberOfMatchedStations->at(k) <= 1 ) return false;
@@ -375,12 +380,15 @@ bool EventHandler::isRA2bMuon(const unsigned int k,
   if (fabs(d0)>=0.2 || pf_mus_dz_vtx>=0.5) return false;
   if ( !pf_mus_tk_numvalPixelhits->at(k)) return false;
   if ( pf_mus_tk_LayersWithMeasurement->at(k) <= 5 ) return false;
-  
+
+  if (GetRA2bMuonRelIso(k) > 0.2 && use_iso) return false;
+  return true;
+}
+
+double EventHandler::GetRA2bMuonRelIso(const unsigned int k) const{
   double isoNeutral(pf_mus_pfIsolationR04_sumNeutralHadronEt->at(k) + pf_mus_pfIsolationR04_sumPhotonEt->at(k) - 0.5*pf_mus_pfIsolationR04_sumPUPt->at(k));
   if(isoNeutral<0.0) isoNeutral=0.0;
-  const double pf_mus_rel_iso((pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k));
-  if (pf_mus_rel_iso > 0.2 && use_iso) return false;
-  return true;
+  return (pf_mus_pfIsolationR04_sumChargedHadronPt->at(k) + isoNeutral) / pf_mus_pt->at(k);
 }
 
 bool EventHandler::isRA2bTau(const unsigned int k,
@@ -649,7 +657,10 @@ void EventHandler::SetupGenMuons() const {
   vector<uint> mus_matched;
   for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
     int gen_index(genMuonCache[genLep].GetMCMusIndex());
+    int reco_index(genMuonCache[genLep].GetMusMatch());
     genMuonCache[genLep].SetIsIso(isIsoGenMuon(gen_index));
+    genMuonCache[genLep].SetIsVeto(0);
+    if (reco_index>=0) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
     double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
@@ -687,7 +698,7 @@ void EventHandler::GetGenMuons() const{
   if (!genMuonsUpToDate) {
     genMuonCache.clear();
     for (unsigned int gen(0); gen<mc_mus_id->size(); gen++) {
-      if(isGenMuon(gen)) {
+      if(isGenMuon(gen)&&isIsoGenMuon(gen)) {
 	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,mc_mus_id->at(gen),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
       }
     }
@@ -699,7 +710,15 @@ void EventHandler::GetGenMuons() const{
 int EventHandler::GetNumIgnoredGenMuons() const{
   int ignored(0);
   for (uint gen(0); gen<mc_mus_id->size(); gen++) {
-    if(!isGenMuon(gen)) ignored++;
+    if(!isGenMuon(gen)||!isIsoGenMuon(gen)) ignored++;
+  }
+  return ignored;
+}
+
+int EventHandler::GetNumIgnoredGenElectrons() const{
+  int ignored(0);
+  for (uint gen(0); gen<mc_electrons_id->size(); gen++) {
+    if(!isGenElectron(gen)||!isIsoGenElectron(gen)) ignored++;
   }
   return ignored;
 }
@@ -793,7 +812,10 @@ void EventHandler::SetupGenElectrons() const {
   vector<uint> els_matched;
   for(unsigned int genLep(0); genLep<genElectronCache.size(); ++genLep){
     int gen_index(genElectronCache[genLep].GetMCElsIndex());
-    genElectronCache[genLep].SetIsIso(isIsoGenElectron(gen_index));  
+    int reco_index(genElectronCache[genLep].GetElsMatch());
+    genElectronCache[genLep].SetIsIso(isIsoGenElectron(gen_index));
+    genElectronCache[genLep].SetIsVeto(0);
+    if (reco_index>=0) genElectronCache[genLep].SetIsVeto(isRecoElectron(reco_index, 0));
     double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genElectronCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
@@ -831,7 +853,7 @@ void EventHandler::GetGenElectrons() const{
   if (!genElectronsUpToDate) {
     genElectronCache.clear();
     for (unsigned int gen(0); gen<mc_electrons_id->size(); gen++) {
-      if(isGenElectron(gen)) {
+      if(isGenElectron(gen)&&isIsoGenElectron(gen)) {
 	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,mc_electrons_id->at(gen),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
       }
     }
@@ -967,79 +989,22 @@ int EventHandler::GetNGenParticles(const int pdgId, const float pt, const bool c
   return count;
 }
 
-vector<int> EventHandler::GetRA4Muons(bool veto, float MuonPTThreshold, float MuonETAThreshold) {
-  vector<int> muons;
-  for(uint index=0; index<mus_pt->size(); index++)
-    if(veto){
-      if(passedRA4MuonVeto(index, MuonPTThreshold, MuonETAThreshold)) muons.push_back(index);
-    }	else {
-      if(passedRA4MuonSelection(index, MuonPTThreshold, MuonETAThreshold)) muons.push_back(index);
-    }
-  return muons;
-}
-
-bool EventHandler::passedRA4MuonVeto(uint imu, float MuonPTThreshold, float MuonETAThreshold){
-  if(imu >= mus_pt->size()) return false;
-
-  float relIso = GetRA4MuonIsolation(imu);
-  
-  return ((mus_isGlobalMuon->at(imu) >0 || mus_isTrackerMuon->at(imu) >0)
-	  && mus_isPFMuon->at(imu) > 0
-	  && fabs(getDZ(mus_tk_vx->at(imu), mus_tk_vy->at(imu), mus_tk_vz->at(imu), mus_tk_px->at(imu), 
-			mus_tk_py->at(imu), mus_tk_pz->at(imu), 0)) < 0.5 
-	  && mus_pt->at(imu) >= MuonPTThreshold
-	  && fabs(mus_eta->at(imu)) <= MuonETAThreshold
-	  && relIso < 0.2);
-}
-
-double EventHandler::getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex){
-  return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
-}
-
-bool EventHandler::passedRA4MuonSelection(uint imu, float MuonPTThreshold, float MuonETAThreshold){
-  if(imu >= mus_pt->size()) return false;
-
-  float relIso = GetRA4MuonIsolation(imu);  
-  return (passedBaseMuonSelection(imu, MuonPTThreshold, MuonETAThreshold) && relIso < 0.12); 
-}
-
-bool EventHandler::passedBaseMuonSelection(uint imu, float MuonPTThreshold, float MuonETAThreshold){
-  if(imu >= mus_pt->size()) return false;
-
-  float d0PV = mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
-  int pfIdx=-1;
-  
-  return (mus_isGlobalMuon->at(imu) > 0
-	  && mus_isPFMuon->at(imu) > 0
-	  && mus_id_GlobalMuonPromptTight->at(imu)> 0 
-	  && mus_tk_LayersWithMeasurement->at(imu) > 5
-	  && mus_tk_numvalPixelhits->at(imu) > 0
-	  && mus_numberOfMatchedStations->at(imu) > 1
-	  //&& fabs(mus_dB->at(imu)) < 0.02
-	  && fabs(d0PV) < 0.02
-	  && fabs(getDZ(mus_tk_vx->at(imu), mus_tk_vy->at(imu), mus_tk_vz->at(imu), mus_tk_px->at(imu), 
-			mus_tk_py->at(imu), mus_tk_pz->at(imu), 0)) < 0.5
-	  && mus_pt->at(imu) >= MuonPTThreshold
-	  && hasPFMatch(imu, particleId::muon, pfIdx)
-	  && fabs(mus_eta->at(imu)) <= MuonETAThreshold);
-}
-
-bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx){
+bool EventHandler::hasPFMatch(int index, int pdgId, int &pfIdx){
   double deltaRVal = 999.;
   double deltaPT = 999.;
   double leptonEta = 0, leptonPhi = 0, leptonPt = 0;
-  if(type == particleId::muon ) {
+  if(pdgId == 13) {
     leptonEta = mus_eta->at(index);
     leptonPhi = mus_phi->at(index);
     leptonPt = mus_pt->at(index);
-  }  else if(type == particleId::electron) {
+  }  else if(pdgId == 11) {
     leptonEta = els_scEta->at(index);
     leptonPhi = els_phi->at(index);
     leptonPt = els_pt->at(index);
   }
   
   for(unsigned iCand=0; iCand<pfcand_pt->size(); iCand++) {
-    if(pfcand_particleId->at(iCand)==type) {
+    if(fabs(pfcand_pdgId->at(iCand))==pdgId) {
       double tempDeltaR = Math::GetDeltaR(leptonPhi, leptonEta, pfcand_phi->at(iCand), pfcand_eta->at(iCand));
       if(tempDeltaR < deltaRVal) {
 	deltaRVal = tempDeltaR;
@@ -1048,34 +1013,209 @@ bool EventHandler::hasPFMatch(int index, particleId::leptonType type, int &pfIdx
       }
     }
   }
-  if(type == particleId::electron) return (deltaPT<10);
+  if (pdgId == 11) return (deltaPT<10);
   else return (deltaPT<5);
 }
 
-float EventHandler::GetRA4MuonIsolation(uint imu){
-  if(imu >= mus_pt->size()) return -999;
-  double sumEt = mus_pfIsolationR03_sumNeutralHadronEt->at(imu) + mus_pfIsolationR03_sumPhotonEt->at(imu) 
-    - 0.5*mus_pfIsolationR03_sumPUPt->at(imu);
-  if(sumEt<0.0) sumEt=0.0;
-  return (mus_pfIsolationR03_sumChargedHadronPt->at(imu) + sumEt)/mus_pt->at(imu);
+vector<int> EventHandler::GetRecoMuons(bool veto) {
+  vector<int> muons;
+  for(uint index=0; index<mus_pt->size(); index++)
+    if(veto){
+      if(isRecoMuon(index, 0)) muons.push_back(index);
+    }	else {
+      if(isRecoMuon(index, 1)) muons.push_back(index);
+    }
+  return muons;
 }
 
-vector<int> EventHandler::GetRA4Electrons(bool veto){
+double EventHandler::getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex){
+  return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
+}
+
+bool EventHandler::isRecoMuon(const uint imu, const uint level) const{
+  if (imu>mus_pt->size()) return false;
+  double pt_thresh(0.0);
+  if(level>=1) pt_thresh=20.0;
+  double eta_thresh(3.0);
+  if(level>=1) eta_thresh=2.4;
+
+  if (fabs(mus_eta->at(imu)) >= eta_thresh ) return false;
+  if (mus_pt->at(imu) < pt_thresh) return false; 
+  if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
+  // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
+  if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
+  const double beamx (beamSpot_x->at(0)), beamy(beamSpot_y->at(0));   
+  const double d0 = mus_tk_d0dum->at(imu)-beamx*sin(mus_tk_phi->at(imu))+beamy*cos(mus_tk_phi->at(imu));
+  const double mus_vz = mus_tk_vz->at(imu);
+  const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
+  if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
+  if ( !mus_tk_numvalPixelhits->at(imu)) return false;
+  if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
+
+  if (GetMuonRelIso(imu) > 0.2) return false;
+
+  // need to make sure both collections have the "slimmed cuts"
+  // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
+  if (!(mus_pt->at(imu)>5.0 ||
+	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
+	mus_isPFMuon->at(imu))) return false;
+  
+
+  return true;
+}
+
+double EventHandler::GetMuonRelIso(const unsigned int imu) const{
+  double isoNeutral(mus_pfIsolationR04_sumNeutralHadronEt->at(imu) + mus_pfIsolationR04_sumPhotonEt->at(imu) - 0.5*mus_pfIsolationR04_sumPUPt->at(imu));
+  if(isoNeutral<0.0) isoNeutral=0.0;
+  return (mus_pfIsolationR04_sumChargedHadronPt->at(imu) + isoNeutral) / mus_pt->at(imu);
+}
+
+
+vector<int> EventHandler::GetRecoElectrons(bool veto){
   vector<int> electrons;
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
-      if(passedRA4ElectronSelection(index)) electrons.push_back(index);
+      if(isRecoElectron(index,3)) electrons.push_back(index);
     }	else {
-      if(passedRA4ElectronVeto(index)) electrons.push_back(index);
+      if(isRecoElectron(index,0)) electrons.push_back(index);
     }
   return electrons;
 }
 
-float EventHandler::GetRA4ElectronIsolation(uint iel){
-  double sumEt = els_PFphotonIsoR03->at(iel) + els_PFneutralHadronIsoR03->at(iel) 
-    - rho_kt6PFJetsForIsolation2011 * GetEffectiveArea(els_scEta->at(iel), IsMC());
-  if(sumEt<0.0) sumEt=0;
-  return (els_PFchargedHadronIsoR03->at(iel) + sumEt)/els_pt->at(iel);
+bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
+//N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
+  if (iel>els_pt->size()) return false;
+  const double dmax(std::numeric_limits<double>::max());
+  double pt_cut(5.0); //Not actually part of the EGamma ID
+  double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
+  switch(level){
+  case 1:
+    pt_cut=20.0;
+    if(els_isEB->at(iel)){
+      eta_cut=0.007; phi_cut=0.15; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+      d0_cut=0.02; dz_cut=0.2; iso_cut=0.15;
+    }else if(els_isEE->at(iel)){
+      eta_cut=0.009; phi_cut=0.10; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+      d0_cut=0.02; dz_cut=0.2; iso_cut=(els_pt->at(iel)>20.0?0.15:0.10);
+    }
+    break;
+  case 2:
+    pt_cut=20.0;
+    if(els_isEB->at(iel)){
+      eta_cut=0.004; phi_cut=0.06; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+      d0_cut=0.02; dz_cut=0.1; iso_cut=0.15;
+    }else if(els_isEE->at(iel)){
+      eta_cut=0.007; phi_cut=0.03; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+      d0_cut=0.02; dz_cut=0.1; iso_cut=(els_pt->at(iel)>20.0?0.15:0.10);
+    }
+    break;
+  case 3:
+    pt_cut=20.0;
+    if(els_isEB->at(iel)){
+      eta_cut=0.004; phi_cut=0.03; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+      d0_cut=0.02; dz_cut=0.1; iso_cut=0.10;
+      if (cmEnergy==13) {
+	eta_cut=0.009; iso_cut=0.18;
+      }
+    }else if(els_isEE->at(iel)){
+      eta_cut=0.005; phi_cut=0.02; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+      d0_cut=0.02; dz_cut=0.1; iso_cut=(els_pt->at(iel)>20.0?0.10:0.07);
+      if (cmEnergy==13) {
+	eta_cut=0.01; sigmaietaieta_cut=0.031;
+	h_over_e_cut=0.12; iso_cut=0.16;
+      }    
+    }
+    break;
+  case 0: //intentionally falling through to default "veto" case
+  default:
+    pt_cut=10.0;
+    if(els_isEB->at(iel)){
+      eta_cut=0.007; phi_cut=0.8; sigmaietaieta_cut=0.01; h_over_e_cut=0.15;
+      d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
+      if (cmEnergy>=13) {
+	eta_cut=0.012; iso_cut=0.23;
+      }
+    }else if(els_isEE->at(iel)){
+      eta_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
+      d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
+      if (cmEnergy>=13) {
+	eta_cut=0.015; sigmaietaieta_cut=0.033; iso_cut=0.25;
+      }
+    }
+    break;
+  }
+  // if(k>else_pt->size()) return false;
+  if (level>0) {
+    if (fabs(els_scEta->at(iel)) >= 2.5 ) return false;
+    if (els_pt->at(iel) < pt_cut) return false;
+  }
+
+  if ( fabs(els_dEtaIn->at(iel)) > eta_cut)  return false;
+  if ( fabs(els_dPhiIn->at(iel)) > phi_cut)  return false;
+  if (cmEnergy<13 && els_sigmaIEtaIEta->at(iel) > sigmaietaieta_cut) return false;
+  if (cmEnergy>=13 && els_full5x5_sigmaIetaIeta->at(iel) > sigmaietaieta_cut) return false;
+  if (els_hadOverEm->at(iel) > h_over_e_cut) return false;
+
+  const double beamx(beamSpot_x->at(0)), beamy(beamSpot_y->at(0)); 
+  const double d0(els_d0dum->at(iel)-beamx*sin(els_tk_phi->at(iel))+beamy*cos(els_tk_phi->at(iel)));
+  if ( fabs(d0) >= d0_cut ) return false;
+  if ( fabs(els_vz->at(iel) - pv_z->at(0) ) >= dz_cut ) return false;
+
+  float rel_iso(999.);
+  if (cmEnergy<13) rel_iso=GetElectronRelIso(iel);
+  else rel_iso=GetCSAElectronIsolation(iel);
+  if(rel_iso>=iso_cut) return false;
+  return true;
+}
+
+double EventHandler::GetElectronRelIso(const unsigned int k) const{
+  const double rho(rho_kt6PFJetsForIsolation2012);
+  // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta els_scEta->at(k)
+  double AE(0.10); 
+  const double abseta(fabs(els_scEta->at(k)));
+  if      ( abseta < 1.0 ) AE = 0.13;
+  else if ( abseta >=1.0 && abseta <1.479) AE = 0.14;
+  else if ( abseta >=1.479&&abseta <2.0)   AE = 0.07;
+  else if ( abseta >=2.0 && abseta <2.2) AE = 0.09;
+  else if ( abseta >=2.2 && abseta <2.3) AE = 0.11;
+  else if ( abseta >=2.3 && abseta <2.4) AE = 0.11;
+  else if ( abseta >=2.4 ) AE = 0.14;
+
+  const double eleIso(els_PFphotonIsoR03->at(k) + els_PFneutralHadronIsoR03->at(k) - rho*AE);
+  return ( els_PFchargedHadronIsoR03->at(k) + ( eleIso > 0 ? eleIso : 0.0 ) )/els_pt->at(k);
+}
+
+float EventHandler::GetCSAElectronIsolation(const uint iel) const{
+  float absiso = els_pfIsolationR03_sumChargedHadronPt->at(iel) + std::max(0.0 , els_pfIsolationR03_sumNeutralHadronEt->at(iel) + els_pfIsolationR03_sumPhotonEt->at(iel) - 0.5 * els_pfIsolationR03_sumPUPt->at(iel) );
+  return absiso/els_pt->at(iel);
+}
+
+bool EventHandler::passedCSABaseElectronSelection(uint iel, float ElectronPTThreshold){
+  if(iel >= els_pt->size()) return false;
+
+  float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
+  int pfIdx=-1;
+  
+  return (els_pt->at(iel) > ElectronPTThreshold
+	  && fabs(els_scEta->at(iel)) < 2.5
+	  && !els_hasMatchedConversion->at(iel)
+	  && els_n_inner_layer->at(iel) <= 1
+	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
+			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
+	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
+	  && hasPFMatch(iel, 11, pfIdx) 
+	  && fabs(d0PV) < 0.02 
+	  && ((els_isEB->at(iel) // Endcap selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.004
+	       && fabs(els_dPhiIn->at(iel)) < 0.06
+	       && els_sigmaIEtaIEta->at(iel) < 0.01
+	       && els_hadOverEm->at(iel) < 0.12 ) ||
+	      (els_isEE->at(iel)  // Barrel selection
+	       && fabs(els_dEtaIn->at(iel)) < 0.007
+	       && fabs(els_dPhiIn->at(iel)) < 0.03
+	       && els_sigmaIEtaIEta->at(iel) < 0.03
+	       && els_hadOverEm->at(iel) < 0.10 ))
+	  );
 }
 
 bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThreshold){
@@ -1091,7 +1231,7 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
 			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
-	  && hasPFMatch(iel, particleId::electron, pfIdx) 
+	  && hasPFMatch(iel, 11, pfIdx) 
 	  && fabs(d0PV) < 0.02 
 	  && ((els_isEB->at(iel) // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004
@@ -1105,11 +1245,12 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	       && els_hadOverEm->at(iel) < 0.10 ))
 	  );
 }
-
+/*
 bool EventHandler::passedRA4ElectronSelection(uint iel, float ElectronPTThreshold){
   if(iel >= els_pt->size()) return false;
-
+  cout << "Calculating relIso..." << endl;
   double relIso = GetRA4ElectronIsolation(iel);
+  cout << "Calculating baseSelection..." << endl;
   return (passedBaseElectronSelection(iel, ElectronPTThreshold) && relIso < 0.15);
 }
 
@@ -1162,8 +1303,55 @@ float EventHandler::GetEffectiveArea(float SCEta, bool isMC){
   }
   return EffectiveArea;
 }
+*/
 
 bool EventHandler::IsMC(){
   std::string sampleName(chainA.GetFile()->GetName());
   return (sampleName.find("Run201") == std::string::npos);
+}
+
+double EventHandler::GetHT() const{
+  double HT(0.0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i)) HT+=jets_AKPF_pt->at(i);
+  }
+  return HT;
+}
+
+int EventHandler::GetNumGoodJets() const{
+  int numGoodJets(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i)) ++numGoodJets;
+  }
+  return numGoodJets;
+}
+
+int EventHandler::GetNumCSVTJets() const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVTCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
+}
+
+int EventHandler::GetNumCSVMJets() const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
+}
+
+int EventHandler::GetNumCSVLJets() const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVLCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
 }

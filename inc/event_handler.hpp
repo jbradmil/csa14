@@ -79,6 +79,8 @@ protected:
   bool isRA2bMuon(const unsigned int, const unsigned short=0, const bool=true) const;
   bool isRA2bTau(const unsigned int, const unsigned short=0, const bool=true) const;
 
+  double GetRA2bMuonRelIso(const unsigned int) const;
+
   int GetNumRA2bElectrons(const unsigned short=0, const bool=true) const;
   int GetNumRA2bMuons(const unsigned short=0, const bool=true) const;
   int GetNumRA2bTaus(const unsigned short=0, const bool=true) const;
@@ -88,6 +90,7 @@ protected:
 
   int NewGetNumIsoTracks(const double=10.0) const;
 
+  double GetRA2bElectronRelIso(const unsigned int) const;
   double GetElectronRelIso(const unsigned int) const;
 
   double GetTopPtWeight() const;
@@ -109,6 +112,7 @@ protected:
   bool isGenElectron(const int) const;
   bool isIsoGenElectron(const int) const;
   void GetGenElectrons() const;
+  int GetNumIgnoredGenElectrons() const;
   std::pair <int, double> GetGenElectronMinDR(const int, const vector<uint> ) const;
   std::pair <int, double> GetGenElectronMinDPt(const int, const vector<uint> ) const;
   void SetupGenElectrons() const;
@@ -122,22 +126,40 @@ protected:
   void SetupGenTaus() const;
   int GetGenTauLossCode(const int) const;
 
-  vector<int> GetRA4Muons(bool veto, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
-  bool hasPFMatch(int index, particleId::leptonType type, int &pfIdx);
-  bool passedRA4MuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
-  bool passedRA4MuonVeto(uint imu, float MuonPTThreshold=15., float MuonETAThreshold=2.5);
+  bool hasPFMatch(int index, int pdgId, int &pfIdx);
+
+  vector<int> GetRecoMuons(bool veto);
+  bool isRecoMuon(const uint imu, const uint level=0) const;
+  double GetMuonRelIso(const unsigned int imu) const;
+  bool passedRecoMuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
+  bool passedRecoMuonVeto(uint imu, float MuonPTThreshold=15., float MuonETAThreshold=2.5);
   double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
-  float GetRA4MuonIsolation(uint imu);
+  float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRA4Electrons(bool veto);
+  vector<int> GetRecoElectrons(bool veto);
+  bool isRecoElectron(const uint imu, const uint level=0) const;
+
   bool passedRA4ElectronSelection(uint iel, float ElectronPTThreshold=20.);
   bool passedRA4ElectronVeto(uint iel, float ElectronPTThreshold=15.);
   bool passedBaseElectronSelection(uint iel, float ElectronPTThreshold=20.);
   float GetRA4ElectronIsolation(uint iel);
   float GetEffectiveArea(float SCEta, bool isMC);
+
+  vector<int> GetCSAElectrons(bool veto);
+  bool passedCSAElectronSelection(uint iel, float ElectronPTThreshold=20.);
+  bool passedCSAElectronVeto(uint iel, float ElectronPTThreshold=15.);
+  float GetCSAElectronIsolation(const uint iel) const;
+  bool passedCSABaseElectronSelection(uint iel, float ElectronPTThreshold=20.);
+
  
   bool IsMC();
+
+  double GetHT() const;
+  int GetNumGoodJets() const;
+  int GetNumCSVTJets() const;
+  int GetNumCSVMJets() const;
+  int GetNumCSVLJets() const;
 
 };
 
