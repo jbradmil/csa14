@@ -7,7 +7,7 @@
 #include "TLegend.h"
 #include "TCut.h"
 
-void compare_samples(TString var, TCut cuts, TString title, int nbinsx, float low, float high, bool logscale=false, TString comments="") {
+void compare_samples_lost_muon(TString var, TCut cuts, TString title, int nbinsx, float low, float high, bool logscale=false, TString comments="") {
 
   TChain* chain8 = new TChain("reduced_tree");
   chain8->Add("../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root");
@@ -29,6 +29,9 @@ void compare_samples(TString var, TCut cuts, TString title, int nbinsx, float lo
   h13->SetLineColor(2);
   h13->SetLineWidth(2);
 
+  cuts+="num_gen_muons==1&&gen_mu1.mus_match>=0";
+  //  cuts+="gen_mu1.veto_muon<1";
+
   chain8->Project("h8", var, cuts);
   chain13->Project("h13", var, cuts);
 
@@ -47,6 +50,6 @@ void compare_samples(TString var, TCut cuts, TString title, int nbinsx, float lo
   leg->AddEntry(h13,"13 TeV","l");
   leg->Draw();
 
-  TString plotTitle = var+"_"+comments+"_compare8and13TeV.pdf";
+  TString plotTitle = var+"lost_muon"+comments+"_compare8and13TeV.pdf";
   c1->Print(plotTitle);
 }

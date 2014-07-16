@@ -100,6 +100,8 @@ protected:
   int GetNGenParticles(const int, const float=0., const bool=false) const;
   int GetGenParticleIndex(const int, const int=0) const;
 
+  int GetJetGenId(const int) const;
+
   bool isGenMuon(const int) const;
   bool isIsoGenMuon(const int) const;
   void GetGenMuons() const;
@@ -108,6 +110,7 @@ protected:
   std::pair <int, double> GetGenMuonMinDPt(const int, const vector<uint> ) const;
   void SetupGenMuons() const;
   int GetGenMuonLossCode(const int) const;
+  float GetMinDRMuonJet(const int) const;
 
   bool isGenElectron(const int) const;
   bool isIsoGenElectron(const int) const;
@@ -117,6 +120,10 @@ protected:
   std::pair <int, double> GetGenElectronMinDPt(const int, const vector<uint> ) const;
   void SetupGenElectrons() const;
   int GetGenElectronLossCode(const int) const;
+  float GetMinDRElectronJet(const int) const;
+
+  float GetCorrespondingTopPt(const int) const;
+  float GetCorrespondingDeltaRWb(const int) const;
 
   bool isGenTau(const int) const;
   void GetGenTaus() const;

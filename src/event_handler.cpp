@@ -232,6 +232,7 @@ int EventHandler::GetPBNR() const{
   return 1;
 }
 
+// isGoodJet(jet, false, 20.0, 5.0, false)
 bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool doBeta) const{
   if(jets_AKPF_pt->at(ijet)<ptThresh || fabs(jets_AKPF_eta->at(ijet))>etaThresh) return false;
   if( jetid && !jetPassLooseID(ijet) ) return false;
@@ -650,6 +651,43 @@ std::pair <int, double> EventHandler::GetGenMuonMinDPt(const int genLep, const v
   return std::make_pair(closest,minDPt);
 }
 
+float EventHandler::GetCorrespondingTopPt(const int charge) const {
+  float topPt(-1.);
+  for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+    if (static_cast<int>(mc_doc_id->at(imc))*charge==6&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
+      topPt = mc_doc_pt->at(imc);
+    }
+  }
+  return topPt;
+}
+
+float EventHandler::GetCorrespondingDeltaRWb(const int charge) const {
+  int the_b(-1), the_W(-1);
+  for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+    if (static_cast<int>(mc_doc_id->at(imc))*charge==24&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
+      the_W=imc;
+    }
+    if (static_cast<int>(mc_doc_id->at(imc))*charge==-5&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
+      the_b=imc;
+    }
+  }
+  return Math::GetDeltaR(mc_doc_phi->at(the_W), mc_doc_eta->at(the_W), mc_doc_phi->at(the_b), mc_doc_eta->at(the_b));
+}
+
+float EventHandler::GetMinDRMuonJet(const int mu) const{
+  float minDR(999.);
+  float mu_eta(mus_eta->at(mu)), mu_phi(mus_phi->at(mu));
+  float thisDR(999.);
+  for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
+    if (fabs(GetJetGenId(jet))==13) continue;
+    if(isGoodJet(jet, false, 0.0, 5.0, false)) {
+      thisDR=Math::GetDeltaR(mu_phi, mu_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
+    }
+    if (thisDR<minDR) minDR=thisDR;
+  }
+  return minDR;
+}
+
 void EventHandler::SetupGenMuons() const {
   //std::cout << "GetGenMuons" << std::endl;
   GetGenMuons();
@@ -657,10 +695,9 @@ void EventHandler::SetupGenMuons() const {
   vector<uint> mus_matched;
   for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
     int gen_index(genMuonCache[genLep].GetMCMusIndex());
-    int reco_index(genMuonCache[genLep].GetMusMatch());
     genMuonCache[genLep].SetIsIso(isIsoGenMuon(gen_index));
-    genMuonCache[genLep].SetIsVeto(0);
-    if (reco_index>=0) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
+    genMuonCache[genLep].SetTopPt(GetCorrespondingTopPt(static_cast<int>(mc_mus_charge->at(gen_index))));
+    genMuonCache[genLep].SetDeltaRWb(GetCorrespondingDeltaRWb(static_cast<int>(mc_mus_charge->at(gen_index))));
     double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
@@ -682,6 +719,10 @@ void EventHandler::SetupGenMuons() const {
       d1<d2 ? genMuonCache[genLep].SetMusMatch(min_dR.first) : genMuonCache[genLep].SetMusMatch(min_dPt.first);
     } 
     if (genMuonCache[genLep].GetMusMatch()>=0) mus_matched.push_back((uint)genMuonCache[genLep].GetMusMatch());
+    int reco_index(genMuonCache[genLep].GetMusMatch());
+    genMuonCache[genLep].SetIsVeto(0);
+    if (reco_index>=0) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
+    //  printf("gen muon %d: mc/mus = %d/%d--is veto? %d\n", genLep, gen_index, reco_index, genMuonCache[genLep].IsVeto());
     //cout << "Gen muon " << genMuonCache[genLep].GetMCMusIndex() << " matched to reco muon " << genMuonCache[genLep].GetMusMatch() << endl;
     // Determine if/where/why we lost the muon
     genMuonCache[genLep].SetLossCode(GetGenMuonLossCode(genLep));
@@ -805,6 +846,35 @@ std::pair <int, double> EventHandler::GetGenElectronMinDPt(const int genLep, con
   return std::make_pair(closest,minDPt);
 }
 
+float EventHandler::GetMinDRElectronJet(const int el) const{
+  float minDR(999.);
+  float el_eta(els_scEta->at(el)), el_phi(els_phi->at(el));
+  float thisDR(999.);
+  for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
+    if (fabs(GetJetGenId(jet))==11) continue;
+    if(isGoodJet(jet, false, 0.0, 5.0, false)) {
+      thisDR=Math::GetDeltaR(el_phi, el_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
+    }
+    if (thisDR<minDR) minDR=thisDR;
+  }
+  return minDR;
+}
+
+int EventHandler::GetJetGenId(const int jet) const{
+  float minDR(999.);
+  int pdgID(-999);
+  float jet_eta(jets_AKPF_eta->at(jet)), jet_phi(jets_AKPF_phi->at(jet));
+  float thisDR(999.);
+  for (int mc(0); mc<static_cast<int>(mc_doc_id->size()); mc++) {
+    thisDR=Math::GetDeltaR(jet_phi, jet_eta, mc_doc_phi->at(mc), mc_doc_eta->at(mc));
+    if (thisDR<minDR) {
+      minDR=thisDR;
+      pdgID=static_cast<int>(mc_doc_id->at(mc));
+    }
+  }
+  return pdgID;
+}
+
 void EventHandler::SetupGenElectrons() const {
   //std::cout << "GetGenElectrons" << std::endl;
   GetGenElectrons();
@@ -812,10 +882,9 @@ void EventHandler::SetupGenElectrons() const {
   vector<uint> els_matched;
   for(unsigned int genLep(0); genLep<genElectronCache.size(); ++genLep){
     int gen_index(genElectronCache[genLep].GetMCElsIndex());
-    int reco_index(genElectronCache[genLep].GetElsMatch());
     genElectronCache[genLep].SetIsIso(isIsoGenElectron(gen_index));
-    genElectronCache[genLep].SetIsVeto(0);
-    if (reco_index>=0) genElectronCache[genLep].SetIsVeto(isRecoElectron(reco_index, 0));
+    genElectronCache[genLep].SetTopPt(GetCorrespondingTopPt(static_cast<int>(mc_electrons_charge->at(gen_index))));
+    genElectronCache[genLep].SetTopPt(GetCorrespondingDeltaRWb(static_cast<int>(mc_electrons_charge->at(gen_index))));
     double gen_pt(genElectronCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genElectronCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genElectronCache[genLep].GetLorentzVector().Phi());
@@ -838,6 +907,9 @@ void EventHandler::SetupGenElectrons() const {
     } 
     if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back((uint)genElectronCache[genLep].GetElsMatch());
     //  cout << "Gen electron " << genElectronCache[genLep].GetMCElsIndex() << " matched to reco electron " << genElectronCache[genLep].GetElsMatch() << endl;
+    int reco_index(genElectronCache[genLep].GetElsMatch());
+    genElectronCache[genLep].SetIsVeto(0);
+    if (reco_index>=0) genElectronCache[genLep].SetIsVeto(isRecoElectron(reco_index, 0));
     // Determine if/where/why we lost the electron
     genElectronCache[genLep].SetLossCode(GetGenElectronLossCode(genLep));
   }    
@@ -1034,10 +1106,10 @@ double EventHandler::getDZ(double vx, double vy, double vz, double px, double py
 
 bool EventHandler::isRecoMuon(const uint imu, const uint level) const{
   if (imu>mus_pt->size()) return false;
-  double pt_thresh(0.0);
+  double pt_thresh(10.0);
   if(level>=1) pt_thresh=20.0;
-  double eta_thresh(3.0);
-  if(level>=1) eta_thresh=2.4;
+  double eta_thresh(2.4);
+  //  if(level>=1) eta_thresh=2.4;
 
   if (fabs(mus_eta->at(imu)) >= eta_thresh ) return false;
   if (mus_pt->at(imu) < pt_thresh) return false; 
@@ -1086,7 +1158,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
 //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
-  double pt_cut(5.0); //Not actually part of the EGamma ID
+  double pt_cut(10.0); //Not actually part of the EGamma ID
   double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
   switch(level){
   case 1:
@@ -1145,10 +1217,10 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
     break;
   }
   // if(k>else_pt->size()) return false;
-  if (level>0) {
+  // if (level>0) {
     if (fabs(els_scEta->at(iel)) >= 2.5 ) return false;
     if (els_pt->at(iel) < pt_cut) return false;
-  }
+    // }
 
   if ( fabs(els_dEtaIn->at(iel)) > eta_cut)  return false;
   if ( fabs(els_dPhiIn->at(iel)) > phi_cut)  return false;

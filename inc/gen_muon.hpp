@@ -19,6 +19,8 @@ public:
   void SetMusMatch(const int);
   void SetLossCode(const int);
   void SetIsVeto(bool isVetoIn);
+  void SetTopPt(float topPtIn);
+  void SetDeltaRWb(float deltaRWbIn);
 
   TLorentzVector GetLorentzVector() const;
   unsigned int GetMCMusIndex() const;
@@ -29,6 +31,8 @@ public:
   std::pair<int, double> GetMinDR() const;
   std::pair<int, double> GetMinDPt() const;
   int GetMusMatch() const;
+  float GetTopPt() const;
+  float GetDeltaRWb() const;
   int GetLossCode() const;
 
   bool operator==(const GenMuon &muon) const;
@@ -48,6 +52,8 @@ private:
   std::pair<int, double> minDR;
   std::pair<int, double> minDPt;
   int mus_match;
+  float top_pt;
+  float deltaR_Wb;
   int loss_code;
 };
 

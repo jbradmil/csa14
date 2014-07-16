@@ -18,6 +18,8 @@ typedef struct
   float minDR;
   float minDPt;
   int mus_match;
+  float topPt;
+  float deltaRWb;
   int signal_muon;
   int veto_muon;
   float reco_pt;
@@ -26,7 +28,12 @@ typedef struct
   float reco_dZ;
   float reco_d0PV;
   float reco_relIso;
+  float reco_EMIso;
+  float reco_NHIso;
+  float reco_CHIso;
+  float reco_PUIso;
   int reco_hasPFMatch;
+  float reco_minDR; // jet-mu
 } genMuInfo;
 
 typedef struct 
@@ -39,6 +46,8 @@ typedef struct
   float minDR;
   float minDPt;
   int els_match;
+  float topPt;
+  float deltaRWb;
   int signal_electron;
   int veto_electron;
   float reco_pt;
@@ -47,7 +56,12 @@ typedef struct
   float reco_dZ;
   float reco_d0PV;
   float reco_relIso;
+  float reco_EMIso;
+  float reco_NHIso;
+  float reco_CHIso;
+  float reco_PUIso;
   int reco_hasPFMatch;
+  float reco_minDR; // jet-el
 } genElInfo;
 
 typedef struct 

@@ -45,6 +45,13 @@ void GenElectron::SetIsVeto(bool isVetoIn){
   is_veto=isVetoIn;
 }
 
+void GenElectron::SetTopPt(float topPtIn){
+  top_pt=topPtIn;
+}
+void GenElectron::SetDeltaRWb(float deltaRWbIn){
+  deltaR_Wb=deltaRWbIn;
+}
+
 TLorentzVector GenElectron::GetLorentzVector() const{
   return vec;
 }
@@ -63,6 +70,14 @@ bool GenElectron::IsIso() const{
 
 bool GenElectron::IsVeto() const{
   return is_veto;
+}
+
+float GenElectron::GetTopPt() const{
+  return top_pt;
+}
+
+float GenElectron::GetDeltaRWb() const{
+  return deltaR_Wb;
 }
 
 std::pair <int,double> GenElectron::GetMinDR() const{

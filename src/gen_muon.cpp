@@ -41,6 +41,13 @@ void GenMuon::SetIsVeto(bool isVetoIn){
   is_veto=isVetoIn;
 }
 
+void GenMuon::SetTopPt(float topPtIn){
+  top_pt=topPtIn;
+}
+void GenMuon::SetDeltaRWb(float deltaRWbIn){
+  deltaR_Wb=deltaRWbIn;
+}
+
 TLorentzVector GenMuon::GetLorentzVector() const{
   return vec;
 }
@@ -63,6 +70,14 @@ bool GenMuon::IsIso() const{
 
 bool GenMuon::IsVeto() const{
   return is_veto;
+}
+
+float GenMuon::GetTopPt() const{
+  return top_pt;
+}
+
+float GenMuon::GetDeltaRWb() const{
+  return deltaR_Wb;
 }
 
 std::pair <int,double> GenMuon::GetMinDR() const{
