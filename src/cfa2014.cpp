@@ -542,6 +542,27 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   mc_doc_mass(0),
   mc_doc_numOfDaughters(0),
   mc_doc_numOfMothers(0),
+  mc_final_id(0),
+  mc_final_pt(0),
+  mc_final_px(0),
+  mc_final_py(0),
+  mc_final_pz(0),
+  mc_final_eta(0),
+  mc_final_phi(0),
+  mc_final_theta(0),
+  mc_final_energy(0),
+  mc_final_status(0),
+  mc_final_charge(0),
+  mc_final_mother_id(0),
+  mc_final_grandmother_id(0),
+  mc_final_ggrandmother_id(0),
+  mc_final_mother_pt(0),
+  mc_final_vertex_x(0),
+  mc_final_vertex_y(0),
+  mc_final_vertex_z(0),
+  mc_final_mass(0),
+  mc_final_numOfDaughters(0),
+  mc_final_numOfMothers(0),
   Nmc_electrons(0),
   mc_electrons_id(0),
   mc_electrons_pt(0),
@@ -1873,6 +1894,28 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_mc_doc_mass(),
   b_mc_doc_numOfDaughters(),
   b_mc_doc_numOfMothers(),
+  b_Nmc_final(),
+  b_mc_final_id(),
+  b_mc_final_pt(),
+  b_mc_final_px(),
+  b_mc_final_py(),
+  b_mc_final_pz(),
+  b_mc_final_eta(),
+  b_mc_final_phi(),
+  b_mc_final_theta(),
+  b_mc_final_energy(),
+  b_mc_final_status(),
+  b_mc_final_charge(),
+  b_mc_final_mother_id(),
+  b_mc_final_grandmother_id(),
+  b_mc_final_ggrandmother_id(),
+  b_mc_final_mother_pt(),
+  b_mc_final_vertex_x(),
+  b_mc_final_vertex_y(),
+  b_mc_final_vertex_z(),
+  b_mc_final_mass(),
+  b_mc_final_numOfDaughters(),
+  b_mc_final_numOfMothers(),
   b_Nmc_electrons(),
   b_mc_electrons_id(),
   b_mc_electrons_pt(),
@@ -3525,6 +3568,28 @@ void cfA::InitializeB(){
   mc_doc_mass=0;
   mc_doc_numOfDaughters=0;
   mc_doc_numOfMothers=0;
+  Nmc_final=0;
+  mc_final_id=0;
+  mc_final_pt=0;
+  mc_final_px=0;
+  mc_final_py=0;
+  mc_final_pz=0;
+  mc_final_eta=0;
+  mc_final_phi=0;
+  mc_final_theta=0;
+  mc_final_energy=0;
+  mc_final_status=0;
+  mc_final_charge=0;
+  mc_final_mother_id=0;
+  mc_final_grandmother_id=0;
+  mc_final_ggrandmother_id=0;
+  mc_final_mother_pt=0;
+  mc_final_vertex_x=0;
+  mc_final_vertex_y=0;
+  mc_final_vertex_z=0;
+  mc_final_mass=0;
+  mc_final_numOfDaughters=0;
+  mc_final_numOfMothers=0;
   Nmc_electrons=0;
   mc_electrons_id=0;
   mc_electrons_pt=0;
@@ -4930,6 +4995,30 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_mass", &mc_doc_mass, &b_mc_doc_mass);
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
+  if (cmEnergy>=13) {
+    chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
+    chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
+    chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
+    chainB.SetBranchAddress("mc_final_px", &mc_final_px, &b_mc_final_px);
+    chainB.SetBranchAddress("mc_final_py", &mc_final_py, &b_mc_final_py);
+    chainB.SetBranchAddress("mc_final_pz", &mc_final_pz, &b_mc_final_pz);
+    chainB.SetBranchAddress("mc_final_eta", &mc_final_eta, &b_mc_final_eta);
+    chainB.SetBranchAddress("mc_final_phi", &mc_final_phi, &b_mc_final_phi);
+    chainB.SetBranchAddress("mc_final_theta", &mc_final_theta, &b_mc_final_theta);
+    chainB.SetBranchAddress("mc_final_energy", &mc_final_energy, &b_mc_final_energy);
+    chainB.SetBranchAddress("mc_final_status", &mc_final_status, &b_mc_final_status);
+    chainB.SetBranchAddress("mc_final_charge", &mc_final_charge, &b_mc_final_charge);
+    chainB.SetBranchAddress("mc_final_mother_id", &mc_final_mother_id, &b_mc_final_mother_id);
+    chainB.SetBranchAddress("mc_final_grandmother_id", &mc_final_grandmother_id, &b_mc_final_grandmother_id);
+    chainB.SetBranchAddress("mc_final_ggrandmother_id", &mc_final_ggrandmother_id, &b_mc_final_ggrandmother_id);
+    chainB.SetBranchAddress("mc_final_mother_pt", &mc_final_mother_pt, &b_mc_final_mother_pt);
+    chainB.SetBranchAddress("mc_final_vertex_x", &mc_final_vertex_x, &b_mc_final_vertex_x);
+    chainB.SetBranchAddress("mc_final_vertex_y", &mc_final_vertex_y, &b_mc_final_vertex_y);
+    chainB.SetBranchAddress("mc_final_vertex_z", &mc_final_vertex_z, &b_mc_final_vertex_z);
+    chainB.SetBranchAddress("mc_final_mass", &mc_final_mass, &b_mc_final_mass);
+    chainB.SetBranchAddress("mc_final_numOfDaughters", &mc_final_numOfDaughters, &b_mc_final_numOfDaughters);
+    chainB.SetBranchAddress("mc_final_numOfMothers", &mc_final_numOfMothers, &b_mc_final_numOfMothers);
+  }
   chainB.SetBranchAddress("Nmc_electrons", &Nmc_electrons, &b_Nmc_electrons);
   chainB.SetBranchAddress("mc_electrons_id", &mc_electrons_id, &b_mc_electrons_id);
   chainB.SetBranchAddress("mc_electrons_pt", &mc_electrons_pt, &b_mc_electrons_pt);

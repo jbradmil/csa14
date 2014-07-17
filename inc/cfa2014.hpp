@@ -562,6 +562,28 @@ protected:
   std::vector<float> *mc_doc_mass;
   std::vector<float> *mc_doc_numOfDaughters;
   std::vector<float> *mc_doc_numOfMothers;
+  UInt_t Nmc_final;
+  std::vector<float> *mc_final_id;
+  std::vector<float> *mc_final_pt;
+  std::vector<float> *mc_final_px;
+  std::vector<float> *mc_final_py;
+  std::vector<float> *mc_final_pz;
+  std::vector<float> *mc_final_eta;
+  std::vector<float> *mc_final_phi;
+  std::vector<float> *mc_final_theta;
+  std::vector<float> *mc_final_energy;
+  std::vector<float> *mc_final_status;
+  std::vector<float> *mc_final_charge;
+  std::vector<float> *mc_final_mother_id;
+  std::vector<float> *mc_final_grandmother_id;
+  std::vector<float> *mc_final_ggrandmother_id;
+  std::vector<float> *mc_final_mother_pt;
+  std::vector<float> *mc_final_vertex_x;
+  std::vector<float> *mc_final_vertex_y;
+  std::vector<float> *mc_final_vertex_z;
+  std::vector<float> *mc_final_mass;
+  std::vector<float> *mc_final_numOfDaughters;
+  std::vector<float> *mc_final_numOfMothers;
   UInt_t Nmc_electrons;
   std::vector<float> *mc_electrons_id;
   std::vector<float> *mc_electrons_pt;
@@ -1893,6 +1915,28 @@ protected:
   TBranch *b_mc_doc_mass;
   TBranch *b_mc_doc_numOfDaughters;
   TBranch *b_mc_doc_numOfMothers;
+  TBranch *b_Nmc_final;   //!
+  TBranch *b_mc_final_id;   //!
+  TBranch *b_mc_final_pt;   //!
+  TBranch *b_mc_final_px;   //!
+  TBranch *b_mc_final_py;   //!
+  TBranch *b_mc_final_pz;   //!
+  TBranch *b_mc_final_eta;   //!
+  TBranch *b_mc_final_phi;   //!
+  TBranch *b_mc_final_theta;   //!
+  TBranch *b_mc_final_energy;   //!
+  TBranch *b_mc_final_status;   //!
+  TBranch *b_mc_final_charge;   //!
+  TBranch *b_mc_final_mother_id;   //!
+  TBranch *b_mc_final_grandmother_id;   //!
+  TBranch *b_mc_final_ggrandmother_id;   //!
+  TBranch *b_mc_final_mother_pt;   //!
+  TBranch *b_mc_final_vertex_x;   //!
+  TBranch *b_mc_final_vertex_y;   //!
+  TBranch *b_mc_final_vertex_z;   //!
+  TBranch *b_mc_final_mass;   //!
+  TBranch *b_mc_final_numOfDaughters;   //!
+  TBranch *b_mc_final_numOfMothers;   //!
   TBranch *b_Nmc_electrons;
   TBranch *b_mc_electrons_id;
   TBranch *b_mc_electrons_pt;
