@@ -203,7 +203,7 @@ bool EventHandler::isProblemJet(const unsigned int ijet) const{
   return jets_AKPF_pt->at(ijet)>50.0
     && fabs(jets_AKPF_eta->at(ijet))>0.9
     && fabs(jets_AKPF_eta->at(ijet))<1.9
-				     && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
+    && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
@@ -671,7 +671,15 @@ float EventHandler::GetCorrespondingDeltaRWb(const int charge) const {
       the_b=imc;
     }
   }
+  if (the_W<0||the_b<0) return -1.;
   return Math::GetDeltaR(mc_doc_phi->at(the_W), mc_doc_eta->at(the_W), mc_doc_phi->at(the_b), mc_doc_eta->at(the_b));
+}
+
+bool EventHandler::IsFromB(const int mom, const int gmom, const int ggmom) const{
+  if ( (mom>=500&&mom<600) || (mom>=5000&&mom<6000) || fabs(mom)==5 ) return true;
+  if ( (gmom>=500&&mom<600) || (gmom>=5000&&mom<6000) || fabs(gmom)==5 ) return true;
+  if ( (ggmom>=500&&mom<600) || (ggmom>=5000&&mom<6000) || fabs(ggmom)==5 ) return true;
+  return false;
 }
 
 float EventHandler::GetMinDRMuonJet(const int mu) const{
@@ -680,7 +688,7 @@ float EventHandler::GetMinDRMuonJet(const int mu) const{
   float thisDR(999.);
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
     if (fabs(GetJetGenId(jet))==13) continue;
-    if(isGoodJet(jet, false, 0.0, 5.0, false)) {
+    if(isGoodJet(jet, true, 0.0, 5.0, false)) {
       thisDR=Math::GetDeltaR(mu_phi, mu_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
     }
     if (thisDR<minDR) minDR=thisDR;
@@ -689,14 +697,16 @@ float EventHandler::GetMinDRMuonJet(const int mu) const{
 }
 
 void EventHandler::SetupGenMuons() const {
-  //std::cout << "GetGenMuons" << std::endl;
+  //  std::cout << "GetGenMuons" << std::endl;
   GetGenMuons();
-  //std::cout << "Calculate dR and dPts" << std::endl;
+  //  std::cout << "Calculate dR and dPts" << std::endl;
   vector<uint> mus_matched;
   for(unsigned int genLep(0); genLep<genMuonCache.size(); ++genLep){
     int gen_index(genMuonCache[genLep].GetMCMusIndex());
     genMuonCache[genLep].SetIsIso(isIsoGenMuon(gen_index));
+    //  cout << "SetTopPt" << endl;
     genMuonCache[genLep].SetTopPt(GetCorrespondingTopPt(static_cast<int>(mc_mus_charge->at(gen_index))));
+    //  cout << "SetDeltaRWb" << endl;
     genMuonCache[genLep].SetDeltaRWb(GetCorrespondingDeltaRWb(static_cast<int>(mc_mus_charge->at(gen_index))));
     double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
@@ -706,6 +716,7 @@ void EventHandler::SetupGenMuons() const {
     genMuonCache[genLep].SetMinDR(min_dR);
     genMuonCache[genLep].SetMinDPt(min_dPt);
     int dR_ind(genMuonCache[genLep].GetMinDR().first), dPt_ind(genMuonCache[genLep].GetMinDPt().first);
+    //  cout << "dR_ind/dPt_ind: " << dR_ind << "/" << dPt_ind << endl;
     if (dR_ind==dPt_ind) genMuonCache[genLep].SetMusMatch(min_dR.first);
     else if (dR_ind<0&&dPt_ind>=0) genMuonCache[genLep].SetMusMatch(min_dPt.first);
     else if (dR_ind>=0&&dPt_ind<0) genMuonCache[genLep].SetMusMatch(min_dR.first);
@@ -722,8 +733,8 @@ void EventHandler::SetupGenMuons() const {
     int reco_index(genMuonCache[genLep].GetMusMatch());
     genMuonCache[genLep].SetIsVeto(0);
     if (reco_index>=0) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
-    //  printf("gen muon %d: mc/mus = %d/%d--is veto? %d\n", genLep, gen_index, reco_index, genMuonCache[genLep].IsVeto());
-    //cout << "Gen muon " << genMuonCache[genLep].GetMCMusIndex() << " matched to reco muon " << genMuonCache[genLep].GetMusMatch() << endl;
+    //   printf("gen muon %d: mc/mus = %d/%d--is veto? %d\n", genLep, gen_index, reco_index, genMuonCache[genLep].IsVeto());
+    //  cout << "Gen muon " << genMuonCache[genLep].GetMCMusIndex() << " matched to reco muon " << genMuonCache[genLep].GetMusMatch() << endl;
     // Determine if/where/why we lost the muon
     genMuonCache[genLep].SetLossCode(GetGenMuonLossCode(genLep));
   }    
@@ -740,6 +751,7 @@ void EventHandler::GetGenMuons() const{
     genMuonCache.clear();
     for (unsigned int gen(0); gen<mc_mus_id->size(); gen++) {
       if(isGenMuon(gen)&&isIsoGenMuon(gen)) {
+      //  if(isGenMuon(gen)&&IsFromB(mc_mus_mother_id->at(gen), mc_mus_grandmother_id->at(gen), mc_mus_ggrandmother_id->at(gen))) {
 	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,mc_mus_id->at(gen),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
       }
     }
@@ -852,7 +864,7 @@ float EventHandler::GetMinDRElectronJet(const int el) const{
   float thisDR(999.);
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
     if (fabs(GetJetGenId(jet))==11) continue;
-    if(isGoodJet(jet, false, 0.0, 5.0, false)) {
+    if(isGoodJet(jet, true, 0.0, 5.0, false)) {
       thisDR=Math::GetDeltaR(el_phi, el_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
     }
     if (thisDR<minDR) minDR=thisDR;
@@ -866,10 +878,13 @@ int EventHandler::GetJetGenId(const int jet) const{
   float jet_eta(jets_AKPF_eta->at(jet)), jet_phi(jets_AKPF_phi->at(jet));
   float thisDR(999.);
   for (int mc(0); mc<static_cast<int>(mc_doc_id->size()); mc++) {
-    thisDR=Math::GetDeltaR(jet_phi, jet_eta, mc_doc_phi->at(mc), mc_doc_eta->at(mc));
-    if (thisDR<minDR) {
-      minDR=thisDR;
-      pdgID=static_cast<int>(mc_doc_id->at(mc));
+    int status = static_cast<int>(mc_doc_status->at(mc));
+    if(status==3||status==22||status==23) {
+      thisDR=Math::GetDeltaR(jet_phi, jet_eta, mc_doc_phi->at(mc), mc_doc_eta->at(mc));
+      if (thisDR<minDR) {
+	minDR=thisDR;
+	pdgID=static_cast<int>(mc_doc_id->at(mc));
+      }
     }
   }
   return pdgID;
@@ -926,6 +941,7 @@ void EventHandler::GetGenElectrons() const{
     genElectronCache.clear();
     for (unsigned int gen(0); gen<mc_electrons_id->size(); gen++) {
       if(isGenElectron(gen)&&isIsoGenElectron(gen)) {
+      //  if(isGenElectron(gen)&&IsFromB(mc_electrons_mother_id->at(gen), mc_electrons_grandmother_id->at(gen), mc_electrons_ggrandmother_id->at(gen))) {
 	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,mc_electrons_id->at(gen),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
       }
     }
@@ -1050,18 +1066,31 @@ void EventHandler::GetGenTaus() const{
   }
 }
 
-int EventHandler::GetNGenParticles(const int pdgId, const float pt, const bool check_sign) const{
-  if(!genMuonsUpToDate) SetupGenMuons();
+int EventHandler::GetNGenPartons(const float ptCut) const{
+  int up = GetNGenParticles(2, ptCut);
+  int down = GetNGenParticles(1, ptCut);
+  int strange = GetNGenParticles(3, ptCut);
+  int charm = GetNGenParticles(4, ptCut);
+  int bottom = GetNGenParticles(5, ptCut);
+  int gluon = GetNGenParticles(21, ptCut);
+  return up+down+strange+charm+bottom+gluon;
+}
+
+int EventHandler::GetNGenParticles(const int pdgId, const float ptCut, const bool hard_scatter_only) const{
+ 
   uint count(0);
-  for (uint index(0); index < genMuonCache.size(); index++) {
-    if (check_sign && (pdgId*genMuonCache[index].GetPDGId()<0)) continue;
-    if (genMuonCache[index].GetLorentzVector().Pt()<pt) continue;
-    if (pdgId==fabs(genMuonCache[index].GetPDGId())) count++;
-  }
+  bool fromTop(false);
+    for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+      if (hard_scatter_only && !(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) continue;
+      if (static_cast<int>(fabs(mc_doc_id->at(imc)))==5) fromTop=true;
+      if (!fromTop) continue;
+      if (mc_doc_pt->at(imc)<ptCut) continue;
+      if (static_cast<int>(fabs(mc_doc_id->at(imc)))==pdgId) count++;
+    }
   return count;
 }
 
-bool EventHandler::hasPFMatch(int index, int pdgId, int &pfIdx){
+bool EventHandler::hasPFMatch(const int index, const int pdgId) const{
   double deltaRVal = 999.;
   double deltaPT = 999.;
   double leptonEta = 0, leptonPhi = 0, leptonPt = 0;
@@ -1081,7 +1110,6 @@ bool EventHandler::hasPFMatch(int index, int pdgId, int &pfIdx){
       if(tempDeltaR < deltaRVal) {
 	deltaRVal = tempDeltaR;
 	deltaPT = fabs(leptonPt-pfcand_pt->at(iCand));
-	pfIdx=iCand;
       }
     }
   }
@@ -1128,6 +1156,8 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level) const{
 
   // need to make sure both collections have the "slimmed cuts"
   // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
+
+  if (!hasPFMatch(imu, 13)) return false;
   if (!(mus_pt->at(imu)>5.0 ||
 	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
 	mus_isPFMuon->at(imu))) return false;
@@ -1237,6 +1267,9 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   if (cmEnergy<13) rel_iso=GetElectronRelIso(iel);
   else rel_iso=GetCSAElectronIsolation(iel);
   if(rel_iso>=iso_cut) return false;
+
+  if (!hasPFMatch(iel, 11)) return false;
+
   return true;
 }
 
@@ -1266,7 +1299,6 @@ bool EventHandler::passedCSABaseElectronSelection(uint iel, float ElectronPTThre
   if(iel >= els_pt->size()) return false;
 
   float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
-  int pfIdx=-1;
   
   return (els_pt->at(iel) > ElectronPTThreshold
 	  && fabs(els_scEta->at(iel)) < 2.5
@@ -1275,7 +1307,7 @@ bool EventHandler::passedCSABaseElectronSelection(uint iel, float ElectronPTThre
 	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
 			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
-	  && hasPFMatch(iel, 11, pfIdx) 
+	  && hasPFMatch(iel, 11) 
 	  && fabs(d0PV) < 0.02 
 	  && ((els_isEB->at(iel) // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004
@@ -1294,7 +1326,6 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
   if(iel >= els_pt->size()) return false;
 
   float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
-  int pfIdx=-1;
   
   return (els_pt->at(iel) > ElectronPTThreshold
 	  && fabs(els_scEta->at(iel)) < 2.5
@@ -1303,7 +1334,7 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
 			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
-	  && hasPFMatch(iel, 11, pfIdx) 
+	  && hasPFMatch(iel, 11) 
 	  && fabs(d0PV) < 0.02 
 	  && ((els_isEB->at(iel) // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004

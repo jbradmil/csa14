@@ -36,6 +36,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float met(0.0), ht(0.0);
 
   unsigned short num_jets(0), num_csvt_jets(0), num_csvm_jets(0), num_csvl_jets(0);
+  unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
 
 
   /*
@@ -98,6 +99,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_csvm_jets", &num_csvm_jets); 
   reduced_tree.Branch("num_csvl_jets", &num_csvl_jets); 
 
+  reduced_tree.Branch("num_gen_partons", &num_gen_partons);
+  reduced_tree.Branch("num_gen_partons_pt20", &num_gen_partons_pt20);
+  reduced_tree.Branch("num_gen_partons_pt40", &num_gen_partons_pt40);
+  reduced_tree.Branch("num_gen_partons_pt70", &num_gen_partons_pt70);
+  reduced_tree.Branch("num_gen_partons_pt100", &num_gen_partons_pt100);
+  reduced_tree.Branch("num_gen_partons_pt150", &num_gen_partons_pt150);
 
   /* 
      reduced_tree.Branch("num_ra2b_veto_electrons", &num_ra2b_veto_electrons);
@@ -174,10 +181,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       timer.PrintRemainingTime();
     }
     timer.Iterate();
-    //   cout << "JERR" << endl;
+    //     cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
-    //  cout << "*****Event " << i << "*****" << endl;
+    //    cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
@@ -188,17 +195,24 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     if (cmEnergy<=8) pu_true_num_interactions=GetNumInteractions();
     else pu_true_num_interactions=20;
     num_primary_vertices=GetNumVertices();
-    //  cout << "JERR1" << endl;
+    //    cout << "JERR1" << endl;
 
     met=pfTypeImets_et->at(0);
-    //  cout << "JERR2" << endl;
+    //     cout << "JERR2" << endl;
     ht=GetHT();
     num_jets=GetNumGoodJets();
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
     num_csvl_jets=GetNumCSVLJets();
 
-    //   cout << "JERR" << endl;
+    num_gen_partons=GetNGenPartons();
+    num_gen_partons_pt20=GetNGenPartons(20.);
+    num_gen_partons_pt40=GetNGenPartons(40.);
+    num_gen_partons_pt70=GetNGenPartons(70.);
+    num_gen_partons_pt100=GetNGenPartons(100.);
+    num_gen_partons_pt150=GetNGenPartons(150.);
+
+    //    cout << "JERR" << endl;
 
     /*
       num_ra2b_veto_electrons=GetNumRA2bElectrons(0);
@@ -236,15 +250,17 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_gen_muons=genMuonCache.size();
     num_iso_gen_muons=0;
     num_lost_muons=0;
-    for (uint imu(0); imu<num_gen_muons; imu++) {
+    //      cout << "JERR3" << endl;
+   for (uint imu(0); imu<num_gen_muons; imu++) {
       if (genMuonCache[imu].IsIso()) num_iso_gen_muons++;
       if (!genMuonCache[imu].IsVeto()) num_lost_muons++;
     }
-    num_ignored_gen_muons = GetNumIgnoredGenMuons();
+  num_ignored_gen_muons = GetNumIgnoredGenMuons();
     SetMuonValues(1,gen_mu1);
     SetMuonValues(2,gen_mu2);
     SetMuonValues(3,gen_mu3);
     SetMuonValues(4,gen_mu4);
+    //     cout << "JERR4" << endl;
 
     if (!genElectronsUpToDate) SetupGenElectrons();
     num_gen_electrons=genElectronCache.size();
@@ -259,7 +275,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     SetElectronValues(2,gen_el2);
     SetElectronValues(3,gen_el3);
     SetElectronValues(4,gen_el4);
-    //     cout << "JERR3" << endl;
  
 
     num_gen_leptons=num_gen_electrons+num_gen_muons;
@@ -321,8 +336,7 @@ void ReducedTreeMaker::SetMuonValues(uint index, genMuInfo& gen_mu) {
     gen_mu.reco_CHIso=mus_pfIsolationR04_sumChargedHadronPt->at(gen_mu.mus_match)/gen_mu.reco_pt;
     gen_mu.reco_NHIso=mus_pfIsolationR04_sumNeutralHadronEt->at(gen_mu.mus_match)/gen_mu.reco_pt;
     gen_mu.reco_PUIso=mus_pfIsolationR04_sumPUPt->at(gen_mu.mus_match)/gen_mu.reco_pt;
-    int pfIdx(-1);
-    gen_mu.reco_hasPFMatch=hasPFMatch(gen_mu.mus_match, particleId::muon, pfIdx);
+    gen_mu.reco_hasPFMatch=hasPFMatch(gen_mu.mus_match, particleId::muon);
     gen_mu.reco_minDR=GetMinDRMuonJet(gen_mu.mus_match);
     //  printf("Reco muon params: %d/%d/%.2f\n",gen_mu.signal_muon, gen_mu.veto_muon, gen_mu.reco_pt);
   }
@@ -368,8 +382,7 @@ void ReducedTreeMaker::SetElectronValues(uint index, genElInfo& gen_el) {
       gen_el.reco_NHIso=els_pfIsolationR03_sumNeutralHadronEt->at(gen_el.els_match)/gen_el.reco_pt;
       gen_el.reco_PUIso=els_pfIsolationR03_sumPUPt->at(gen_el.els_match)/gen_el.reco_pt;
     }
-    int pfIdx(-1);
-    gen_el.reco_hasPFMatch=hasPFMatch(gen_el.els_match, particleId::electron, pfIdx);
+    gen_el.reco_hasPFMatch=hasPFMatch(gen_el.els_match, particleId::electron);
     gen_el.reco_minDR=GetMinDRElectronJet(gen_el.els_match);
     // if (gen_el.signal_electron) printf("Reco electron params: %d/%d/%.2f\n",gen_el.signal_electron, gen_el.veto_electron, gen_el.reco_pt);
   }

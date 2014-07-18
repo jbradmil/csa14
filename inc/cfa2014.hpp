@@ -277,6 +277,7 @@ protected:
   std::vector<float> *beamSpot_beamWidthXError;
   std::vector<float> *beamSpot_beamWidthYError;
   UInt_t Nels;
+  std::vector<float> *els_nPFmatch;
   std::vector<float> *els_energy;
   std::vector<float> *els_et;
   std::vector<float> *els_eta;
@@ -755,6 +756,7 @@ protected:
   std::vector<float> *mets_AK5_unCPhi;
   std::vector<float> *mets_AK5_unCPt;
   UInt_t Nmus;
+  std::vector<float> *mus_nPFmatch;
   std::vector<float> *mus_energy;
   std::vector<float> *mus_et;
   std::vector<float> *mus_eta;
@@ -1450,6 +1452,7 @@ protected:
   std::vector<float> *pfmets_unCPhi;
   std::vector<float> *pfmets_unCPt;
   UInt_t Nphotons;
+  std::vector<float> *photons_nPFmatch;
   std::vector<float> *photons_energy;
   std::vector<float> *photons_et;
   std::vector<float> *photons_eta;
@@ -1518,6 +1521,7 @@ protected:
   std::vector<float> *pv_isValid;
   std::vector<float> *pv_tracksSize;
   UInt_t Ntaus;
+  std::vector<float> *taus_nPFmatch;
   std::vector<float> *taus_status;
   std::vector<float> *taus_phi;
   std::vector<float> *taus_pt;

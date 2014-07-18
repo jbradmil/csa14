@@ -97,7 +97,8 @@ protected:
   double GetTopPt() const;
   double GetTopPtWeightOfficial() const;
 
-  int GetNGenParticles(const int, const float=0., const bool=false) const;
+  int GetNGenPartons(const float=0.) const;
+  int GetNGenParticles(const int, const float=0., const bool=true) const;
   int GetGenParticleIndex(const int, const int=0) const;
 
   int GetJetGenId(const int) const;
@@ -133,7 +134,8 @@ protected:
   void SetupGenTaus() const;
   int GetGenTauLossCode(const int) const;
 
-  bool hasPFMatch(int index, int pdgId, int &pfIdx);
+  bool hasPFMatch(const int index, const int pdgId) const;
+  bool IsFromB(const int, const int, const int) const;
 
   vector<int> GetRecoMuons(bool veto);
   bool isRecoMuon(const uint imu, const uint level=0) const;
