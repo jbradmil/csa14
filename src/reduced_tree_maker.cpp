@@ -30,8 +30,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   //  bool passesPVCut(false), passesMETCleaningCut(false);
 
 
-  float pu_true_num_interactions(0.0);
+  float pu_num_interactions(0.0), pu_true_num_interactions(0.0);
   unsigned short num_primary_vertices(0);
+
+  float eoot_pu, loot_pu, oot_pu;
 
   float met(0.0), ht(0.0);
 
@@ -89,7 +91,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("entry", &entry);
 
   reduced_tree.Branch("pu_true_num_interactions", &pu_true_num_interactions);
+  reduced_tree.Branch("pu_num_interactions", &pu_num_interactions);
   reduced_tree.Branch("num_primary_vertices", &num_primary_vertices);
+  reduced_tree.Branch("eoot_pu", &eoot_pu);
+  reduced_tree.Branch("loot_pu", &loot_pu);
+  reduced_tree.Branch("oot_pu", &oot_pu);
 
   reduced_tree.Branch("met", &met);
   reduced_tree.Branch("ht", &ht);
@@ -191,10 +197,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     
     // passesMETCleaningCut=PassesMETCleaningCut();
     // passesPVCut=PassesPVCut();
-
-    if (cmEnergy<=8) pu_true_num_interactions=GetNumInteractions();
-    else pu_true_num_interactions=20;
+    
     num_primary_vertices=GetNumVertices();
+
+    pu_true_num_interactions=GetTrueNumInteractions();
+    pu_num_interactions=GetNumInteractions();
+    eoot_pu=GetEarlyOutOfTimePU(3);
+    loot_pu=GetLateOutOfTimePU();
+    oot_pu=eoot_pu+loot_pu;
     //    cout << "JERR1" << endl;
 
     met=pfTypeImets_et->at(0);

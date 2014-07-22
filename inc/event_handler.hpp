@@ -59,10 +59,13 @@ protected:
   void GetBeta(const std::string which="beta") const;
 
 
+  double GetTrueNumInteractions() const;
   double GetNumInteractions() const;
   unsigned short GetNumVertices() const;
   double GetPUWeight(reweight::LumiReWeighting &) const;
   bool isGoodVertex(const unsigned int) const;
+  double GetEarlyOutOfTimePU(const int=1) const;
+  double GetLateOutOfTimePU() const;
 
   bool PassesPVCut() const;
   bool PassesMETCleaningCut() const;
@@ -72,6 +75,7 @@ protected:
   bool PassesBadJetFilter() const;
   bool isGoodJet(const unsigned int, const bool=true, const double=20.0,
                  const double=2.4, const bool=true) const;
+  bool isCleanJet(const unsigned int, const int) const;
   bool isProblemJet(const unsigned int) const;
   bool jetPassLooseID(const unsigned int) const;
 

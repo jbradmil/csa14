@@ -241,6 +241,16 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   return true;
 }
 
+bool EventHandler::isCleanJet(const unsigned int ijet, const int pdgId) const{ // remove overlap, based on pfcand hypothesis
+  float jet_eta(jets_AKPF_eta->at(ijet)), jet_phi(jets_AKPF_phi->at(ijet));
+  for (unsigned int it = 0; it<pfcand_pt->size(); it++) {
+    if (static_cast<int>(fabs(pfcand_pdgId->at(it)))!=pdgId) continue;
+    float dR = Math::GetDeltaR(jet_phi, jet_eta, pfcand_phi->at(it), pfcand_eta->at(it));
+    if (dR<=0.5) return false;
+  }
+  return true;
+}
+
 bool EventHandler::jetPassLooseID(const unsigned int ijet) const{
   //want the uncorrected energy
   const double jetenergy = jets_AKPF_energy->at(ijet) * jets_AKPF_corrFactorRaw->at(ijet);
@@ -450,11 +460,42 @@ int EventHandler::NewGetNumIsoTracks(const double ptThresh) const{
   return nisotracks;
 }
 
-double EventHandler::GetNumInteractions() const{
+double EventHandler::GetTrueNumInteractions() const{
   double npv(-1.0);
   for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
     if(PU_bunchCrossing->at(i)==0){
       npv = PU_TrueNumInteractions->at(i);
+    }
+  }
+  return npv;
+}
+
+double EventHandler::GetNumInteractions() const{
+  double npv(-1.0);
+  for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
+    if(PU_bunchCrossing->at(i)==0){
+      npv = PU_NumInteractions->at(i);
+    }
+  }
+  return npv;
+}
+
+double EventHandler::GetEarlyOutOfTimePU(const int BX_before) const{
+  double npv(-1.0);
+  int first_BX_to_check = 0 - BX_before;
+  for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
+    if(PU_bunchCrossing->at(i)<first_BX_to_check) continue;
+    if(PU_bunchCrossing->at(i)==0) break;
+    npv += PU_NumInteractions->at(i);
+  }
+  return npv;
+}
+
+double EventHandler::GetLateOutOfTimePU() const{
+  double npv(-1.0);
+  for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
+    if(PU_bunchCrossing->at(i)==1){
+      npv = PU_NumInteractions->at(i);
     }
   }
   return npv;
@@ -687,7 +728,8 @@ float EventHandler::GetMinDRMuonJet(const int mu) const{
   float mu_eta(mus_eta->at(mu)), mu_phi(mus_phi->at(mu));
   float thisDR(999.);
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
-    if (fabs(GetJetGenId(jet))==13) continue;
+    //  if (fabs(GetJetGenId(jet))==13) continue;
+    if (!isCleanJet(jet, 13)) continue; // trying to remove overlap
     if(isGoodJet(jet, true, 0.0, 5.0, false)) {
       thisDR=Math::GetDeltaR(mu_phi, mu_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
     }
