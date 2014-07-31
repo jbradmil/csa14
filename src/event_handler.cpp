@@ -30,14 +30,14 @@
 #include "b_jet.hpp"
 #include "timer.hpp"
 #include "math.hpp"
-#include "in_json_2012.hpp"
+// #include "in_json_2012.hpp"
 
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
-const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"));
-const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
-const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
+// const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"))
+// const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
+// const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
 
 
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
@@ -771,7 +771,7 @@ void EventHandler::SetupGenMuons() const {
       double d2 = sqrt(pow(genMuonCache[genLep].GetMinDPt().second/0.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, mus_phi->at(dPt_ind), mus_eta->at(dPt_ind))/0.05,2));
       d1<d2 ? genMuonCache[genLep].SetMusMatch(min_dR.first) : genMuonCache[genLep].SetMusMatch(min_dPt.first);
     } 
-    if (genMuonCache[genLep].GetMusMatch()>=0) mus_matched.push_back((uint)genMuonCache[genLep].GetMusMatch());
+    if (genMuonCache[genLep].GetMusMatch()>=0) mus_matched.push_back(static_cast<uint>(genMuonCache[genLep].GetMusMatch()));
     int reco_index(genMuonCache[genLep].GetMusMatch());
     genMuonCache[genLep].SetIsVeto(0);
     if (reco_index>=0) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
@@ -962,7 +962,7 @@ void EventHandler::SetupGenElectrons() const {
       double d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(dPt_ind), els_eta->at(dPt_ind))/0.07,2));
       d1<d2 ? genElectronCache[genLep].SetElsMatch(min_dR.first) : genElectronCache[genLep].SetElsMatch(min_dPt.first);
     } 
-    if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back((uint)genElectronCache[genLep].GetElsMatch());
+    if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back(static_cast<uint>(genElectronCache[genLep].GetElsMatch()));
     //  cout << "Gen electron " << genElectronCache[genLep].GetMCElsIndex() << " matched to reco electron " << genElectronCache[genLep].GetElsMatch() << endl;
     int reco_index(genElectronCache[genLep].GetElsMatch());
     genElectronCache[genLep].SetIsVeto(0);
@@ -1082,7 +1082,7 @@ void EventHandler::SetupGenTaus() const {
       double d2 = sqrt(pow(genTauCache[genLep].GetMinDPt().second/3.,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, taus_phi->at(dPt_ind), taus_eta->at(dPt_ind))/0.2,2));
       d1<d2 ? genTauCache[genLep].SetTausMatch(min_dR.first) : genTauCache[genLep].SetTausMatch(min_dPt.first);
     } 
-    if (genTauCache[genLep].GetTausMatch()>=0) taus_matched.push_back((uint)genTauCache[genLep].GetTausMatch());
+    if (genTauCache[genLep].GetTausMatch()>=0) taus_matched.push_back(static_cast<uint>(genTauCache[genLep].GetTausMatch()));
     // cout << "Gen tau " << genTauCache[genLep].GetMCTausIndex() << " matched to reco tau " << genTauCache[genLep].GetTausMatch() << " (" << genTauCache[genLep].GetMinDR().second << "/" << genTauCache[genLep].GetMinDPt().second << ")" << endl;
     // Determine if/where/why we lost the tau
     genTauCache[genLep].SetLossCode(GetGenTauLossCode(genLep));
