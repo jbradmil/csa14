@@ -29,7 +29,7 @@ void compare_samples_lost_muon(TString var, TCut cuts, TString title, int nbinsx
   h13->SetLineColor(2);
   h13->SetLineWidth(2);
 
-  cuts+="num_gen_muons==1&&gen_mu1.mus_match>=0";
+  cuts+="num_gen_muons==1&&muon_reco_match>=0";
   //  cuts+="gen_mu1.veto_muon<1";
 
   chain8->Project("h8", var, cuts);
