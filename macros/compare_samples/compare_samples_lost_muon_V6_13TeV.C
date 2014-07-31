@@ -12,8 +12,7 @@ void compare_samples_lost_muon(TString var, TCut cuts, TString title, int nbinsx
   TChain* chain8 = new TChain("reduced_tree");
   chain8->Add("../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root");
   TChain* chain13 = new TChain("reduced_tree");
-  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v1-MINIAODSIM.list.root");
-  //  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-MINIAODSIM-PU20bx25_POSTLS170_V5-v2_10k.root");
+  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1-MINIAODSIM_10k.root");
 
   TH1F* h8 = new TH1F("h8",title, nbinsx, low, high);
   TH1F* h13 = new TH1F("h13",title, nbinsx, low, high);
@@ -30,7 +29,7 @@ void compare_samples_lost_muon(TString var, TCut cuts, TString title, int nbinsx
   h13->SetLineColor(2);
   h13->SetLineWidth(2);
 
-  cuts+="num_gen_muons==1&&muon_reco_match>=0";
+  cuts+="num_gen_muons==1&&gen_mu1.mus_match>=0";
   //  cuts+="gen_mu1.veto_muon<1";
 
   chain8->Project("h8", var, cuts);
@@ -51,6 +50,6 @@ void compare_samples_lost_muon(TString var, TCut cuts, TString title, int nbinsx
   leg->AddEntry(h13,"13 TeV","l");
   leg->Draw();
 
-  TString plotTitle = var+"lost_muon"+comments+"_compare8and13TeV.pdf";
+  TString plotTitle = var+"lost_muon"+comments+"_compare8and13TeV_V6ttbar.pdf";
   c1->Print(plotTitle);
 }

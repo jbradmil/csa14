@@ -12,7 +12,8 @@ void compare_samples(TString var, TCut cuts, TString title, int nbinsx, float lo
   TChain* chain8 = new TChain("reduced_tree");
   chain8->Add("../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root");
   TChain* chain13 = new TChain("reduced_tree");
-  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v1-MINIAODSIM.list.root");
+  // chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v1-MINIAODSIM.list.root");
+  chain13->Add("../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-MINIAODSIM-PU20bx25_POSTLS170_V5-v2_10k.root");
 
   TH1F* h8 = new TH1F("h8",title, nbinsx, low, high);
   TH1F* h13 = new TH1F("h13",title, nbinsx, low, high);

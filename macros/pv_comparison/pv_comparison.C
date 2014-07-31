@@ -27,11 +27,25 @@ void pv_comparison(TString files, TString comments="") {
   h0to10->SetLineWidth(2);
 
   TCut mu("num_gen_muons==1&&gen_mu1.mus_match>=0");
+  
   chain->Project("h0to10", "gen_mu1.reco_relIso", mu+"num_primary_vertices<=10");
   chain->Project("h10to15", "gen_mu1.reco_relIso", mu+"num_primary_vertices>10&&num_primary_vertices<=15");
   chain->Project("h15to20", "gen_mu1.reco_relIso", mu+"num_primary_vertices>15&&num_primary_vertices<=20");
   chain->Project("h20to25", "gen_mu1.reco_relIso", mu+"num_primary_vertices>20&&num_primary_vertices<=25");
   chain->Project("h25to40", "gen_mu1.reco_relIso", mu+"num_primary_vertices>25");
+  
+  /*
+    chain->Project("h0to10", "gen_mu1.reco_relIso", mu+"num_primary_vertices<=13");
+    chain->Project("h10to15", "gen_mu1.reco_relIso", mu+"num_primary_vertices>13&&num_primary_vertices<=17");
+    chain->Project("h15to20", "gen_mu1.reco_relIso", mu+"num_primary_vertices>17&&num_primary_vertices<=21");
+    chain->Project("h25to40", "gen_mu1.reco_relIso", mu+"num_primary_vertices>21");
+  */
+
+  float avg1(h0to10->GetMean());
+  float avg2(h10to15->GetMean());
+  float avg3(h15to20->GetMean());
+  float avg4(h20to25->GetMean());
+  float avg5(h25to40->GetMean());
 
   h0to10->Scale(1/h0to10->Integral());
   h10to15->Scale(1/h10to15->Integral());
@@ -44,6 +58,12 @@ void pv_comparison(TString files, TString comments="") {
   h15to20->SetLineColor(3);
   h20to25->SetLineColor(4);
   h25to40->SetLineColor(6);
+
+  h0to10->SetLineWidth(2);
+  h10to15->SetLineWidth(2);
+  h15to20->SetLineWidth(2);
+  h20to25->SetLineWidth(2);
+  h25to40->SetLineWidth(2);
 
   TCanvas* c1 = new TCanvas();
   float max = TMath::Max(h0to10->GetMaximum(), h10to15->GetMaximum());
@@ -58,12 +78,18 @@ void pv_comparison(TString files, TString comments="") {
   h20to25->Draw("hist,same");
   h25to40->Draw("hist,same");
 
-  TLegend* leg = new TLegend(0.75,0.6,0.9,0.9);
-  leg->AddEntry(h0to10,"NPV#leq10","l");
-  leg->AddEntry(h10to15,"10<NPV#leq15","l");
-  leg->AddEntry(h15to20,"15<NPV#leq20","l");
-  leg->AddEntry(h20to25,"20<NPV#leq25","l");
-  leg->AddEntry(h25to40,"NPV>25","l");
+  TLegend* leg = new TLegend(0.50,0.6,0.9,0.9);
+  char label[1000];
+  sprintf(label,"NPV#leq13 (#mu=%3.2f)",avg1);
+  leg->AddEntry(h0to10,label,"l");
+  sprintf(label,"13<NPV#leq17 (#mu=%3.2f)",avg2);
+  leg->AddEntry(h10to15,label,"l");
+  sprintf(label,"17<NPV#leq21 (#mu=%3.2f)",avg3);
+  leg->AddEntry(h15to20,label,"l");
+  //sprintf(label,"20<NPV#leq25 (#mu=%3.2f)",avg4);
+  //leg->AddEntry(h20to25,label,"l");
+  sprintf(label,"NPV>21 (#mu=%3.2f)",avg5);
+  leg->AddEntry(h25to40,label,"l");
   leg->Draw();
 
   TString plotTitle ="relIso_vs_NPV"+comments+".pdf";

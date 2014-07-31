@@ -32,6 +32,11 @@ typedef struct
   float reco_NHIso;
   float reco_CHIso;
   float reco_PUIso;
+  float reco_IsoEn;
+  float reco_EMEn;
+  float reco_NHEn;
+  float reco_CHEn;
+  float reco_PUEn;
   int reco_hasPFMatch;
   float reco_minDR; // jet-mu
 } genMuInfo;
