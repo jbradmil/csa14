@@ -48,6 +48,12 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   genElectronsUpToDate(false),
   genTauCache(0),
   genTausUpToDate(false),
+  recoMuonCache(0),
+  recoMuonsUpToDate(false),
+  recoElectronCache(0),
+  recoElectronsUpToDate(false),
+  recoTauCache(0),
+  recoTausUpToDate(false), 
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
   beta(0){
@@ -69,6 +75,50 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
     chainB.SetBranchStatus("Njets_AK5PFclean",0);
     chainB.SetBranchStatus("jets_AK5PFclean_*",0);
   }
+}
+
+bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
+  if (!recoMuonsUpToDate) {
+    if (cmEnergy>=13) recoMuonCache=GetRecoMuons(true);
+    else recoMuonCache=GetRA2bMuons(true);
+    recoMuonsUpToDate=true;
+  }
+  for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
+    double deltaR = Math::GetDeltaR(phi, eta, mus_phi->at(recoMuonCache[mu]), mus_eta->at(recoMuonCache[mu]));
+    if (deltaR<0.4) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool EventHandler::isInElectronCollection(const double eta, const double phi) const{
+if (!recoElectronsUpToDate) {
+    if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
+    else recoElectronCache=GetRA2bElectrons(true);
+    recoElectronsUpToDate=true;
+  }
+  for (unsigned int el(0); el<recoElectronCache.size(); el++) {
+    double deltaR = Math::GetDeltaR(phi, eta, els_phi->at(recoElectronCache[el]), els_eta->at(recoElectronCache[el]));
+    if (deltaR<0.4) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool EventHandler::isInTauCollection(const double eta, const double phi) const{
+if (!recoTausUpToDate) {
+    recoTauCache=GetRecoTaus();
+    recoTausUpToDate=true;
+  }
+  for (unsigned int tau(0); tau<recoTauCache.size(); tau++) {
+    double deltaR = Math::GetDeltaR(phi, eta, taus_phi->at(recoTauCache[tau]), taus_eta->at(recoTauCache[tau]));
+    if (deltaR<0.4) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void EventHandler::GetBeta(const std::string which) const{
@@ -152,6 +202,9 @@ void EventHandler::GetEntry(const unsigned int entry){
   genMuonsUpToDate=false;
   genElectronsUpToDate=false;
   genTausUpToDate=false;
+  recoMuonsUpToDate=false;
+  recoElectronsUpToDate=false;
+  recoTausUpToDate=false;
 }
 
 int EventHandler::GetcfAVersion() const{
@@ -233,11 +286,16 @@ int EventHandler::GetPBNR() const{
 }
 
 // isGoodJet(jet, false, 20.0, 5.0, false)
-bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool doBeta) const{
+bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh/*, const bool doBeta*/) const{
   if(jets_AKPF_pt->at(ijet)<ptThresh || fabs(jets_AKPF_eta->at(ijet))>etaThresh) return false;
   if( jetid && !jetPassLooseID(ijet) ) return false;
   // if(!betaUpToDate) GetBeta();
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
+  if (cmEnergy>8) { // overlap removal
+    if (isInMuonCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+    if (isInElectronCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+    if (isInTauCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+  }
   return true;
 }
 
@@ -333,12 +391,11 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
     }
     break;
   }
-  // if(k>pf_else_pt->size()) return false;
+  // if(k>pf_els_pt->size()) return false;
   if (level>0) {
     if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false;
     if (pf_els_pt->at(k) < pt_cut) return false;
   }
-
   if ( fabs(pf_els_dEtaIn->at(k)) > eta_cut)  return false;
   if ( fabs(pf_els_dPhiIn->at(k)) > phi_cut)  return false;
   if (pf_els_sigmaIEtaIEta->at(k) > sigmaietaieta_cut) return false;
@@ -349,12 +406,13 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
   if ( fabs(d0) >= d0_cut ) return false;
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= dz_cut ) return false;
 
-  if(GetElectronRelIso(k)>=iso_cut && use_iso) return false;
+  if(GetRA2bElectronRelIso(k)>=iso_cut && use_iso) return false;
   return true;
 }
 
 double EventHandler::GetRA2bElectronRelIso(const unsigned int k) const{
-  const double rho(rho_kt6PFJetsForIsolation2012);
+  //   cout << "GetRA2bElectronRelIso" << endl;
+ const double rho(rho_kt6PFJetsForIsolation2012);
   // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
   double AE(0.10); 
   const double abseta(fabs(pf_els_scEta->at(k)));
@@ -411,8 +469,41 @@ bool EventHandler::isRA2bTau(const unsigned int k,
   if (taus_pt->at(k)<pt_cut) return false;
   if (fabs(taus_eta->at(k)) > 2.4) return false;
   if (require_iso && (taus_byLooseIsolationDeltaBetaCorr->at(k) <= 0)) return false;
+
+  // if (cmEnergy>8) {
+  //   if (isLeptonicTau(k)) return false;
+  // }
+
   return true;
 }
+
+// bool EventHandler::isLeptonicTau(const unsigned int k) const{
+//   if (!recoElectronsUpToDate) {
+//     if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
+//     //  else recoElectronCache=GetRA2bElectrons(true);
+//     recoElectronsUpToDate=true;
+//   }
+
+//   if (!recoMuonsUpToDate) {
+//     if (cmEnergy>=13) recoElectronCache=GetRecoMuons(true);
+//     //  else recoElectronCache=GetRA2bElectrons(true);
+//     recoMuonsUpToDate=true;
+//   }
+
+//   int el_ind(taus_el_ind->at(k)), mu_ind(taus_mu_ind->at(k));
+//   if (el_ind>=0) {
+//     for (unsigned int iel(0); iel<recoElectronCache.size(); iel++) {
+//       if (el_ind==recoElectronCache[iel]) return true;
+//     }
+//   }
+//   if (mu_ind>=0) {
+//     for (unsigned int imu(0); imu<recoMuonCache.size(); imu++) {
+//       if (mu_ind==recoMuonCache[imu]) return true;
+//     }
+//   }
+  
+//   return false;
+// }
 
 int EventHandler::GetNumRA2bElectrons(const unsigned short level, const bool use_iso) const{
   int count(0);
@@ -730,7 +821,7 @@ float EventHandler::GetMinDRMuonJet(const int mu) const{
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
     //  if (fabs(GetJetGenId(jet))==13) continue;
     if (!isCleanJet(jet, 13)) continue; // trying to remove overlap
-    if(isGoodJet(jet, true, 0.0, 5.0, false)) {
+    if(isGoodJet(jet, true, 0.0, 5.0/*, false*/)) {
       thisDR=Math::GetDeltaR(mu_phi, mu_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
     }
     if (thisDR<minDR) minDR=thisDR;
@@ -906,7 +997,7 @@ float EventHandler::GetMinDRElectronJet(const int el) const{
   float thisDR(999.);
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
     if (fabs(GetJetGenId(jet))==11) continue;
-    if(isGoodJet(jet, true, 0.0, 5.0, false)) {
+    if(isGoodJet(jet, true, 0.0, 5.0/*, false*/)) {
       thisDR=Math::GetDeltaR(el_phi, el_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
     }
     if (thisDR<minDR) minDR=thisDR;
@@ -1159,13 +1250,24 @@ bool EventHandler::hasPFMatch(const int index, const int pdgId) const{
   else return (deltaPT<5);
 }
 
-vector<int> EventHandler::GetRecoMuons(bool veto) {
+vector<int> EventHandler::GetRecoMuons(const bool veto) const{
   vector<int> muons;
   for(uint index=0; index<mus_pt->size(); index++)
     if(veto){
       if(isRecoMuon(index, 0)) muons.push_back(index);
     }	else {
       if(isRecoMuon(index, 1)) muons.push_back(index);
+    }
+  return muons;
+}
+
+vector<int> EventHandler::GetRA2bMuons(const bool veto) const{
+  vector<int> muons;
+  for(uint index=0; index<pf_mus_pt->size(); index++)
+    if(veto){
+      if(isRA2bMuon(index, 0)) muons.push_back(index);
+    }	else {
+      if(isRA2bMuon(index, 1)) muons.push_back(index);
     }
   return muons;
 }
@@ -1199,7 +1301,7 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level) const{
   // need to make sure both collections have the "slimmed cuts"
   // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
 
-  if (!hasPFMatch(imu, 13)) return false;
+  if (cmEnergy>8&&!mus_isPF->at(imu)) return false;
   if (!(mus_pt->at(imu)>5.0 ||
 	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
 	mus_isPFMuon->at(imu))) return false;
@@ -1214,8 +1316,14 @@ double EventHandler::GetMuonRelIso(const unsigned int imu) const{
   return (mus_pfIsolationR04_sumChargedHadronPt->at(imu) + isoNeutral) / mus_pt->at(imu);
 }
 
+vector<int> EventHandler::GetRecoTaus() const{
+  vector<int> taus;
+  for(uint index=0; index<taus_pt->size(); index++)
+      if(isRA2bTau(index)) taus.push_back(index);
+  return taus;
+}
 
-vector<int> EventHandler::GetRecoElectrons(bool veto){
+vector<int> EventHandler::GetRecoElectrons(const bool veto) const{
   vector<int> electrons;
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
@@ -1226,12 +1334,25 @@ vector<int> EventHandler::GetRecoElectrons(bool veto){
   return electrons;
 }
 
+vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
+  vector<int> electrons;
+  for(uint index=0; index<pf_els_pt->size(); index++)
+    if(!veto){
+      if(isRA2bElectron(index,3)) electrons.push_back(index);
+    }	else {
+      if(isRA2bElectron(index,0)) electrons.push_back(index);
+    }
+  return electrons;
+}
+
 bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
 //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
   double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
+  if (cmEnergy>8&&!els_isPF->at(iel)) return false;
+
   switch(level){
   case 1:
     pt_cut=20.0;

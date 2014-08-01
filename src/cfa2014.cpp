@@ -127,6 +127,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   isotk_iso(0),
   isotk_dzpv(0),
   isotk_charge(0),
+  els_isPF(0),
+  mus_isPF(0),
+  taus_el_ind(0),
+  taus_mu_ind(0),
   b_trigger_prescalevalue(),
   b_trigger_name(),
   b_trigger_decision(),
@@ -241,6 +245,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_isotk_iso(),
   b_isotk_dzpv(),
   b_isotk_charge(),
+  b_els_isPF(),
+  b_mus_isPF(),
+  b_taus_el_ind(),
+  b_taus_mu_ind(),
   NbeamSpot(0),
   beamSpot_x(0),
   beamSpot_y(0),
@@ -3146,6 +3154,10 @@ void cfA::InitializeA(){
   isotk_iso=0;
   isotk_dzpv=0;
   isotk_charge=0;
+  els_isPF=0;
+  mus_isPF=0;
+  taus_el_ind=0;
+  taus_mu_ind=0;
   chainA.SetBranchAddress("trigger_prescalevalue", &trigger_prescalevalue, &b_trigger_prescalevalue);
   chainA.SetBranchAddress("trigger_name", &trigger_name, &b_trigger_name);
   chainA.SetBranchAddress("trigger_decision", &trigger_decision, &b_trigger_decision);
@@ -3261,6 +3273,12 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
     chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
     chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  }
+  else {
+    chainA.SetBranchAddress("els_isPF", &els_isPF, &b_els_isPF);
+    chainA.SetBranchAddress("mus_isPF", &mus_isPF, &b_mus_isPF);
+    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
+    chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
 }
 

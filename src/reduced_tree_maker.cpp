@@ -247,10 +247,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       timer.PrintRemainingTime();
     }
     timer.Iterate();
-    //     cout << "JERR" << endl;
+    //        cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
-    //    cout << "*****Event " << i << "*****" << endl;
+    //     cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
@@ -265,10 +265,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     eoot_pu=GetEarlyOutOfTimePU(3);
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
-    //    cout << "JERR1" << endl;
+    //       cout << "JERR1" << endl;
 
     met=pfTypeImets_et->at(0);
-    //     cout << "JERR2" << endl;
+    //        cout << "JERR2" << endl;
     ht=GetHT();
     num_jets=GetNumGoodJets();
     num_csvt_jets=GetNumCSVTJets();
@@ -319,7 +319,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_gen_muons=genMuonCache.size();
     num_iso_gen_muons=0;
     num_lost_muons=0;
-    //      cout << "JERR3" << endl;
     for (uint imu(0); imu<num_gen_muons; imu++) {
       if (genMuonCache[imu].IsIso()) num_iso_gen_muons++;
       if (!genMuonCache[imu].IsVeto()) num_lost_muons++;
@@ -329,7 +328,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     SetMuonValues(2,gen_mu2);
     SetMuonValues(3,gen_mu3);
     SetMuonValues(4,gen_mu4);
-    //     cout << "JERR4" << endl;
 
     if (!genElectronsUpToDate) SetupGenElectrons();
     num_gen_electrons=genElectronCache.size();
@@ -349,15 +347,29 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_gen_leptons=num_gen_electrons+num_gen_muons;
     num_iso_gen_leptons=num_iso_gen_electrons+num_iso_gen_muons;
 
-    vector<int> reco_muons = GetRecoMuons(false);
-    vector<int> reco_veto_muons = GetRecoMuons(true);
+    vector<int> reco_muons, reco_veto_muons;
+    if (cmEnergy>8) {
+      reco_muons = GetRecoMuons(false);
+      reco_veto_muons = GetRecoMuons(true);
+    }
+    else {
+     reco_muons = GetRA2bMuons(false);
+     reco_veto_muons = GetRA2bMuons(true);
+     //    cout << "JERR3" << endl;
+    }
     num_reco_muons = reco_muons.size();
     num_reco_veto_muons = reco_veto_muons.size();
     
     vector<int> reco_electrons, reco_veto_electrons;
-    reco_electrons = GetRecoElectrons(false);
-    reco_veto_electrons = GetRecoElectrons(true);
-
+     if (cmEnergy>8) {
+       reco_electrons = GetRecoElectrons(false);
+       reco_veto_electrons = GetRecoElectrons(true);
+     }
+     else {
+       reco_electrons = GetRA2bElectrons(false);
+       reco_veto_electrons = GetRA2bElectrons(true);
+       //        cout << "JERR4" << endl;
+     }
 
     num_reco_electrons = reco_electrons.size();
     num_reco_veto_electrons = reco_veto_electrons.size();

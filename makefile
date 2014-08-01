@@ -32,7 +32,7 @@ $(EXEDIR)/print_collections.exe: print_collections.o object_printer.o cfa2014.o
 # Note: you need a space after sed -i for Max OSX.  You must NOT have a space for linux.
 $(MAKEDIR)/%.d: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -MM -MG -MF $@ $< 
-	sed -i'' 's#$*.o#$(OBJDIR)/$*.o $(MAKEDIR)/$*.d#g' $@
+	sed -i '' 's#$*.o#$(OBJDIR)/$*.o $(MAKEDIR)/$*.d#g' $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c $<

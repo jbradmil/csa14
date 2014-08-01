@@ -48,6 +48,12 @@ protected:
   mutable bool genElectronsUpToDate; 
   mutable std::vector<GenTau>genTauCache;
   mutable bool genTausUpToDate;
+  mutable std::vector<int> recoMuonCache;
+  mutable bool recoMuonsUpToDate;
+  mutable std::vector<int> recoElectronCache;
+  mutable bool recoElectronsUpToDate; 
+  mutable std::vector<int>recoTauCache;
+  mutable bool recoTausUpToDate;
   mutable bool betaUpToDate;
   static const double CSVTCut, CSVMCut, CSVLCut;
   double scaleFactor;
@@ -58,6 +64,9 @@ protected:
   void GetEntry(const unsigned int);
   void GetBeta(const std::string which="beta") const;
 
+  bool isInMuonCollection(const double, const double) const;
+  bool isInElectronCollection(const double, const double) const;
+  bool isInTauCollection(const double, const double) const;
 
   double GetTrueNumInteractions() const;
   double GetNumInteractions() const;
@@ -74,7 +83,7 @@ protected:
   int GetPBNR() const;
   bool PassesBadJetFilter() const;
   bool isGoodJet(const unsigned int, const bool=true, const double=20.0,
-                 const double=2.4, const bool=true) const;
+                 const double=2.4/*, const bool=true*/) const;
   bool isCleanJet(const unsigned int, const int) const;
   bool isProblemJet(const unsigned int) const;
   bool jetPassLooseID(const unsigned int) const;
@@ -141,7 +150,7 @@ protected:
   bool hasPFMatch(const int index, const int pdgId) const;
   bool IsFromB(const int, const int, const int) const;
 
-  vector<int> GetRecoMuons(bool veto);
+  vector<int> GetRecoMuons(const bool veto) const;
   bool isRecoMuon(const uint imu, const uint level=0) const;
   double GetMuonRelIso(const unsigned int imu) const;
   bool passedRecoMuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
@@ -150,8 +159,13 @@ protected:
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(bool veto);
+  vector<int> GetRecoElectrons(const bool veto) const;
   bool isRecoElectron(const uint imu, const uint level=0) const;
+
+  vector<int> GetRA2bElectrons(const bool veto) const;
+  vector<int> GetRA2bMuons(const bool veto) const;
+
+  vector<int> GetRecoTaus() const;
 
   bool passedRA4ElectronSelection(uint iel, float ElectronPTThreshold=20.);
   bool passedRA4ElectronVeto(uint iel, float ElectronPTThreshold=15.);
@@ -159,7 +173,7 @@ protected:
   float GetRA4ElectronIsolation(uint iel);
   float GetEffectiveArea(float SCEta, bool isMC);
 
-  vector<int> GetCSAElectrons(bool veto);
+  // vector<int> GetCSAElectrons(bool veto);
   bool passedCSAElectronSelection(uint iel, float ElectronPTThreshold=20.);
   bool passedCSAElectronVeto(uint iel, float ElectronPTThreshold=15.);
   float GetCSAElectronIsolation(const uint iel) const;

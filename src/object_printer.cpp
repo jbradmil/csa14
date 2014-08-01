@@ -20,7 +20,7 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
 
     cout << "*****Event " << i << "*****" << endl;
   
-    /*  
+      
     cout << "Printing contents of mc_doc..." << endl;
     for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
       if (mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23) {  // hard scatter
@@ -36,10 +36,10 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
 	    <<",   \tstatus "<<mc_doc_status->at(imc)
 	    <<", \tGMom ID "<<(int)mc_doc_grandmother_id->at(imc)
 	    <<", \tGGMom ID "<<(int)mc_doc_ggrandmother_id->at(imc) <<endl;
-      }
+	   }
     }
     cout << endl;
-    
+    /*
     cout << "Looking for partons..." << endl;
     for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
       if ( (fabs(mc_doc_id->at(imc))>0&&fabs(mc_doc_id->at(imc))<6) || fabs(mc_doc_id->at(imc))==21 ) {
@@ -101,7 +101,7 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
       }
       }
       cout << endl;   
-    */
+    
       cout << "Printing mc_mus..." << endl;
       for(unsigned int imc = 0; imc < mc_mus_id->size(); imc++){
       if (fabs((int)mc_mus_mother_id->at(imc))==24||fabs((int)mc_mus_grandmother_id->at(imc))==24||fabs((int)mc_mus_ggrandmother_id->at(imc))==24)
@@ -115,7 +115,7 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
       <<", \tN daughters "<<mc_mus_numOfDaughters->at(imc)<<endl;
       }
       cout<<endl;
-      /*
+      
       cout << "Printing mc_electrons..." << endl;
       for(unsigned int imc = 0; imc < mc_electrons_id->size(); imc++){
       if (fabs((int)mc_electrons_mother_id->at(imc))==24||fabs((int)mc_electrons_grandmother_id->at(imc))==24||fabs((int)mc_electrons_ggrandmother_id->at(imc))==24)
