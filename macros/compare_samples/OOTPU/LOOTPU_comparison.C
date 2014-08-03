@@ -25,11 +25,20 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   h5to15->GetXaxis()->SetLabelSize(0.04);
   h5to15->SetLineWidth(2);
 
+  //  h5to15->StatOverflows(true);
+  //  h15to20->StatOverflows(true);
+  //  h20to25->StatOverflows(true);
+  //  h25to35->StatOverflows(true);
+
   TCut mu("num_gen_muons==1&&muon_reco_match>=0");
-  chain->Project("h5to15", var, mu+"loot_pu>=5&&loot_pu<15");
-  chain->Project("h15to20", var, mu+"loot_pu>=15&&loot_pu<20");
-  chain->Project("h20to25", var, mu+"loot_pu>=20&&loot_pu<25");
-  chain->Project("h25to35", var, mu+"loot_pu>=25&&loot_pu<35");
+  //if (files.Contains("PU_S10")) {
+    chain->Project("h5to15", var, mu+"loot_pu>=0&&loot_pu<15");
+    chain->Project("h15to20", var, mu+"loot_pu>=15&&loot_pu<20");
+    chain->Project("h20to25", var, mu+"loot_pu>=20&&loot_pu<25");
+    chain->Project("h25to35", var, mu+"loot_pu>=25&&loot_pu<35");
+    // }
+    // else {
+    //  }
 
   float avg1(h5to15->GetMean());
   float avg2(h15to20->GetMean());
@@ -62,7 +71,8 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   h20to25->Draw("hist,same");
   h25to35->Draw("hist,same");
 
-  TLegend* leg = new TLegend(0.45,0.6,0.9,0.9);
+  TLegend* leg = new TLegend(0.42,0.6,0.9,0.9);
+  leg->SetFillStyle(0);
   char label[1000];
   sprintf(label,"5#leqLate OOTPU<15 (#mu=%3.3f)",avg1);
   leg->AddEntry(h5to15,label,"lp");
