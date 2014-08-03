@@ -83,8 +83,10 @@ bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
     else recoMuonCache=GetRA2bMuons(true);
     recoMuonsUpToDate=true;
   }
+  // cout << "Found " << recoMuonCache.size() << " muons." << endl;
   for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
     double deltaR = Math::GetDeltaR(phi, eta, mus_phi->at(recoMuonCache[mu]), mus_eta->at(recoMuonCache[mu]));
+    //  printf("Muon %d, DeltaR %3.2f\n",recoMuonCache[mu], deltaR);
     if (deltaR<0.4) {
       return true;
     }
@@ -292,6 +294,7 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   // if(!betaUpToDate) GetBeta();
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
   if (cmEnergy>8) { // overlap removal
+    // cout << "JET " << ijet << endl; 
     if (isInMuonCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
     if (isInElectronCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
     if (isInTauCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
@@ -820,12 +823,14 @@ float EventHandler::GetMinDRMuonJet(const int mu) const{
   float thisDR(999.);
   for (int jet(0); jet<static_cast<int>(jets_AKPF_pt->size()); jet++) {
     //  if (fabs(GetJetGenId(jet))==13) continue;
-    if (!isCleanJet(jet, 13)) continue; // trying to remove overlap
+    //  if (!isCleanJet(jet, 13)) continue; // trying to remove overlap
     if(isGoodJet(jet, true, 0.0, 5.0/*, false*/)) {
       thisDR=Math::GetDeltaR(mu_phi, mu_eta, jets_AKPF_phi->at(jet), jets_AKPF_eta->at(jet));
+      //      cout << "jet " << jet << " DR " << thisDR << endl;
     }
     if (thisDR<minDR) minDR=thisDR;
   }
+  //  cout << "minDR " << minDR << endl;
   return minDR;
 }
 
