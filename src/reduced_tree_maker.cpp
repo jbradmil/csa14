@@ -82,6 +82,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float muon_relIso;
   float muon_NH_Et, muon_CH_pt, muon_ph_Et, muon_PU_pt;
   float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
+  float muon_minDR_jet;
 
   int electron_gen_mother_id;
   int electron_reco_match;
@@ -187,7 +188,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("muon_ph_Et", &muon_ph_Et);
   reduced_tree.Branch("muon_PU_pt", &muon_PU_pt);
 
-
+  reduced_tree.Branch("muon_minDR_jet", &muon_minDR_jet);
 
   reduced_tree.Branch("num_reco_veto_muons", &num_reco_veto_muons);
   reduced_tree.Branch("num_reco_muons", &num_reco_muons);
@@ -250,7 +251,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     //        cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
-    //     cout << "*****Event " << i << "*****" << endl;
+    //    cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
@@ -271,6 +272,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     //        cout << "JERR2" << endl;
     ht=GetHT();
     num_jets=GetNumGoodJets();
+    //  cout << "num_jets=" << num_jets << endl;
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
     num_csvl_jets=GetNumCSVLJets();
@@ -395,6 +397,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     muon_CH_pt=-1.;
     muon_ph_Et=-1.;
     muon_PU_pt=-1.;
+    muon_minDR_jet=-1;
     
     //  cout << "JERRmu" << endl;
 
@@ -417,6 +420,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	muon_ph_Iso=muon_ph_Et/muon_pt;
 	muon_PU_Iso=muon_PU_pt/muon_pt;
 	muon_relIso=GetMuonRelIso(muon_reco_match);
+	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match);
+	//	cout << "muon_minDR_jet: " << muon_minDR_jet << endl;
       }
     }
 
@@ -467,7 +472,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     }
 
     reduced_tree.Fill(); 
-    //  if (i==100000) break;
+    //  if (i==20) break;
 
   }
 
