@@ -75,7 +75,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   genElInfo gen_el1, gen_el2, gen_el3, gen_el4;
   //  genTauInfo gen_tau1, gen_tau2;
 
-  int muon_gen_mother_id;
+  int muon_gen_mother_id, muon_gen_pt, muon_gen_eta;
   int muon_reco_match;
   int muon_signal, muon_veto, muon_PFmatched;
   float muon_pt, muon_eta, muon_phi;
@@ -167,6 +167,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("gen_mu4", &gen_mu4, gen_muon_branches.c_str());
 
   reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
+  reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
+  reduced_tree.Branch("muon_gen_eta", &muon_gen_eta);
   reduced_tree.Branch("muon_reco_match", &muon_reco_match);
 
   reduced_tree.Branch("muon_signal", &muon_signal);
@@ -403,24 +405,41 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     if (num_gen_muons==1) {
       muon_gen_mother_id=genMuonCache[0].GetMotherId();
+      muon_gen_pt=genMuonCache[0].GetLorentzVector().Pt();
+      muon_gen_eta=genMuonCache[0].GetLorentzVector().Eta();
       if(genMuonCache[0].GetMusMatch()>=0) {
 	muon_reco_match = genMuonCache[0].GetMusMatch();
-	muon_signal=isRecoMuon(muon_reco_match,1);
-	muon_veto=isRecoMuon(muon_reco_match,0);
-	muon_PFmatched=hasPFMatch(muon_reco_match, particleId::muon);
-	muon_pt=mus_pt->at(muon_reco_match);
-	muon_eta=mus_eta->at(muon_reco_match);
-	muon_phi=mus_phi->at(muon_reco_match);
-	muon_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
-	muon_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
-	muon_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
-	muon_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon_reco_match);   
+	if (cmEnergy>=13) {
+	  muon_signal=isRecoMuon(muon_reco_match,1);
+	  muon_veto=isRecoMuon(muon_reco_match,0);
+	  muon_PFmatched=mus_isPF->at(muon_reco_match);
+	  muon_pt=mus_pt->at(muon_reco_match);
+	  muon_eta=mus_eta->at(muon_reco_match);
+	  muon_phi=mus_phi->at(muon_reco_match);
+	  muon_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
+	  muon_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
+	  muon_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
+	  muon_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon_reco_match);  
+	  muon_relIso=GetMuonRelIso(muon_reco_match); 
+	}
+	else {
+	  muon_signal=isRA2bMuon(muon_reco_match,1);
+	  muon_veto=isRA2bMuon(muon_reco_match,0);
+	  muon_PFmatched=true;
+	  muon_pt=pf_mus_pt->at(muon_reco_match);
+	  muon_eta=pf_mus_eta->at(muon_reco_match);
+	  muon_phi=pf_mus_phi->at(muon_reco_match);
+	  muon_NH_Et=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
+	  muon_CH_pt=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
+	  muon_ph_Et=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
+	  muon_PU_pt=pf_mus_pfIsolationR04_sumPUPt->at(muon_reco_match);
+	  muon_relIso=GetRA2bMuonRelIso(muon_reco_match);
+	}
 	muon_NH_Iso=muon_NH_Et/muon_pt;
 	muon_CH_Iso=muon_CH_pt/muon_pt;
 	muon_ph_Iso=muon_ph_Et/muon_pt;
 	muon_PU_Iso=muon_PU_pt/muon_pt;
-	muon_relIso=GetMuonRelIso(muon_reco_match);
-	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match);
+	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match); // compatible with both old and new samples
 	//	cout << "muon_minDR_jet: " << muon_minDR_jet << endl;
       }
     }

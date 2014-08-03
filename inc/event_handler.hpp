@@ -122,6 +122,8 @@ protected:
   int GetNumIgnoredGenMuons() const;
   std::pair <int, double> GetGenMuonMinDR(const int, const vector<uint> ) const;
   std::pair <int, double> GetGenMuonMinDPt(const int, const vector<uint> ) const;
+  std::pair <int, double> GetGenMuonMinDRCSA14(const int, const vector<uint> ) const;
+  std::pair <int, double> GetGenMuonMinDPtCSA14(const int, const vector<uint> ) const;
   void SetupGenMuons() const;
   int GetGenMuonLossCode(const int) const;
   float GetMinDRMuonJet(const int) const;
