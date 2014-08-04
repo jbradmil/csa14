@@ -82,7 +82,7 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   leg->AddEntry(h20to25,label,"lp");
   sprintf(label,"25#leqLate OOTPU<35 (#mu=%3.3f)",avg4);
   leg->AddEntry(h25to35,label,"lp");
-  leg->Draw();
+  // leg->Draw();
 
   TString plotTitle ="relIso_vs_LOOTPU_"+var+comments+".pdf";
   c1->Print(plotTitle);

@@ -15,7 +15,7 @@ void quick_stats(TString files) {
   int nTotal(chain->GetEntries()), n_true_mu(chain->GetEntries("num_gen_muons==1")), n_lost_mu(chain->GetEntries("num_gen_muons==1&&muon_veto<1"));
   // n_lost_mu = chain->GetEntries("num_gen_muons==1&&num_reco_veto_muons==0");
   TCut matched("num_gen_muons==1&&muon_reco_match>=0");
-  int n_no_match(chain->GetEntries("num_gen_muons==1"+!matched)), n_fail_iso(chain->GetEntries(matched+"muon_relIso>0.2")), n_fail_pt(chain->GetEntries(matched+"muon_pt<10"));
+  int n_no_match(chain->GetEntries("num_gen_muons==1"+!matched)), n_fail_iso(chain->GetEntries(matched+"muon_relIso>0.2&&muon_pt>10")), n_fail_pt(chain->GetEntries(matched+"muon_pt<10&&muon_relIso<0.2"));
   int n_fail_both(chain->GetEntries(matched+"muon_relIso>0.2&&muon_pt<10")), n_fail_either(chain->GetEntries(matched+"muon_relIso>0.2||muon_pt<10"));
 
   printf("Sample: %s\n", files.Data());

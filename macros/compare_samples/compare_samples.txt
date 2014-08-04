@@ -11,3 +11,9 @@ compare_samples("muon_NH_Iso",mu,";I_{rel}(NH);(a.u.)",30,0,0.3)
 compare_samples("muon_CH_Iso",mu,";I_{rel}(CH);(a.u.)",30,0,0.3)
 compare_samples("muon_ph_Iso",mu,";I_{rel}(#gamma);(a.u.)",30,0,0.3)
 compare_samples("muon_PU_Iso",mu,";I_{rel}(PU);(a.u.)",30,0,0.3)
+
+TCut el("num_gen_electrons==1&&electron_reco_match>=0");
+compare_samples("electron_NH_Iso",el,";I_{rel}(NH);(a.u.)",30,0,0.3)
+compare_samples("electron_CH_Iso",el,";I_{rel}(CH);(a.u.)",30,0,0.3)
+compare_samples("electron_ph_Iso",el,";I_{rel}(#gamma);(a.u.)",30,0,0.3)
+#compare_samples("electron_PU_Iso",el,";I_{rel}(PU);(a.u.)",30,0,0.3)

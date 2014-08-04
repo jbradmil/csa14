@@ -7,73 +7,83 @@
 #include "TLegend.h"
 #include "TCut.h"
 
-void ootpu_comparison(TString files, TString comments="") {
+void eootpu_comparison(TString files, TString var, TString title, int nbins, float low, float high, TString comments="") {
 
   TChain* chain = new TChain("reduced_tree");
   chain->Add(files);
 
-  TH1F* h20to30 = new TH1F("h20to30",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h30to40 = new TH1F("h30to40",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h40to50 = new TH1F("h40to50",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h50to60 = new TH1F("h50to60",";relIso;(a.u.)", 15, 0., 1.);
-  h20to30->SetStats(0);
-  h20to30->GetYaxis()->SetLabelSize(0.04);
-  //h20to30->GetYaxis()->SetTitleOffset(1.3);
-  h20to30->GetXaxis()->SetTitleOffset(1.1);
-  h20to30->GetXaxis()->SetTitleFont(132);
-  h20to30->GetXaxis()->SetTitleSize(0.042);
-  h20to30->GetXaxis()->SetLabelSize(0.04);
-  h20to30->SetLineWidth(2);
+  TH1F* h5to15 = new TH1F("h5to15",title, nbins, low, high);
+  TH1F* h15to20 = new TH1F("h15to20",title, nbins, low, high);
+  TH1F* h20to25 = new TH1F("h20to25",title, nbins, low, high);
+  TH1F* h25to35 = new TH1F("h25to35",title, nbins, low, high);
+  h5to15->SetStats(0);
+  h5to15->GetYaxis()->SetLabelSize(0.04);
+  //h5to15->GetYaxis()->SetTitleOffset(1.3);
+  h5to15->GetXaxis()->SetTitleOffset(1.1);
+  h5to15->GetXaxis()->SetTitleFont(132);
+  h5to15->GetXaxis()->SetTitleSize(0.042);
+  h5to15->GetXaxis()->SetLabelSize(0.04);
+  h5to15->SetLineWidth(2);
+
+  //  h5to15->StatOverflows(true);
+  //  h15to20->StatOverflows(true);
+  //  h20to25->StatOverflows(true);
+  //  h25to35->StatOverflows(true);
 
   TCut mu("num_gen_muons==1&&muon_reco_match>=0");
-  chain->Project("h20to30", "muon_relIso", mu+"eoot_pu>=5&&eoot_pu<15");
-  chain->Project("h30to40", "muon_relIso", mu+"eoot_pu>=15&&eoot_pu<20");
-  chain->Project("h40to50", "muon_relIso", mu+"eoot_pu>=20&&eoot_pu<25");
-  chain->Project("h50to60", "muon_relIso", mu+"eoot_pu>=25&&eoot_pu<35");
+  //if (files.Contains("PU_S10")) {
+    chain->Project("h5to15", var, mu+"eoot_pu>=0&&eoot_pu<15");
+    chain->Project("h15to20", var, mu+"eoot_pu>=15&&eoot_pu<20");
+    chain->Project("h20to25", var, mu+"eoot_pu>=20&&eoot_pu<25");
+    chain->Project("h25to35", var, mu+"eoot_pu>=25&&eoot_pu<35");
+    // }
+    // else {
+    //  }
 
-  float avg1(h20to30->GetMean());
-  float avg2(h30to40->GetMean());
-  float avg3(h40to50->GetMean());
-  float avg4(h50to60->GetMean());
+  float avg1(h5to15->GetMean());
+  float avg2(h15to20->GetMean());
+  float avg3(h20to25->GetMean());
+  float avg4(h25to35->GetMean());
 
-  h20to30->Scale(1/h20to30->Integral());
-  h30to40->Scale(1/h30to40->Integral());
-  h40to50->Scale(1/h40to50->Integral());
-  h50to60->Scale(1/h50to60->Integral());
+  h5to15->Scale(1/h5to15->Integral());
+  h15to20->Scale(1/h15to20->Integral());
+  h20to25->Scale(1/h20to25->Integral());
+  h25to35->Scale(1/h25to35->Integral());
 
-  h20to30->SetLineColor(1);
-  h30to40->SetLineColor(2);
-  h40to50->SetLineColor(3);
-  h50to60->SetLineColor(4);
+  h5to15->SetLineColor(1);
+  h15to20->SetLineColor(2);
+  h20to25->SetLineColor(3);
+  h25to35->SetLineColor(4);
 
-  h20to30->SetLineWidth(2);
-  h30to40->SetLineWidth(2);
-  h40to50->SetLineWidth(2);
-  h50to60->SetLineWidth(2);
+  h5to15->SetLineWidth(2);
+  h15to20->SetLineWidth(2);
+  h20to25->SetLineWidth(2);
+  h25to35->SetLineWidth(2);
 
   TCanvas* c1 = new TCanvas();
-  float max = TMath::Max(h20to30->GetMaximum(), h30to40->GetMaximum());
-  if (h40to50->GetMaximum()>max) max = h40to50->GetMaximum();
-  if (h50to60->GetMaximum()>max) max = h50to60->GetMaximum();
+  float max = TMath::Max(h5to15->GetMaximum(), h15to20->GetMaximum());
+  if (h20to25->GetMaximum()>max) max = h20to25->GetMaximum();
+  if (h25to35->GetMaximum()>max) max = h25to35->GetMaximum();
 
-  h20to30->SetMaximum(max*1.1);
-  h20to30->Draw("hist");
-  h30to40->Draw("hist,same");
-  h40to50->Draw("hist,same");
-  h50to60->Draw("hist,same");
+  h5to15->SetMaximum(max*1.1);
+  h5to15->Draw("hist");
+  h15to20->Draw("hist,same");
+  h20to25->Draw("hist,same");
+  h25to35->Draw("hist,same");
 
-  TLegend* leg = new TLegend(0.5,0.6,0.9,0.9);
+  TLegend* leg = new TLegend(0.42,0.6,0.9,0.9);
+  leg->SetFillStyle(0);
   char label[1000];
-  sprintf(label,"5#leqEarly OOTPU<15 (#mu=%3.2f)",avg1);
-  leg->AddEntry(h20to30,label,"l");
-  sprintf(label,"15#leqEarly OOTPU<20 (#mu=%3.2f)",avg2);
-  leg->AddEntry(h30to40,label,"l");
-  sprintf(label,"20#leqEarly OOTPU<25 (#mu=%3.2f)",avg3);
-  leg->AddEntry(h40to50,label,"l");
-  sprintf(label,"25#leqEarly OOTPU<35 (#mu=%3.2f)",avg4);
-  leg->AddEntry(h50to60,label,"l");
-  leg->Draw();
+  sprintf(label,"5#leqLate OOTPU<15 (#mu=%3.3f)",avg1);
+  leg->AddEntry(h5to15,label,"lp");
+  sprintf(label,"15#leqLate OOTPU<20 (#mu=%3.3f)",avg2);
+  leg->AddEntry(h15to20,label,"lp");
+  sprintf(label,"20#leqLate OOTPU<25 (#mu=%3.3f)",avg3);
+  leg->AddEntry(h20to25,label,"lp");
+  sprintf(label,"25#leqLate OOTPU<35 (#mu=%3.3f)",avg4);
+  leg->AddEntry(h25to35,label,"lp");
+  // leg->Draw();
 
-  TString plotTitle ="relIso_vs_OOTPU"+comments+".pdf";
+  TString plotTitle ="relIso_vs_EOOTPU_"+var+comments+".pdf";
   c1->Print(plotTitle);
 }

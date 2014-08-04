@@ -265,7 +265,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     pu_true_num_interactions=GetTrueNumInteractions();
     pu_num_interactions=GetNumInteractions();
-    eoot_pu=GetEarlyOutOfTimePU(3);
+    eoot_pu=GetEarlyOutOfTimePU(1);
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
     //       cout << "JERR1" << endl;
