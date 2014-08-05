@@ -536,7 +536,7 @@ void ReducedTreeMaker::SetMuonValues(uint index, genMuInfo& gen_mu) {
     gen_mu.reco_PUEn=mus_pfIsolationR04_sumPUPt->at(gen_mu.mus_match);
     gen_mu.reco_hasPFMatch=hasPFMatch(gen_mu.mus_match, particleId::muon);
     gen_mu.reco_minDR=GetMinDRMuonJet(gen_mu.mus_match);
-    //  printf("Reco muon params: %d/%d/%.2f\n",gen_mu.signal_muon, gen_mu.veto_muon, gen_mu.reco_pt);
+    // printf("Reco muon params: %d/%d/%.2f\n",gen_mu.signal_muon, gen_mu.veto_muon, gen_mu.reco_pt);
   }
 }
 

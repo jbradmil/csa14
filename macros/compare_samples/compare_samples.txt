@@ -7,12 +7,28 @@ Rejection rates:
 (1-h13_25->Integral(13,31))/h13_25->Integral(1,31)
 
 Components:
+compare_samples("muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5)
 compare_samples("muon_NH_Iso",mu,";I_{rel}(NH);(a.u.)",30,0,0.3)
 compare_samples("muon_CH_Iso",mu,";I_{rel}(CH);(a.u.)",30,0,0.3)
 compare_samples("muon_ph_Iso",mu,";I_{rel}(#gamma);(a.u.)",30,0,0.3)
 compare_samples("muon_PU_Iso",mu,";I_{rel}(PU);(a.u.)",30,0,0.3)
 
+compare_samples("muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5)
+compare_samples("muon_relIso",mu+"gen_mu1.topPt<50",";I_{rel}(#mu);(a.u.)",30,0,0.5,false,"topPt50")
+compare_samples("muon_relIso",mu+"gen_mu1.topPt>50&&gen_mu1.topPt<100",";I_{rel}(#mu);(a.u.)",30,0,0.5,false,"50topPt100")
+compare_samples("muon_relIso",mu+"gen_mu1.topPt>100&&gen_mu1.topPt<200",";I_{rel}(#mu);(a.u.)",30,0,0.5,false,"100topPt200")
+compare_samples("muon_relIso",mu+"gen_mu1.topPt>200",";I_{rel}(#mu);(a.u.)",30,0,0.5,false,"200topPt")
+
+
+compare_samples("gen_mu1.topPt",mu,";top p_{T} [GeV];(a.u.)",40,0,800,true);
+compare_samples("gen_mu1.topPt",mu+"met>150",";top p_{T} [GeV];(a.u.)",20,0,800,true,"met150");
+compare_samples("gen_mu1.topPt",mu+"met>350",";top p_{T} [GeV];(a.u.)",20,0,800,true,"met350");
+compare_samples("gen_mu1.deltaRWb",mu,";#DeltaR(#mu,b);(a.u.)",60,0,6);
+compare_samples("gen_mu1.deltaRWb",mu+"met>150",";#DeltaR(#mu,b);(a.u.)",30,0,6,false,"met150");
+compare_samples("gen_mu1.deltaRWb",mu+"met>350",";#DeltaR(#mu,b);(a.u.)",30,0,6,false,"met350");
+
 TCut el("num_gen_electrons==1&&electron_reco_match>=0");
+compare_samples("electron_relIso",el,";I_{rel}(e);(a.u.)",30,0,0.5)
 compare_samples("electron_NH_Iso",el,";I_{rel}(NH);(a.u.)",30,0,0.3)
 compare_samples("electron_CH_Iso",el,";I_{rel}(CH);(a.u.)",30,0,0.3)
 compare_samples("electron_ph_Iso",el,";I_{rel}(#gamma);(a.u.)",30,0,0.3)

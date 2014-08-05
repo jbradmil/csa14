@@ -875,6 +875,25 @@ float EventHandler::GetCorrespondingDeltaRWb(const int charge) const {
   return Math::GetDeltaR(mc_doc_phi->at(the_W), mc_doc_eta->at(the_W), mc_doc_phi->at(the_b), mc_doc_eta->at(the_b));
 }
 
+float EventHandler::GetCorrespondingDeltaRlb(const int gen_index) const { // actually deltaR(W,mu) now
+  int the_b(-1), the_W(-1);
+  // cout << "mc_mus index: " << gen_index << endl;
+  // cout << "mc_mus size: " << mc_mus_eta->size() << endl;
+  double gen_mu_eta(mc_mus_eta->at(gen_index)), gen_mu_phi(mc_mus_phi->at(gen_index));
+  int charge(mc_mus_charge->at(gen_index));
+  for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+    if (static_cast<int>(mc_doc_id->at(imc))*charge==24&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
+      the_W=imc;
+    }
+    if (static_cast<int>(mc_doc_id->at(imc))*charge==-5&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
+      the_b=imc;
+    }
+  }
+  //  cout << "the_b: " << the_b << endl;
+  if (the_W<0||the_b<0) return -1.;
+  return Math::GetDeltaR(gen_mu_phi, gen_mu_eta, mc_doc_phi->at(the_b), mc_doc_eta->at(the_b));
+}
+
 bool EventHandler::IsFromB(const int mom, const int gmom, const int ggmom) const{
   if ( (mom>=500&&mom<600) || (mom>=5000&&mom<6000) || fabs(mom)==5 ) return true;
   if ( (gmom>=500&&mom<600) || (gmom>=5000&&mom<6000) || fabs(gmom)==5 ) return true;
@@ -914,7 +933,7 @@ void EventHandler::SetupGenMuons() const {
     //  cout << "SetTopPt" << endl;
     genMuonCache[genLep].SetTopPt(GetCorrespondingTopPt(static_cast<int>(mc_mus_charge->at(gen_index))));
     //  cout << "SetDeltaRWb" << endl;
-    genMuonCache[genLep].SetDeltaRWb(GetCorrespondingDeltaRWb(static_cast<int>(mc_mus_charge->at(gen_index))));
+    genMuonCache[genLep].SetDeltaRWb(GetCorrespondingDeltaRlb(gen_index));
     double gen_pt(genMuonCache[genLep].GetLorentzVector().Pt());
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());

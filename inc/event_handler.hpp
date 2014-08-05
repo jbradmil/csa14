@@ -140,6 +140,7 @@ protected:
 
   float GetCorrespondingTopPt(const int) const;
   float GetCorrespondingDeltaRWb(const int) const;
+  float GetCorrespondingDeltaRlb(const int) const;
 
   bool isGenTau(const int) const;
   void GetGenTaus() const;
