@@ -33,3 +33,15 @@ compare_samples("electron_NH_Iso",el,";I_{rel}(NH);(a.u.)",30,0,0.3)
 compare_samples("electron_CH_Iso",el,";I_{rel}(CH);(a.u.)",30,0,0.3)
 compare_samples("electron_ph_Iso",el,";I_{rel}(#gamma);(a.u.)",30,0,0.3)
 #compare_samples("electron_PU_Iso",el,";I_{rel}(PU);(a.u.)",30,0,0.3)
+
+# mu from b
+compare_samples("muon_relIso",mu+"muon_pt>15",";I_{rel}(#mu);(a.u.)",30,0,2)
+
+# PU dists
+compare_samples("eoot_pu","",";Early out-of-time interactions (BX-1);(a.u.)",79,0,79)
+compare_samples("loot_pu","",";Late out-of-time interactions (BX+1);(a.u.)",79,0,79)
+compare_samples("oot_pu","",";Out-of-time interactions (BX-1 & BX+1);(a.u.)",134,0,134)
+
+compare_samples("eoot_pu",mu,";Early out-of-time interactions (BX-1);(a.u.)",79,0,79,false,"one_mu")
+compare_samples("loot_pu",mu,";Late out-of-time interactions (BX+1);(a.u.)",79,0,79,false,"one_mu")
+compare_samples("oot_pu",mu,";Out-of-time interactions (BX-1 & BX+1);(a.u.)",134,0,134,false,"one_mu")

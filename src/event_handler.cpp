@@ -575,7 +575,7 @@ double EventHandler::GetNumInteractions() const{
 }
 
 double EventHandler::GetEarlyOutOfTimePU(const int BX_before) const{
-  double npv(-1.0);
+  double npv(0.);
   int first_BX_to_check = 0 - BX_before;
   for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
     if(PU_bunchCrossing->at(i)<first_BX_to_check) continue;
@@ -586,7 +586,7 @@ double EventHandler::GetEarlyOutOfTimePU(const int BX_before) const{
 }
 
 double EventHandler::GetLateOutOfTimePU() const{
-  double npv(-1.0);
+  double npv(0.);
   for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
     if(PU_bunchCrossing->at(i)==1){
       npv = PU_NumInteractions->at(i);

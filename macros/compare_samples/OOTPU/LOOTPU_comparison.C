@@ -6,11 +6,15 @@
 #include "TMath.h"
 #include "TLegend.h"
 #include "TCut.h"
+#include <iostream>
+#include <iomanip>
 
 void ootpu_comparison(TString files, TString var, TString title, int nbins, float low, float high, TString comments="") {
 
   TChain* chain = new TChain("reduced_tree");
   chain->Add(files);
+
+  TH1::SetDefaultSumw2();
 
   TH1F* h5to15 = new TH1F("h5to15",title, nbins, low, high);
   TH1F* h15to20 = new TH1F("h15to20",title, nbins, low, high);
@@ -66,10 +70,10 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   if (h25to35->GetMaximum()>max) max = h25to35->GetMaximum();
 
   h5to15->SetMaximum(max*1.1);
-  h5to15->Draw("hist");
-  h15to20->Draw("hist,same");
-  h20to25->Draw("hist,same");
-  h25to35->Draw("hist,same");
+  h5to15->Draw("e1");
+  h15to20->Draw("e1,same");
+  h20to25->Draw("e1,same");
+  h25to35->Draw("e1,same");
 
   TLegend* leg = new TLegend(0.42,0.6,0.9,0.9);
   leg->SetFillStyle(0);
@@ -86,4 +90,23 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
 
   TString plotTitle ="relIso_vs_LOOTPU_"+var+comments+".pdf";
   c1->Print(plotTitle);
+
+  cout << "Rejection rates" << endl;
+  Double_t left(0.), lerror(0.), right(0.), rerror(0.);
+  left = h5to15->IntegralAndError(1,12,lerror);
+  right = h5to15->IntegralAndError(13,31,rerror);
+  float rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin1: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = h15to20->IntegralAndError(1,12,lerror);
+  right = h15to20->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin2: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = h20to25->IntegralAndError(1,12,lerror);
+  right = h20to25->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin3: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = h25to35->IntegralAndError(1,12,lerror);
+  right = h25to35->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin4: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
 }

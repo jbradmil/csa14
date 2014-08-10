@@ -6,78 +6,139 @@
 #include "TMath.h"
 #include "TLegend.h"
 #include "TCut.h"
+#include <iostream>
+#include <iomanip>
 
-void ootpu_comparison(TString files, TString comments="") {
+void ootpu_comparison(TString files, TString var, TString title, int nbins, float low, float high, TString comments="") {
 
   TChain* chain = new TChain("reduced_tree");
   chain->Add(files);
 
-  TH1F* h20to30 = new TH1F("h20to30",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h30to40 = new TH1F("h30to40",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h40to50 = new TH1F("h40to50",";relIso;(a.u.)", 15, 0., 1.);
-  TH1F* h50to60 = new TH1F("h50to60",";relIso;(a.u.)", 15, 0., 1.);
-  h20to30->SetStats(0);
-  h20to30->GetYaxis()->SetLabelSize(0.04);
-  //h20to30->GetYaxis()->SetTitleOffset(1.3);
-  h20to30->GetXaxis()->SetTitleOffset(1.1);
-  h20to30->GetXaxis()->SetTitleFont(132);
-  h20to30->GetXaxis()->SetTitleSize(0.042);
-  h20to30->GetXaxis()->SetLabelSize(0.04);
-  h20to30->SetLineWidth(2);
+  TH1::SetDefaultSumw2();
 
-  TCut mu("num_gen_muons==1&&muon_reco_match>=0");
-  // chain->Project("h20to30", "muon_relIso", mu+"oot_pu>=0&&oot_pu<30");
-  // chain->Project("h30to40", "muon_relIso", mu+"oot_pu>=30&&oot_pu<40");
-  // chain->Project("h40to50", "muon_relIso", mu+"oot_pu>=40&&oot_pu<50");
-  // chain->Project("h50to60", "muon_relIso", mu+"oot_pu>=50&&oot_pu<60");
-  chain->Project("h20to30", "muon_relIso", mu+"oot_pu>=50&&oot_pu<65");
-  chain->Project("h30to40", "muon_relIso", mu+"oot_pu>=65&&oot_pu<75");
-  chain->Project("h40to50", "muon_relIso", mu+"oot_pu>=75&&oot_pu<85");
-  chain->Project("h50to60", "muon_relIso", mu+"oot_pu>=85&&oot_pu<100");
+  TH1F* hA = new TH1F("hA",title, nbins, low, high);
+  TH1F* hB = new TH1F("hB",title, nbins, low, high);
+  TH1F* hC = new TH1F("hC",title, nbins, low, high);
+  TH1F* hD = new TH1F("hD",title, nbins, low, high);
+  hA->SetStats(0);
+  hA->GetYaxis()->SetLabelSize(0.04);
+  //hA->GetYaxis()->SetTitleOffset(1.3);
+  hA->GetXaxis()->SetTitleOffset(1.1);
+  hA->GetXaxis()->SetTitleFont(132);
+  hA->GetXaxis()->SetTitleSize(0.042);
+  hA->GetXaxis()->SetLabelSize(0.04);
+  hA->SetLineWidth(2);
 
-  float avg1(h20to30->GetMean());
-  float avg2(h30to40->GetMean());
-  float avg3(h40to50->GetMean());
-  float avg4(h50to60->GetMean());
+  //  hA->StatOverflows(true);
+  //  hB->StatOverflows(true);
+  //  hC->StatOverflows(true);
+  //  hD->StatOverflows(true);
 
-  h20to30->Scale(1/h20to30->Integral());
-  h30to40->Scale(1/h30to40->Integral());
-  h40to50->Scale(1/h40to50->Integral());
-  h50to60->Scale(1/h50to60->Integral());
+  int n1(0), n2(0), n3(0), n4(0), n5(0);
+  if (files.Contains("20bx25")) {
+    n1=20;
+    n2=35;
+    n3=40;
+    n4=45;
+    n5=60;
+  }
+  else if (files.Contains("S14")) {
+    n1=20;
+    n2=60;
+    n3=75;
+    n4=85;
+    n5=120;
+  }
+  else { // default: 8 TeV scenario
+    n1=0;
+    n2=30;
+    n3=40;
+    n4=60;
+    n5=140;
+  }
 
-  h20to30->SetLineColor(1);
-  h30to40->SetLineColor(2);
-  h40to50->SetLineColor(3);
-  h50to60->SetLineColor(4);
 
-  h20to30->SetLineWidth(2);
-  h30to40->SetLineWidth(2);
-  h40to50->SetLineWidth(2);
-  h50to60->SetLineWidth(2);
+  TString mu("num_gen_muons==1&&muon_reco_match>=0");
+  //if (files.Contains("PU_S10")) {
+  TString cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n1,n2);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hA", var, cuts);
+  cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n2,n3);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hB", var, cuts);
+  cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n3,n4);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hC", var, cuts);
+  cuts = Form("(%s)&&(oot_pu>=%d)",mu.Data(),n4);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hD", var, cuts);
+  // }
+  // else {
+  //  }
+  
+  float avg1(hA->GetMean());
+  float avg2(hB->GetMean());
+  float avg3(hC->GetMean());
+  float avg4(hD->GetMean());
+
+  hA->Scale(1/hA->Integral());
+  hB->Scale(1/hB->Integral());
+  hC->Scale(1/hC->Integral());
+  hD->Scale(1/hD->Integral());
+
+  hA->SetLineColor(1);
+  hB->SetLineColor(2);
+  hC->SetLineColor(3);
+  hD->SetLineColor(4);
+
+  hA->SetLineWidth(2);
+  hB->SetLineWidth(2);
+  hC->SetLineWidth(2);
+  hD->SetLineWidth(2);
 
   TCanvas* c1 = new TCanvas();
-  float max = TMath::Max(h20to30->GetMaximum(), h30to40->GetMaximum());
-  if (h40to50->GetMaximum()>max) max = h40to50->GetMaximum();
-  if (h50to60->GetMaximum()>max) max = h50to60->GetMaximum();
+  float max = TMath::Max(hA->GetMaximum(), hB->GetMaximum());
+  if (hC->GetMaximum()>max) max = hC->GetMaximum();
+  if (hD->GetMaximum()>max) max = hD->GetMaximum();
 
-  h20to30->SetMaximum(max*1.1);
-  h20to30->Draw("hist");
-  h30to40->Draw("hist,same");
-  h40to50->Draw("hist,same");
-  h50to60->Draw("hist,same");
+  hA->SetMaximum(max*1.1);
+  hA->Draw("e1");
+  hB->Draw("e1,same");
+  hC->Draw("e1,same");
+  hD->Draw("e1,same");
 
-  TLegend* leg = new TLegend(0.55,0.6,0.9,0.9);
+  TLegend* leg = new TLegend(0.42,0.6,0.9,0.9);
+  leg->SetFillStyle(0);
   char label[1000];
-  sprintf(label,"50#leqOOTPU<65 (#mu=%3.2f)",avg1);
-  leg->AddEntry(h20to30,label,"l");
-  sprintf(label,"65#leqOOTPU<75 (#mu=%3.2f)",avg2);
-  leg->AddEntry(h30to40,label,"l");
-  sprintf(label,"75#leqOOTPU<85 (#mu=%3.2f)",avg3);
-  leg->AddEntry(h40to50,label,"l");
-  sprintf(label,"85#leqOOTPU<100 (#mu=%3.2f)",avg4);
-  leg->AddEntry(h50to60,label,"l");
-  leg->Draw();
+  sprintf(label,"%d#leqInts.<%d (#mu=%3.3f)",n1,n2,avg1);
+  leg->AddEntry(hA,label,"lp");
+  sprintf(label,"%d#leqInts.<%d (#mu=%3.3f)",n2,n3,avg2);
+  leg->AddEntry(hB,label,"lp");
+  sprintf(label,"%d#leqInts.<%d (#mu=%3.3f)",n3,n4,avg3);
+  leg->AddEntry(hC,label,"lp");
+  sprintf(label,"Ints.>%d (#mu=%3.3f)",n4,avg4);
+  leg->AddEntry(hD,label,"lp");
+  // leg->Draw();
 
-  TString plotTitle ="relIso_vs_OOTPU"+comments+".pdf";
+  TString plotTitle ="relIso_vs_OOTPU_"+var+comments+".pdf";
   c1->Print(plotTitle);
+
+  cout << "Rejection rates" << endl;
+  Double_t left(0.), lerror(0.), right(0.), rerror(0.);
+  left = hA->IntegralAndError(1,12,lerror);
+  right = hA->IntegralAndError(13,31,rerror);
+  float rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin1: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = hB->IntegralAndError(1,12,lerror);
+  right = hB->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin2: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = hC->IntegralAndError(1,12,lerror);
+  right = hC->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin3: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  left = hD->IntegralAndError(1,12,lerror);
+  right = hD->IntegralAndError(13,31,rerror);
+  rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
+  printf("bin4: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
 }

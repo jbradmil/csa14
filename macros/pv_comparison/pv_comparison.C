@@ -12,11 +12,11 @@ void pv_comparison(TString files, TString comments="") {
   TChain* chain = new TChain("reduced_tree");
   chain->Add(files);
 
-  TH1F* h0to10 = new TH1F("h0to10",";relIso;(a.u.)", 30, 0., 1.);
-  TH1F* h10to15 = new TH1F("h10to15",";relIso;(a.u.)", 30, 0., 1.);
-  TH1F* h15to20 = new TH1F("h15to20",";relIso;(a.u.)", 30, 0., 1.);
-  TH1F* h20to25 = new TH1F("h20to25",";relIso;(a.u.)", 30, 0., 1.);
-  TH1F* h25to40 = new TH1F("h25to40",";relIso;(a.u.)", 30, 0., 1.);
+  TH1F* h0to10 = new TH1F("h0to10",";I_{rel}(#mu);(a.u.)", 30, 0., 0.5);
+  TH1F* h10to15 = new TH1F("h10to15",";relIso;(a.u.)", 30, 0., 0.5);
+  TH1F* h15to20 = new TH1F("h15to20",";relIso;(a.u.)", 30, 0., 0.5);
+  TH1F* h20to25 = new TH1F("h20to25",";relIso;(a.u.)", 30, 0., 0.5);
+  TH1F* h25to40 = new TH1F("h25to40",";relIso;(a.u.)", 30, 0., 0.5);
   h0to10->SetStats(0);
   h0to10->GetYaxis()->SetLabelSize(0.04);
   //h0to10->GetYaxis()->SetTitleOffset(1.3);
@@ -26,19 +26,19 @@ void pv_comparison(TString files, TString comments="") {
   h0to10->GetXaxis()->SetLabelSize(0.04);
   h0to10->SetLineWidth(2);
 
-  TCut mu("num_gen_muons==1&&gen_mu1.mus_match>=0");
+  TCut mu("num_gen_muons==1&&muon_reco_match>=0");
   /*
   chain->Project("h0to10", "gen_mu1.reco_relIso", mu+"num_primary_vertices<=10");
   chain->Project("h10to15", "gen_mu1.reco_relIso", mu+"num_primary_vertices>10&&num_primary_vertices<=15");
   chain->Project("h15to20", "gen_mu1.reco_relIso", mu+"num_primary_vertices>15&&num_primary_vertices<=20");
   chain->Project("h20to25", "gen_mu1.reco_relIso", mu+"num_primary_vertices>20&&num_primary_vertices<=25");
-  chain->Project("h25to40", "gen_mu1.reco_relIso", mu+"num_primary_vertices>25");
+  chain->Project("h25to40", "muon_relIso", mu+"num_primary_vertices>25");
   */
   
-    chain->Project("h0to10", "gen_mu1.reco_relIso", mu+"num_primary_vertices>10&&num_primary_vertices<=20");
-    chain->Project("h10to15", "gen_mu1.reco_relIso", mu+"num_primary_vertices>20&&num_primary_vertices<=30");
-    chain->Project("h15to20", "gen_mu1.reco_relIso", mu+"num_primary_vertices>30&&num_primary_vertices<=40");
-    chain->Project("h25to40", "gen_mu1.reco_relIso", mu+"num_primary_vertices>40");
+    chain->Project("h0to10", "muon_relIso", mu+"num_primary_vertices<=13");
+    chain->Project("h10to15", "muon_relIso", mu+"num_primary_vertices>13&&num_primary_vertices<=17");
+    chain->Project("h15to20", "muon_relIso", mu+"num_primary_vertices>17&&num_primary_vertices<=21");
+    chain->Project("h25to40", "muon_relIso", mu+"num_primary_vertices>21");
   
 
   float avg1(h0to10->GetMean());
@@ -80,15 +80,15 @@ void pv_comparison(TString files, TString comments="") {
 
   TLegend* leg = new TLegend(0.50,0.6,0.9,0.9);
   char label[1000];
-  sprintf(label,"10>NPV#leq20 (#mu=%3.2f)",avg1);
+  sprintf(label,"0>NPV#leq13 (#mu=%3.2f)",avg1);
   leg->AddEntry(h0to10,label,"l");
-  sprintf(label,"20<NPV#leq30 (#mu=%3.2f)",avg2);
+  sprintf(label,"13<NPV#leq17 (#mu=%3.2f)",avg2);
   leg->AddEntry(h10to15,label,"l");
-  sprintf(label,"30<NPV#leq40 (#mu=%3.2f)",avg3);
+  sprintf(label,"17<NPV#leq21 (#mu=%3.2f)",avg3);
   leg->AddEntry(h15to20,label,"l");
   //sprintf(label,"20<NPV#leq25 (#mu=%3.2f)",avg4);
   //leg->AddEntry(h20to25,label,"l");
-  sprintf(label,"NPV>40 (#mu=%3.2f)",avg5);
+  sprintf(label,"NPV>21 (#mu=%3.2f)",avg5);
   leg->AddEntry(h25to40,label,"l");
   leg->Draw();
 
