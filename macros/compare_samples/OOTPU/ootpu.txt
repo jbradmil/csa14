@@ -1,10 +1,13 @@
 ootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"8TeV");
-ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV");
-ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1_cfA_v72.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV");
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV25ns");
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1_cfA_v72.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV50ns");
 
 eootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"8TeV");
 eootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV");
 
+eff_scat("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root",10,0,60,"8TeV")
+eff_scat("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root",10,0,50,"13TeV25ns")
+eff_scat("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1_cfA_v72.list.root",10,0,70,"13TeV50ns")
 
 Rejection rates:
 (1-h5to15->Integral(13,31))/h5to15->Integral(1,31)

@@ -75,7 +75,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   genElInfo gen_el1, gen_el2, gen_el3, gen_el4;
   //  genTauInfo gen_tau1, gen_tau2;
 
-  int muon_gen_mother_id, muon_gen_pt, muon_gen_eta;
+  int muon_gen_mother_id;
+  float muon_gen_pt, muon_gen_eta, muon_gen_phi;
   int muon_reco_match;
   int muon_signal, muon_veto, muon_PFmatched;
   float muon_pt, muon_eta, muon_phi;
@@ -169,6 +170,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
   reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
   reduced_tree.Branch("muon_gen_eta", &muon_gen_eta);
+  reduced_tree.Branch("muon_gen_phi", &muon_gen_phi);
   reduced_tree.Branch("muon_reco_match", &muon_reco_match);
 
   reduced_tree.Branch("muon_signal", &muon_signal);
@@ -407,6 +409,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       muon_gen_mother_id=genMuonCache[0].GetMotherId();
       muon_gen_pt=genMuonCache[0].GetLorentzVector().Pt();
       muon_gen_eta=genMuonCache[0].GetLorentzVector().Eta();
+      muon_gen_phi=genMuonCache[0].GetLorentzVector().Phi();
       if(genMuonCache[0].GetMusMatch()>=0) {
 	muon_reco_match = genMuonCache[0].GetMusMatch();
 	if (cmEnergy>=13) {

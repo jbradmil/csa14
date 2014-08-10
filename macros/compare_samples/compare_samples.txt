@@ -45,3 +45,14 @@ compare_samples("oot_pu","",";Out-of-time interactions (BX-1 & BX+1);(a.u.)",134
 compare_samples("eoot_pu",mu,";Early out-of-time interactions (BX-1);(a.u.)",79,0,79,false,"one_mu")
 compare_samples("loot_pu",mu,";Late out-of-time interactions (BX+1);(a.u.)",79,0,79,false,"one_mu")
 compare_samples("oot_pu",mu,";Out-of-time interactions (BX-1 & BX+1);(a.u.)",134,0,134,false,"one_mu")
+
+#muon not reconstructed
+TCut mu_no_reco("num_gen_muons==1&&muon_reco_match<0");
+compare_samples("muon_gen_pt",mu_no_reco,";p_{T}^{#mu} [GeV];(a.u.)",30,0,300,false,"no_reco_wide")
+compare_samples("muon_gen_pt",mu_no_reco,";p_{T}^{#mu} [GeV];(a.u.)",30,0,30,false,"no_reco_low")
+compare_samples("muon_gen_eta",mu_no_reco,";#eta (#mu);(a.u.)",200,-5,5,false,"no_reco")
+
+compare_samples("muon_gen_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,300,false,"gen_reco_wide")
+compare_samples("muon_gen_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,30,false,"gen_reco_low")
+compare_samples("muon_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,300,false,"reco_wide")
+compare_samples("muon_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,30,false,"reco_low")

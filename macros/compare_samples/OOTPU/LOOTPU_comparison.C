@@ -16,97 +16,129 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
 
   TH1::SetDefaultSumw2();
 
-  TH1F* h5to15 = new TH1F("h5to15",title, nbins, low, high);
-  TH1F* h15to20 = new TH1F("h15to20",title, nbins, low, high);
-  TH1F* h20to25 = new TH1F("h20to25",title, nbins, low, high);
-  TH1F* h25to35 = new TH1F("h25to35",title, nbins, low, high);
-  h5to15->SetStats(0);
-  h5to15->GetYaxis()->SetLabelSize(0.04);
-  //h5to15->GetYaxis()->SetTitleOffset(1.3);
-  h5to15->GetXaxis()->SetTitleOffset(1.1);
-  h5to15->GetXaxis()->SetTitleFont(132);
-  h5to15->GetXaxis()->SetTitleSize(0.042);
-  h5to15->GetXaxis()->SetLabelSize(0.04);
-  h5to15->SetLineWidth(2);
+  TH1F* hA = new TH1F("hA",title, nbins, low, high);
+  TH1F* hB = new TH1F("hB",title, nbins, low, high);
+  TH1F* hC = new TH1F("hC",title, nbins, low, high);
+  TH1F* hD = new TH1F("hD",title, nbins, low, high);
+  hA->SetStats(0);
+  hA->GetYaxis()->SetLabelSize(0.04);
+  //hA->GetYaxis()->SetTitleOffset(1.3);
+  hA->GetXaxis()->SetTitleOffset(1.1);
+  hA->GetXaxis()->SetTitleFont(132);
+  hA->GetXaxis()->SetTitleSize(0.042);
+  hA->GetXaxis()->SetLabelSize(0.04);
+  hA->SetLineWidth(2);
 
-  //  h5to15->StatOverflows(true);
-  //  h15to20->StatOverflows(true);
-  //  h20to25->StatOverflows(true);
-  //  h25to35->StatOverflows(true);
+  //  hA->StatOverflows(true);
+  //  hB->StatOverflows(true);
+  //  hC->StatOverflows(true);
+  //  hD->StatOverflows(true);
 
-  TCut mu("num_gen_muons==1&&muon_reco_match>=0");
+  int n1(0), n2(0), n3(0), n4(0), n5(0);
+  if (files.Contains("20bx25")) {
+    n1=5;
+    n2=17;
+    n3=21;
+    n4=25;
+    n5=40;
+  }
+  else if (files.Contains("S14")) {
+    n1=0;
+    n2=25;
+    n3=40;
+    n4=55;
+    n5=120;
+  }
+  else { // default: 8 TeV scenario
+    n1=0;
+    n2=15;
+    n3=22;
+    n4=32;
+    n5=70;
+  }
+
+
+  TString mu("num_gen_muons==1&&muon_reco_match>=0");
   //if (files.Contains("PU_S10")) {
-    chain->Project("h5to15", var, mu+"loot_pu>=0&&loot_pu<15");
-    chain->Project("h15to20", var, mu+"loot_pu>=15&&loot_pu<20");
-    chain->Project("h20to25", var, mu+"loot_pu>=20&&loot_pu<25");
-    chain->Project("h25to35", var, mu+"loot_pu>=25&&loot_pu<35");
-    // }
-    // else {
-    //  }
+  TString cuts = Form("(%s)&&(loot_pu>=%d&&loot_pu<%d)",mu.Data(),n1,n2);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hA", var, cuts);
+  cuts = Form("(%s)&&(loot_pu>=%d&&loot_pu<%d)",mu.Data(),n2,n3);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hB", var, cuts);
+  cuts = Form("(%s)&&(loot_pu>=%d&&loot_pu<%d)",mu.Data(),n3,n4);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hC", var, cuts);
+  cuts = Form("(%s)&&(loot_pu>=%d)",mu.Data(),n4);
+  cout << "Cuts: " << cuts.Data() << endl;
+  chain->Project("hD", var, cuts);
+  // }
+  // else {
+  //  }
+  
+  float avg1(hA->GetMean());
+  float avg2(hB->GetMean());
+  float avg3(hC->GetMean());
+  float avg4(hD->GetMean());
 
-  float avg1(h5to15->GetMean());
-  float avg2(h15to20->GetMean());
-  float avg3(h20to25->GetMean());
-  float avg4(h25to35->GetMean());
+  hA->Scale(1/hA->Integral());
+  hB->Scale(1/hB->Integral());
+  hC->Scale(1/hC->Integral());
+  hD->Scale(1/hD->Integral());
 
-  h5to15->Scale(1/h5to15->Integral());
-  h15to20->Scale(1/h15to20->Integral());
-  h20to25->Scale(1/h20to25->Integral());
-  h25to35->Scale(1/h25to35->Integral());
+  hA->SetLineColor(1);
+  hB->SetLineColor(2);
+  hC->SetLineColor(3);
+  hD->SetLineColor(4);
 
-  h5to15->SetLineColor(1);
-  h15to20->SetLineColor(2);
-  h20to25->SetLineColor(3);
-  h25to35->SetLineColor(4);
-
-  h5to15->SetLineWidth(2);
-  h15to20->SetLineWidth(2);
-  h20to25->SetLineWidth(2);
-  h25to35->SetLineWidth(2);
+  hA->SetLineWidth(2);
+  hB->SetLineWidth(2);
+  hC->SetLineWidth(2);
+  hD->SetLineWidth(2);
 
   TCanvas* c1 = new TCanvas();
-  float max = TMath::Max(h5to15->GetMaximum(), h15to20->GetMaximum());
-  if (h20to25->GetMaximum()>max) max = h20to25->GetMaximum();
-  if (h25to35->GetMaximum()>max) max = h25to35->GetMaximum();
+  float max = TMath::Max(hA->GetMaximum(), hB->GetMaximum());
+  if (hC->GetMaximum()>max) max = hC->GetMaximum();
+  if (hD->GetMaximum()>max) max = hD->GetMaximum();
 
-  h5to15->SetMaximum(max*1.1);
-  h5to15->Draw("e1");
-  h15to20->Draw("e1,same");
-  h20to25->Draw("e1,same");
-  h25to35->Draw("e1,same");
+  hA->SetMaximum(max*1.1);
+  hA->Draw("e1");
+  hB->Draw("e1,same");
+  hC->Draw("e1,same");
+  hD->Draw("e1,same");
 
   TLegend* leg = new TLegend(0.42,0.6,0.9,0.9);
   leg->SetFillStyle(0);
   char label[1000];
-  sprintf(label,"5#leqLate OOTPU<15 (#mu=%3.3f)",avg1);
-  leg->AddEntry(h5to15,label,"lp");
-  sprintf(label,"15#leqLate OOTPU<20 (#mu=%3.3f)",avg2);
-  leg->AddEntry(h15to20,label,"lp");
-  sprintf(label,"20#leqLate OOTPU<25 (#mu=%3.3f)",avg3);
-  leg->AddEntry(h20to25,label,"lp");
-  sprintf(label,"25#leqLate OOTPU<35 (#mu=%3.3f)",avg4);
-  leg->AddEntry(h25to35,label,"lp");
+  sprintf(label,"%d#leqLate Ints.<%d (#mu=%3.3f)",n1,n2,avg1);
+  leg->AddEntry(hA,label,"lp");
+  sprintf(label,"%d#leqLate Ints.<%d (#mu=%3.3f)",n2,n3,avg2);
+  leg->AddEntry(hB,label,"lp");
+  sprintf(label,"%d#leqLate Ints.<%d (#mu=%3.3f)",n3,n4,avg3);
+  leg->AddEntry(hC,label,"lp");
+  sprintf(label,"Late Ints.>%d (#mu=%3.3f)",n4,avg4);
+  leg->AddEntry(hD,label,"lp");
   // leg->Draw();
 
-  TString plotTitle ="relIso_vs_LOOTPU_"+var+comments+".pdf";
+  TString plotTitle ="relIso_vs_OOTPU_"+var+comments+".pdf";
   c1->Print(plotTitle);
 
   cout << "Rejection rates" << endl;
   Double_t left(0.), lerror(0.), right(0.), rerror(0.);
-  left = h5to15->IntegralAndError(1,12,lerror);
-  right = h5to15->IntegralAndError(13,31,rerror);
+  left = hA->IntegralAndError(1,12,lerror);
+  right = hA->IntegralAndError(13,31,rerror);
   float rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
   printf("bin1: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = h15to20->IntegralAndError(1,12,lerror);
-  right = h15to20->IntegralAndError(13,31,rerror);
+  left = hB->IntegralAndError(1,12,lerror);
+  right = hB->IntegralAndError(13,31,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
   printf("bin2: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = h20to25->IntegralAndError(1,12,lerror);
-  right = h20to25->IntegralAndError(13,31,rerror);
+  left = hC->IntegralAndError(1,12,lerror);
+  right = hC->IntegralAndError(13,31,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
   printf("bin3: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = h25to35->IntegralAndError(1,12,lerror);
-  right = h25to35->IntegralAndError(13,31,rerror);
+  left = hD->IntegralAndError(1,12,lerror);
+  right = hD->IntegralAndError(13,31,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
   printf("bin4: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
 }
