@@ -37,7 +37,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   float met(0.0), ht(0.0);
 
-  unsigned short num_jets(0), num_csvt_jets(0), num_csvm_jets(0), num_csvl_jets(0);
+  unsigned short num_jets_pt20(0), num_jets_pt40(0), num_jets_pt60(0), num_jets_pt80(0), num_jets_pt100(0), num_jets_pt150(0);
+  unsigned short num_csvt_jets(0), num_csvm_jets(0), num_csvl_jets(0);
   unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
 
 
@@ -118,7 +119,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("met", &met);
   reduced_tree.Branch("ht", &ht);
 
-  reduced_tree.Branch("num_jets", &num_jets); 
+  reduced_tree.Branch("num_jets_pt20", &num_jets_pt20); 
+  reduced_tree.Branch("num_jets_pt40", &num_jets_pt40); 
+  reduced_tree.Branch("num_jets_pt60", &num_jets_pt60); 
+  reduced_tree.Branch("num_jets_pt80", &num_jets_pt80); 
+  reduced_tree.Branch("num_jets_pt100", &num_jets_pt100); 
+  reduced_tree.Branch("num_jets_pt150", &num_jets_pt150); 
+
   reduced_tree.Branch("num_csvt_jets", &num_csvt_jets); 
   reduced_tree.Branch("num_csvm_jets", &num_csvm_jets); 
   reduced_tree.Branch("num_csvl_jets", &num_csvl_jets); 
@@ -275,7 +282,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     met=pfTypeImets_et->at(0);
     //        cout << "JERR2" << endl;
     ht=GetHT();
-    num_jets=GetNumGoodJets();
+    num_jets_pt20=GetNumGoodJets();
+    num_jets_pt40=GetNumGoodJets();
+    num_jets_pt60=GetNumGoodJets();
+    num_jets_pt80=GetNumGoodJets();
+    num_jets_pt100=GetNumGoodJets();
+    num_jets_pt150=GetNumGoodJets();
     //  cout << "num_jets=" << num_jets << endl;
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();

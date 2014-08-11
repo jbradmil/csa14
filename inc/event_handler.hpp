@@ -186,7 +186,7 @@ protected:
   bool IsMC();
 
   double GetHT() const;
-  int GetNumGoodJets() const;
+  int GetNumGoodJets(const double pt=20.) const;
   int GetNumCSVTJets() const;
   int GetNumCSVMJets() const;
   int GetNumCSVLJets() const;

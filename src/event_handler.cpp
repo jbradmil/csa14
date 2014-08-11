@@ -1687,10 +1687,10 @@ double EventHandler::GetHT() const{
   return HT;
 }
 
-int EventHandler::GetNumGoodJets() const{
+int EventHandler::GetNumGoodJets(const double pt) const{
   int numGoodJets(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i)) ++numGoodJets;
+    if(isGoodJet(i,true,pt)) ++numGoodJets;
   }
   return numGoodJets;
 }

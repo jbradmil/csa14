@@ -1,4 +1,14 @@
 *** Options I've used for compare_samples.C to make nice plots ***
+
+## basic distributions
+compare_samples("met","",";E_{T}^{miss} [GeV];(a.u.)",35,0,350,false)
+compare_samples("met","",";E_{T}^{miss} [GeV];(a.u.)",35,0,350,true,"log")
+compare_samples("ht","",";H_{T} [GeV];(a.u.)",40,0,2000,false)
+compare_samples("ht","",";H_{T} [GeV];(a.u.)",50,0,2500,true,"log")
+compare_samples("num_jets","",";n_{jets} (p_{T} > 20 GeV);(a.u.)",13,0,13)
+compare_samples("num_csvm_jets","",";n_{CSVM} (p_{T} > 20 GeV);(a.u.)",6,0,6)
+
+
 TCut mu("num_gen_muons==1&&muon_reco_match>=0");
 compare_samples("muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5);
 Rejection rates:
@@ -50,7 +60,15 @@ compare_samples("oot_pu",mu,";Out-of-time interactions (BX-1 & BX+1);(a.u.)",134
 TCut mu_no_reco("num_gen_muons==1&&muon_reco_match<0");
 compare_samples("muon_gen_pt",mu_no_reco,";p_{T}^{#mu} [GeV];(a.u.)",30,0,300,false,"no_reco_wide")
 compare_samples("muon_gen_pt",mu_no_reco,";p_{T}^{#mu} [GeV];(a.u.)",30,0,30,false,"no_reco_low")
-compare_samples("muon_gen_eta",mu_no_reco,";#eta (#mu);(a.u.)",200,-5,5,false,"no_reco")
+compare_samples("muon_gen_eta",mu_no_reco,";#eta (#mu);(a.u.)",100,-5,5,false,"no_reco")
+compare_samples("muon_gen_eta",mu_no_reco+"muon_gen_pt>5",";#eta (#mu);(a.u.)",100,-5,5,false,"no_reco_pt5")
+compare_samples("muon_gen_eta",mu_no_reco+"muon_gen_pt>10",";#eta (#mu);(a.u.)",100,-5,5,false,"no_reco_pt10")
+compare_samples("muon_gen_phi",mu_no_reco,";#phi (#mu);(a.u.)",128,-3.2,3.2,false,"no_reco")
+compare_samples("num_primary_vertices",mu_no_reco,";NPV;(a.u.)",60,0,60,false,"no_reco")
+compare_samples("num_primary_vertices",mu_no_reco+"muon_gen_pt>5",";NPV;(a.u.)",60,0,60,false,"no_reco_high_pt")
+compare_samples("num_primary_vertices",mu_no_reco+"abs(muon_gen_eta<2.4)",";NPV;(a.u.)",60,0,60,false,"no_reco_eta_2.4")
+compare_samples("num_primary_vertices",mu_no_reco+"muon_gen_pt>5&&abs(muon_gen_eta<2.4)",";NPV;(a.u.)",60,0,60,false,"no_reco_pt5_eta_2.4")
+
 
 compare_samples("muon_gen_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,300,false,"gen_reco_wide")
 compare_samples("muon_gen_pt",mu,";p_{T}^{#mu} [GeV];(a.u.)",30,0,30,false,"gen_reco_low")
