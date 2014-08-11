@@ -1,9 +1,11 @@
-ootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"8TeV");
-ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV25ns");
-ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1_cfA_v72.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV50ns");
+TString mu("num_gen_muons==1&&muon_reco_match>=0");
 
-eootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"8TeV");
-eootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV");
+ootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5,12,"8TeV",true);
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5,12,"13TeV25ns",true);
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU_S14_POSTLS170_V6-v1_cfA_v72.list.root","muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5,12,"13TeV50ns",true);
+
+eootpu_comparison("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root","muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5,"8TeV");
+eootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","muon_relIso",mu,";I_{rel}(#mu);(a.u.)",30,0,0.5,"13TeV");
 
 eff_scat("../../../reduced_trees/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71.list.root",10,0,60,"8TeV")
 eff_scat("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root",10,0,50,"13TeV25ns")
@@ -14,3 +16,20 @@ Rejection rates:
 (1-h15to20->Integral(13,31))/h15to20->Integral(1,31)
 (1-h20to25->Integral(13,31))/h20to25->Integral(1,31)
 (1-h25to35->Integral(13,31))/h25to35->Integral(1,31)
+
+
+## Non-isolation variables
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","met","",";E_{T}^{miss} [GeV];(a.u.)",60,0,300,25,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","ht","",";H_{T} [GeV];(a.u.)",40,0,2000,8,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_jets_pt20","",";n_{jets} (p_{T} > 20 GeV);(a.u.)",13,0,13,3,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_jets_pt50","",";n_{jets} (p_{T} > 50 GeV);(a.u.)",13,0,13,3,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_jets_pt80","",";n_{jets} (p_{T} > 80 GeV);(a.u.)",13,0,13,3,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_jets_pt100","",";n_{jets} (p_{T} > 100 GeV);(a.u.)",13,0,13,3,"13Tev25ns")
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_jets_pt150","",";n_{jets} (p_{T} > 150 GeV);(a.u.)",13,0,13,3,"13Tev25ns")
+
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_reco_veto_muons","",";n_{#mu}^{veto} (p_{T} > 10 GeV);(a.u.)",5,0,5,1,"13Tev25ns",true)
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_reco_veto_electrons","",";n_{e}^{veto} (p_{T} > 10 GeV);(a.u.)",5,0,5,1,"13Tev25ns",true)
+
+
+
+ootpu_comparison("../../../reduced_trees/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25_POSTLS170_V5-v2-MINIAODSIM.list.root","num_primary_vertices","",";NPV;(a.u.)",45,0,45,"13Tev25ns")

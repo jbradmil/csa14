@@ -7,9 +7,10 @@
 #include "TLegend.h"
 #include "TCut.h"
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
-void ootpu_comparison(TString files, TString var, TString title, int nbins, float low, float high, TString comments="") {
+void ootpu_comparison(TString files, TString var, TString addCuts, TString title, int nbins, float low, float high, int cut_bin=1, TString comments="", bool leq=false) {
 
   TChain* chain = new TChain("reduced_tree");
   chain->Add(files);
@@ -58,18 +59,20 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   }
 
 
-  TString mu("num_gen_muons==1&&muon_reco_match>=0");
+  // TString mu("num_gen_muons==1&&muon_reco_match>=0");
   //if (files.Contains("PU_S10")) {
-  TString cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n1,n2);
+  TString addCuts_form("");
+  if (addCuts.Length()>0) addCuts_form = Form("(%s)&&",addCuts.Data());
+  TString cuts = Form("%s(oot_pu>=%d&&oot_pu<%d)",addCuts_form.Data(),n1,n2);
   cout << "Cuts: " << cuts.Data() << endl;
   chain->Project("hA", var, cuts);
-  cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n2,n3);
+  cuts = Form("%s(oot_pu>=%d&&oot_pu<%d)",addCuts_form.Data(),n2,n3);
   cout << "Cuts: " << cuts.Data() << endl;
   chain->Project("hB", var, cuts);
-  cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),n3,n4);
+  cuts = Form("%s(oot_pu>=%d&&oot_pu<%d)",addCuts_form.Data(),n3,n4);
   cout << "Cuts: " << cuts.Data() << endl;
   chain->Project("hC", var, cuts);
-  cuts = Form("(%s)&&(oot_pu>=%d)",mu.Data(),n4);
+  cuts = Form("%s(oot_pu>=%d)",addCuts_form.Data(),n4);
   cout << "Cuts: " << cuts.Data() << endl;
   chain->Project("hD", var, cuts);
   // }
@@ -118,27 +121,46 @@ void ootpu_comparison(TString files, TString var, TString title, int nbins, floa
   leg->AddEntry(hC,label,"lp");
   sprintf(label,"Ints.>%d (#mu=%3.3f)",n4,avg4);
   leg->AddEntry(hD,label,"lp");
-  // leg->Draw();
+  leg->Draw();
 
-  TString plotTitle ="relIso_vs_OOTPU_"+var+comments+".pdf";
-  c1->Print(plotTitle);
+  TString plotTitle ="relIso_vs_OOTPU_"+var+comments;
+  c1->Print(plotTitle+".pdf");
 
-  cout << "Rejection rates" << endl;
+  std::ofstream ofs;
+  ofs.open(plotTitle+".txt", std::ofstream::out);
+  char header[1000];
+  TString dir(">");
+  if (leq) dir="<";
+  sprintf(header,"Cut efficiency (%s%s%3.2f): ",var.Data(),dir.Data(),hA->GetBinLowEdge(cut_bin+1));
+  cout << header << endl;
+  ofs << header << endl;
   Double_t left(0.), lerror(0.), right(0.), rerror(0.);
-  left = hA->IntegralAndError(1,12,lerror);
-  right = hA->IntegralAndError(13,31,rerror);
+  left = hA->IntegralAndError(1,cut_bin,lerror);
+  right = hA->IntegralAndError(cut_bin+1,nbins+1,rerror);
   float rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
-  printf("bin1: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = hB->IntegralAndError(1,12,lerror);
-  right = hB->IntegralAndError(13,31,rerror);
+  char line[1000];
+  if (leq) sprintf(line,"bin1: %3.3f +/- %3.3f", left/(left+right),rat_error);
+  else sprintf(line,"bin1: %3.3f +/- %3.3f", right/(left+right),rat_error);
+  cout << line << endl;
+  ofs << line << endl;
+  left = hB->IntegralAndError(1,cut_bin,lerror);
+  right = hB->IntegralAndError(cut_bin+1,nbins+1,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
-  printf("bin2: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = hC->IntegralAndError(1,12,lerror);
-  right = hC->IntegralAndError(13,31,rerror);
+  if (leq) sprintf(line,"bin2: %3.3f +/- %3.3f", left/(left+right),rat_error);
+  else sprintf(line,"bin2: %3.3f +/- %3.3f", right/(left+right),rat_error);
+  cout << line << endl;
+  ofs << line << endl;  left = hC->IntegralAndError(1,cut_bin,lerror);
+  right = hC->IntegralAndError(cut_bin+1,nbins+1,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
-  printf("bin3: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
-  left = hD->IntegralAndError(1,12,lerror);
-  right = hD->IntegralAndError(13,31,rerror);
+  if (leq) sprintf(line,"bin3: %3.3f +/- %3.3f", left/(left+right),rat_error);
+  else sprintf(line,"bin3: %3.3f +/- %3.3f", right/(left+right),rat_error);
+  cout << line << endl;
+  ofs << line << endl;  left = hD->IntegralAndError(1,cut_bin,lerror);
+  right = hD->IntegralAndError(cut_bin+1,nbins+1,rerror);
   rat_error=sqrt((left*left*rerror*rerror+right*right*lerror*lerror)/((left+right)*(left+right)));
-  printf("bin4: %3.2f +/- %3.3f\n", left/(left+right),rat_error);
+  if (leq) sprintf(line,"bin4: %3.3f +/- %3.3f", left/(left+right),rat_error);
+  else sprintf(line,"bin4: %3.3f +/- %3.3f", right/(left+right),rat_error);
+  cout << line << endl;
+  ofs << line << endl;
+  ofs.close();
 }

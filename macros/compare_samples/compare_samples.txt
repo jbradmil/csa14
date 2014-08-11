@@ -5,7 +5,12 @@ compare_samples("met","",";E_{T}^{miss} [GeV];(a.u.)",35,0,350,false)
 compare_samples("met","",";E_{T}^{miss} [GeV];(a.u.)",35,0,350,true,"log")
 compare_samples("ht","",";H_{T} [GeV];(a.u.)",40,0,2000,false)
 compare_samples("ht","",";H_{T} [GeV];(a.u.)",50,0,2500,true,"log")
-compare_samples("num_jets","",";n_{jets} (p_{T} > 20 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt20","",";n_{jets} (p_{T} > 20 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt40","",";n_{jets} (p_{T} > 40 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt60","",";n_{jets} (p_{T} > 60 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt80","",";n_{jets} (p_{T} > 80 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt100","",";n_{jets} (p_{T} > 100 GeV);(a.u.)",13,0,13)
+compare_samples("num_jets_pt150","",";n_{jets} (p_{T} > 150 GeV);(a.u.)",13,0,13)
 compare_samples("num_csvm_jets","",";n_{CSVM} (p_{T} > 20 GeV);(a.u.)",6,0,6)
 
 
