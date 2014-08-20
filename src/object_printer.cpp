@@ -24,7 +24,7 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
     cout << "Printing contents of mc_doc..." << endl;
     for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
       if (mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23) {  // hard scatter
-	cout<<imc<<": ID "<<(int)mc_doc_id->at(imc)<<",   \tMom ID "<<(int)mc_doc_mother_id->at(imc)
+	cout<<imc<<": ID "<<static_cast<int>(mc_doc_id->at(imc))<<",   \tMom ID "<<static_cast<int>(mc_doc_mother_id->at(imc))
 	    <<", \tN mothers "<<mc_doc_numOfMothers->at(imc)
 	    <<", \tN daughters "<<mc_doc_numOfDaughters->at(imc)
 	    <<",   \tpx "<<mc_doc_px->at(imc)
@@ -34,8 +34,8 @@ void ObjectPrinter::PrintObjects(const unsigned int nentries) {
 	    <<",   \teta "<<mc_doc_eta->at(imc)
 	    <<",   \tphi "<<mc_doc_phi->at(imc)
 	    <<",   \tstatus "<<mc_doc_status->at(imc)
-	    <<", \tGMom ID "<<(int)mc_doc_grandmother_id->at(imc)
-	    <<", \tGGMom ID "<<(int)mc_doc_ggrandmother_id->at(imc) <<endl;
+	    <<", \tGMom ID "<<static_cast<int>(mc_doc_grandmother_id->at(imc))
+	    <<", \tGGMom ID "<<static_cast<int>(mc_doc_ggrandmother_id->at(imc)) <<endl;
 	   }
     }
     cout << endl;

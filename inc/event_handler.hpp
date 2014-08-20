@@ -191,6 +191,8 @@ protected:
   int GetNumCSVMJets() const;
   int GetNumCSVLJets() const;
 
+  double GetMTW(const double, const double, const double, const double) const;
+
 };
 
 #endif

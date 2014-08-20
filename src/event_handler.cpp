@@ -880,7 +880,7 @@ float EventHandler::GetCorrespondingDeltaRlb(const int gen_index) const { // act
   // cout << "mc_mus index: " << gen_index << endl;
   // cout << "mc_mus size: " << mc_mus_eta->size() << endl;
   double gen_mu_eta(mc_mus_eta->at(gen_index)), gen_mu_phi(mc_mus_phi->at(gen_index));
-  int charge(mc_mus_charge->at(gen_index));
+  int charge(static_cast<int>(mc_mus_charge->at(gen_index)));
   for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
     if (static_cast<int>(mc_doc_id->at(imc))*charge==24&&(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) {
       the_W=imc;
@@ -988,7 +988,7 @@ void EventHandler::GetGenMuons() const{
     for (unsigned int gen(0); gen<mc_mus_id->size(); gen++) {
       if(isGenMuon(gen)&&isIsoGenMuon(gen)) {
 	// if(isGenMuon(gen)&&IsFromB(mc_mus_mother_id->at(gen), mc_mus_grandmother_id->at(gen), mc_mus_ggrandmother_id->at(gen))) {
-	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,mc_mus_id->at(gen),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
+	genMuonCache.push_back(GenMuon(TLorentzVector(mc_mus_px->at(gen),mc_mus_py->at(gen),mc_mus_pz->at(gen),mc_mus_energy->at(gen)),gen,static_cast<int>(mc_mus_id->at(gen)),static_cast<unsigned int>(mc_mus_mother_id->at(gen))));
       }
     }
     std::sort(genMuonCache.begin(),genMuonCache.end(), std::greater<GenMuon>());
@@ -1178,7 +1178,7 @@ void EventHandler::GetGenElectrons() const{
     for (unsigned int gen(0); gen<mc_electrons_id->size(); gen++) {
       if(isGenElectron(gen)&&isIsoGenElectron(gen)) {
       //  if(isGenElectron(gen)&&IsFromB(mc_electrons_mother_id->at(gen), mc_electrons_grandmother_id->at(gen), mc_electrons_ggrandmother_id->at(gen))) {
-	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,mc_electrons_id->at(gen),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
+	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,static_cast<int>(mc_electrons_id->at(gen)),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
       }
     }
     std::sort(genElectronCache.begin(),genElectronCache.end(), std::greater<GenElectron>());
@@ -1294,7 +1294,7 @@ void EventHandler::GetGenTaus() const{
     genTauCache.clear();
     for (unsigned int gen(0); gen<mc_taus_id->size(); gen++) {
       if(isGenTau(gen)) {
-	genTauCache.push_back(GenTau(TLorentzVector(mc_taus_px->at(gen),mc_taus_py->at(gen),mc_taus_pz->at(gen),mc_taus_energy->at(gen)),gen,mc_taus_id->at(gen),static_cast<unsigned int>(mc_taus_mother_id->at(gen))));
+	genTauCache.push_back(GenTau(TLorentzVector(mc_taus_px->at(gen),mc_taus_py->at(gen),mc_taus_pz->at(gen),mc_taus_energy->at(gen)),gen,static_cast<int>(mc_taus_id->at(gen)),static_cast<unsigned int>(mc_taus_mother_id->at(gen))));
       }
     }
     std::sort(genTauCache.begin(),genTauCache.end(), std::greater<GenTau>());
@@ -1614,68 +1614,9 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	       && els_hadOverEm->at(iel) < 0.10 ))
 	  );
 }
-/*
-bool EventHandler::passedRA4ElectronSelection(uint iel, float ElectronPTThreshold){
-  if(iel >= els_pt->size()) return false;
-  cout << "Calculating relIso..." << endl;
-  double relIso = GetRA4ElectronIsolation(iel);
-  cout << "Calculating baseSelection..." << endl;
-  return (passedBaseElectronSelection(iel, ElectronPTThreshold) && relIso < 0.15);
-}
 
-bool EventHandler::passedRA4ElectronVeto(uint iel, float ElectronPTThreshold){
-  if(iel >= els_pt->size()) return false;
-
-  float d0PV = els_d0dum->at(iel)-pv_x->at(0)*sin(els_tk_phi->at(iel))+pv_y->at(0)*cos(els_tk_phi->at(iel));
-  double relIso = GetRA4ElectronIsolation(iel);
-  
-  return (els_pt->at(iel) > ElectronPTThreshold
-	  && fabs(els_scEta->at(iel)) < 2.5
-	  && relIso < 0.15
-	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
-			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.2
-	  && fabs(d0PV) < 0.04 
-	  && ((els_isEB->at(iel) // Endcap selection
-	       && fabs(els_dEtaIn->at(iel)) < 0.007
-	       && fabs(els_dPhiIn->at(iel)) < 0.8
-	       && els_sigmaIEtaIEta->at(iel) < 0.01
-	       && els_hadOverEm->at(iel) < 0.15) ||
-	      (els_isEE->at(iel)  // Barrel selection
-	       && fabs(els_dEtaIn->at(iel)) < 0.01
-	       && fabs(els_dPhiIn->at(iel)) < 0.7
-	       && els_sigmaIEtaIEta->at(iel) < 0.03))
-	  );  
-}
-
-float EventHandler::GetEffectiveArea(float SCEta, bool isMC){
-  float EffectiveArea;
-  
-  if(isMC) {
-    if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.110;
-    if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.130;
-    if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.089;
-    if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.130;
-    if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.150;
-    if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.160;
-    if (fabs(SCEta) >= 2.4) EffectiveArea = 0.190;
-  }
-  else {
-    //kEleGammaAndNeutralHadronIso03 from 2011 data
-    //obtained from http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/EGamma/EGammaAnalysisTools/interface/ElectronEffectiveArea.h?revision=1.3&view=markup
-    if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.100;
-    if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.120;
-    if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.085;
-    if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.110;
-    if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.120;
-    if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.120;
-    if (fabs(SCEta) >= 2.4) EffectiveArea = 0.130;
-  }
-  return EffectiveArea;
-}
-*/
 
 bool EventHandler::IsMC(){
-  std::string sampleName(chainA.GetFile()->GetName());
   return (sampleName.find("Run201") == std::string::npos);
 }
 
@@ -1723,4 +1664,8 @@ int EventHandler::GetNumCSVLJets() const{
     }
   }
   return numPassing;
+}
+
+double EventHandler::GetMTW(const double lep_pt, const double MET, const double lep_phi, const double MET_phi) const{
+  return TMath::Sqrt(2*lep_pt*MET*(1-cos(Math::GetDeltaPhi(lep_phi,MET_phi))));
 }
