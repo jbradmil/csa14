@@ -30,10 +30,10 @@ void ootpu_comparison(TString files, TString var, TString addCuts, TString title
   hA->GetXaxis()->SetLabelSize(0.04);
   hA->SetLineWidth(2);
 
-  //  hA->StatOverflows(true);
-  //  hB->StatOverflows(true);
-  //  hC->StatOverflows(true);
-  //  hD->StatOverflows(true);
+  hA->StatOverflows(true);
+  hB->StatOverflows(true);
+  hC->StatOverflows(true);
+  hD->StatOverflows(true);
 
   int n1(0), n2(0), n3(0), n4(0), n5(0);
   if (files.Contains("20bx25")) {
