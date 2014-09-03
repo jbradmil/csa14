@@ -6,7 +6,7 @@
 
 class WeightCalculator{
 public:
-  explicit WeightCalculator(const double=19399);
+  explicit WeightCalculator(const double=19399, const int=-1);
 
   void SetLuminosity(const double lumiIn=19399);
   double GetLuminosity() const;
@@ -19,11 +19,13 @@ public:
 
   double GetWeight(const std::string&) const;
   double GetWeight(const std::string&, const int, const int) const;
+  double GetWeightPerPb(const std::string&) const;
 
 private:
   static std::map<std::string, double> crossSectionTable;
   static std::map<std::string, int> totalEventsTable;
   double lumi;
+  int Nentries;
 
   void SetCrossSections();
   void SetTotalEvents();

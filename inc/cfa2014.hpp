@@ -147,6 +147,8 @@ protected:
   std::vector<int> *isotk_charge;
   std::vector<bool> *els_isPF;
   std::vector<bool> *mus_isPF;
+  std::vector<int> *els_jet_ind;
+  std::vector<int> *mus_jet_ind;
   std::vector<int> *taus_el_ind;
   std::vector<int> *taus_mu_ind;
   TBranch *b_trigger_prescalevalue;
@@ -265,6 +267,8 @@ protected:
   TBranch *b_isotk_charge;
   TBranch *b_els_isPF;
   TBranch *b_mus_isPF;
+  TBranch *b_els_jet_ind;
+  TBranch *b_mus_jet_ind;
   TBranch *b_taus_el_ind;
   TBranch *b_taus_mu_ind;
   UInt_t NbeamSpot;

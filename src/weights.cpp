@@ -4,8 +4,10 @@
 std::map<std::string, double> WeightCalculator::crossSectionTable;
 std::map<std::string, int> WeightCalculator::totalEventsTable;
 
-WeightCalculator::WeightCalculator(const double lumiIn):
-  lumi(lumiIn){
+WeightCalculator::WeightCalculator(const double lumiIn, const int NentriesIn):
+  lumi(lumiIn),
+  Nentries(NentriesIn)
+{
   SetCrossSections();
   SetTotalEvents();
 }
@@ -57,9 +59,22 @@ int WeightCalculator::GetTotalEvents(const std::string &process, const int m1,
 }
 
 double WeightCalculator::GetWeight(const std::string &process) const{
-  const double xsec(GetCrossSection(process)), events(GetTotalEvents(process));
+  const double xsec(GetCrossSection(process));
+  int events(Nentries);
+  if(events<0) events=GetTotalEvents(process);
   if(events>=0 && xsec>=0.0){
     return lumi*xsec/static_cast<double>(events);
+  }else{
+    return 1.0;
+  }
+}
+
+double WeightCalculator::GetWeightPerPb(const std::string &process) const{
+  const double xsec(GetCrossSection(process));
+  int events(Nentries);
+  if(events<0) events=GetTotalEvents(process);
+  if(events>=0 && xsec>=0.0){
+    return xsec/static_cast<double>(events);
   }else{
     return 1.0;
   }
@@ -134,6 +149,37 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-350_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0552*0.561*0.561;
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-400_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0294*0.561*0.561;
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-450_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0163*0.561*0.561;
+  // CSA14 samples
+  crossSectionTable["SMS-T1tttt_2J_mGl-1500_mLSP-100"]=0.0141903;
+  crossSectionTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=0.0856418;
+  crossSectionTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=0.0141903;
+  crossSectionTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=0.325388;
+  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=818.8;
+  crossSectionTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=1817.0;
+  crossSectionTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=471.6;
+  crossSectionTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=55.61;
+  crossSectionTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=18.81;
+  crossSectionTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod"]=80710000000;
+  crossSectionTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod"]=7528000000;
+  crossSectionTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod"]=2327000000;
+  crossSectionTable["QCD_Pt-30to50_Tune4C_13TeV_pythia8_Spring14miniaod"]=161500000;
+  crossSectionTable["QCD_Pt-50to80_Tune4C_13TeV_pythia8_Spring14miniaod"]=22110000;
+  crossSectionTable["QCD_Pt-80to120_Tune4C_13TeV_pythia8_Spring14miniaod"]=3000114;
+  crossSectionTable["QCD_Pt-120to170_Tune4C_13TeV_pythia8_Spring14miniaod"]=493200;
+  crossSectionTable["QCD_Pt-170to300_Tune4C_13TeV_pythia8_Spring14miniaod"]=120300;
+  crossSectionTable["QCD_Pt-300to470_Tune4C_13TeV_pythia8_Spring14miniaod"]=7475;
+  crossSectionTable["QCD_Pt-470to600_Tune4C_13TeV_pythia8_Spring14miniaod"]=587.1;
+  crossSectionTable["QCD_Pt-600to800_Tune4C_13TeV_pythia8_Spring14miniaod"]=167;
+  crossSectionTable["QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Spring14miniaod"]=28.25;
+  crossSectionTable["QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Spring14miniaod"]=8.195;
+  crossSectionTable["QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Spring14miniaod"]=0.7346;
+  crossSectionTable["QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Spring14miniaod"]=0.102;
+  crossSectionTable["QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Spring14miniaod"]=0.0064;
+  crossSectionTable["QCD_Pt-3200_Tune4C_13TeV_pythia8_Spring14miniaod"]=0.000163;
+  crossSectionTable["ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=372.6;
+  crossSectionTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=100.8;
+  crossSectionTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=11.99;
+  crossSectionTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4.113;
 }
 
 void WeightCalculator::SetTotalEvents(){
@@ -233,4 +279,35 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-350_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=80478;
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-400_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=79013;
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-450_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=76402;
+// CSA14 samples
+  totalEventsTable["SMS-T1tttt_2J_mGl-1500_mLSP-100"]=105679;
+  totalEventsTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=100322;
+  totalEventsTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=105964;
+  totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=97584;
+  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=8667327;
+  totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3181078;
+  totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3133549;
+  totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2507939;
+  totalEventsTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2399709;
+  totalEventsTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod"]=4791146;
+  totalEventsTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod"]=4510630;
+  totalEventsTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod"]=4655329;
+  totalEventsTable["QCD_Pt-30to50_Tune4C_13TeV_pythia8_Spring14miniaod"]=4848856;
+  totalEventsTable["QCD_Pt-50to80_Tune4C_13TeV_pythia8_Spring14miniaod"]=4726495;
+  totalEventsTable["QCD_Pt-80to120_Tune4C_13TeV_pythia8_Spring14miniaod"]=4794295;
+  totalEventsTable["QCD_Pt-120to170_Tune4C_13TeV_pythia8_Spring14miniaod"]=3562052;
+  totalEventsTable["QCD_Pt-170to300_Tune4C_13TeV_pythia8_Spring14miniaod"]=2793204;
+  totalEventsTable["QCD_Pt-300to470_Tune4C_13TeV_pythia8_Spring14miniaod"]=2700637;
+  totalEventsTable["QCD_Pt-470to600_Tune4C_13TeV_pythia8_Spring14miniaod"]=2907137;
+  totalEventsTable["QCD_Pt-600to800_Tune4C_13TeV_pythia8_Spring14miniaod"]=2853619;
+  totalEventsTable["QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Spring14miniaod"]=2875729;
+  totalEventsTable["QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Spring14miniaod"]=2834231;
+  totalEventsTable["QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Spring14miniaod"]=2931414;
+  totalEventsTable["QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Spring14miniaod"]=2953210;
+  totalEventsTable["QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Spring14miniaod"]=2939491;
+  totalEventsTable["QCD_Pt-3200_Tune4C_13TeV_pythia8_Spring14miniaod"]=2953151;
+  totalEventsTable["ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4950929;
+  totalEventsTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4548024;
+  totalEventsTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4453911;
+  totalEventsTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4428190;
 }

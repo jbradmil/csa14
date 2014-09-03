@@ -82,11 +82,12 @@ protected:
 
   int GetPBNR() const;
   bool PassesBadJetFilter() const;
-  bool isGoodJet(const unsigned int, const bool=true, const double=20.0,
+  bool isGoodJet(const unsigned int, const bool=true, const double=50.0,
                  const double=2.4/*, const bool=true*/) const;
   bool isCleanJet(const unsigned int, const int) const;
   bool isProblemJet(const unsigned int) const;
   bool jetPassLooseID(const unsigned int) const;
+  bool jetHasEMu(const int) const;
 
   bool isRA2bElectron(const unsigned int, const unsigned short=0, const bool=true) const;
   bool isRA2bMuon(const unsigned int, const unsigned short=0, const bool=true) const;
@@ -185,13 +186,25 @@ protected:
  
   bool IsMC();
 
-  double GetHT() const;
-  int GetNumGoodJets(const double pt=20.) const;
-  int GetNumCSVTJets() const;
-  int GetNumCSVMJets() const;
-  int GetNumCSVLJets() const;
+  double GetHT(double=50.) const;
+  unsigned int GetNumGoodJets(const double pt=50.) const;
+  unsigned int GetNumCSVTJets() const;
+  unsigned int GetNumCSVMJets() const;
+  unsigned int GetNumCSVLJets() const;
 
   double GetMTW(const double, const double, const double, const double) const;
+
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool keith, bool useArcsin=false );
+  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,false); };
+  double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool keith, bool useArcsin ); //Ben
+  double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
+
+  double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid,  bool keith);
+  double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true,false); } //overloaded
+
+  int GetNumIsoTracks(const double=10.0) const;
+
+  double GetTransverseMass() const;
 
 };
 

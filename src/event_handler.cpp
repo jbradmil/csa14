@@ -57,24 +57,54 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
   beta(0){
-  if (fastMode&&cmEnergy<=8) { // turn off unnecessary branches
-    chainA.SetBranchStatus("triggerobject_*",0);
-    chainA.SetBranchStatus("standalone_t*",0);
-    chainA.SetBranchStatus("L1trigger_*",0);
-    chainA.SetBranchStatus("passprescale*",0);
-    chainA.SetBranchStatus("jets_AK5PFclean_*",0);
-    chainA.SetBranchStatus("softjetUp_*",0);
-    chainA.SetBranchStatus("pdfweights_*",0);
-    chainA.SetBranchStatus("photon_*",0);
-    chainB.SetBranchStatus("Ntcmets",0);
-    chainB.SetBranchStatus("tcmets_*",0);
-    chainB.SetBranchStatus("Nphotons",0);
-    chainB.SetBranchStatus("photons_*",0);
-    chainB.SetBranchStatus("Npf_photons",0);
-    chainB.SetBranchStatus("pf_photons_*",0);
-    chainB.SetBranchStatus("Njets_AK5PFclean",0);
-    chainB.SetBranchStatus("jets_AK5PFclean_*",0);
+  if (fastMode){
+    if(cmEnergy<=8) { // turn off unnecessary branches
+      chainA.SetBranchStatus("triggerobject_*",0);
+      chainA.SetBranchStatus("standalone_t*",0);
+      chainA.SetBranchStatus("L1trigger_*",0);
+      chainA.SetBranchStatus("passprescale*",0);
+      chainA.SetBranchStatus("jets_AK5PFclean_*",0);
+      chainA.SetBranchStatus("softjetUp_*",0);
+      chainA.SetBranchStatus("pdfweights_*",0);
+      chainA.SetBranchStatus("photon_*",0);
+      chainB.SetBranchStatus("Ntcmets",0);
+      chainB.SetBranchStatus("tcmets_*",0);
+      chainB.SetBranchStatus("Nphotons",0);
+      chainB.SetBranchStatus("photons_*",0);
+      chainB.SetBranchStatus("Npf_photons",0);
+      chainB.SetBranchStatus("pf_photons_*",0);
+      chainB.SetBranchStatus("Njets_AK5PFclean",0);
+      chainB.SetBranchStatus("jets_AK5PFclean_*",0);
+    }
+    else {
+      chainB.SetBranchStatus("pfcand*",0);
+      chainB.SetBranchStatus("mc_final*",0);
+   }
   }
+}
+
+bool EventHandler::jetHasEMu(const int ijet) const{
+ // has an isolated (veto) muon
+ if (!recoMuonsUpToDate) {
+    if (cmEnergy>=13) recoMuonCache=GetRecoMuons(true);
+    else recoMuonCache=GetRA2bMuons(true);
+    recoMuonsUpToDate=true;
+ }
+ for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
+   int mujet = mus_jet_ind->at(recoMuonCache[mu]);
+   if (ijet==mujet) return true;
+ }
+ // has an isolated (veto) electron
+ if (!recoElectronsUpToDate) {
+    if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
+    else recoElectronCache=GetRA2bElectrons(true);
+    recoElectronsUpToDate=true;
+ }
+ for (unsigned int el(0); el<recoElectronCache.size(); el++) {
+   int eljet = els_jet_ind->at(recoElectronCache[el]);
+   if (ijet==eljet) return true;
+ }
+ return false;
 }
 
 bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
@@ -295,9 +325,10 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
   if (cmEnergy>8) { // overlap removal
     // cout << "JET " << ijet << endl; 
-    if (isInMuonCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
-    if (isInElectronCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
-    if (isInTauCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+    if (jetHasEMu(ijet)) return false;
+    //if (isInMuonCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+    // if (isInElectronCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
+    //   if (isInTauCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
   }
   return true;
 }
@@ -541,7 +572,7 @@ bool EventHandler::isQualityTrack(const unsigned int k) const{
 
 int EventHandler::NewGetNumIsoTracks(const double ptThresh) const{
   int nisotracks=0;
-  if ( GetcfAVersion() < 71 ) return nisotracks;
+  if ( GetcfAVersion() < 71 || GetcfAVersion() == 73) return nisotracks;
   for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
     if ( (isotk_pt->at(itrack) >= ptThresh) &&
          (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
@@ -1534,8 +1565,6 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   else rel_iso=GetCSAElectronIsolation(iel);
   if(rel_iso>=iso_cut) return false;
 
-  if (!hasPFMatch(iel, 11)) return false;
-
   return true;
 }
 
@@ -1620,15 +1649,15 @@ bool EventHandler::IsMC(){
   return (sampleName.find("Run201") == std::string::npos);
 }
 
-double EventHandler::GetHT() const{
+double EventHandler::GetHT(double pt_cut) const{
   double HT(0.0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i)) HT+=jets_AKPF_pt->at(i);
+    if(isGoodJet(i,true,pt_cut)) HT+=jets_AKPF_pt->at(i);
   }
   return HT;
 }
 
-int EventHandler::GetNumGoodJets(const double pt) const{
+unsigned int EventHandler::GetNumGoodJets(const double pt) const{
   int numGoodJets(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i,true,pt)) ++numGoodJets;
@@ -1636,7 +1665,7 @@ int EventHandler::GetNumGoodJets(const double pt) const{
   return numGoodJets;
 }
 
-int EventHandler::GetNumCSVTJets() const{
+unsigned int EventHandler::GetNumCSVTJets() const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVTCut){
@@ -1646,7 +1675,7 @@ int EventHandler::GetNumCSVTJets() const{
   return numPassing;
 }
 
-int EventHandler::GetNumCSVMJets() const{
+unsigned int EventHandler::GetNumCSVMJets() const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut){
@@ -1656,7 +1685,7 @@ int EventHandler::GetNumCSVMJets() const{
   return numPassing;
 }
 
-int EventHandler::GetNumCSVLJets() const{
+unsigned int EventHandler::GetNumCSVLJets() const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVLCut){
@@ -1668,4 +1697,113 @@ int EventHandler::GetNumCSVLJets() const{
 
 double EventHandler::GetMTW(const double lep_pt, const double MET, const double lep_phi, const double MET_phi) const{
   return TMath::Sqrt(2*lep_pt*MET*(1-cos(Math::GetDeltaPhi(lep_phi,MET_phi))));
+}
+
+double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float maineta, bool mainid,float otherpt, float othereta, bool otherid, bool keith, bool useArcsin) {//Ben
+  //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
+  unsigned int ijet = 999999;
+  unsigned int goodJetI=0;
+  for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
+    if (isGoodJet(i, mainpt, maineta, mainid)) {
+      if(goodJetI == goodJetN){
+	ijet = i;
+	break;
+      }
+      goodJetI++;
+    }
+  }
+  if(ijet == 999999) return -99;
+  double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid, keith);
+  //calculate deltaPhiMETN
+  double dp = Math::GetDeltaPhi(jets_AKPF_phi->at(ijet), pfTypeImets_phi->at(0));
+  double dpN;
+  if(useArcsin) {
+    if( deltaT/pfTypeImets_et->at(0) >= 1.0) dpN = dp / (TMath::Pi()/2.0);
+    else dpN = dp / asin(deltaT/pfTypeImets_et->at(0));
+  }
+  else dpN = dp / atan2(deltaT, pfTypeImets_et->at(0));
+  return dpN;
+}
+
+double EventHandler::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool keith) {
+if(ijet==999999) return -99;
+double METx = pfTypeImets_et->at(0) * cos(pfTypeImets_phi->at(0));
+double METy = pfTypeImets_et->at(0) * sin(pfTypeImets_phi->at(0));
+//get sum for deltaT
+double sum = 0;
+for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
+if(i==ijet) continue;
+if(isGoodJet(i, otherpt, othereta, otherid)){
+double jetres = 0.1;
+if(keith) sum += pow( jetres*(METx*jets_AKPF_py->at(i) - METy*jets_AKPF_px->at(i)), 2);
+else sum += pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2);
+}//is good jet
+}//i
+double deltaT = keith ? sqrt(sum)/pfTypeImets_et->at(0) : sqrt(sum)/jets_AKPF_pt->at(ijet);
+return deltaT;
+}
+
+double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
+				     float otherpt, float othereta, bool otherid, 
+					bool keith, bool useArcsin) 
+{
+  double mdpN=1E12;
+  for (unsigned int i=0; i<maxjets; i++) {
+    if(i>=GetNumGoodJets()) break;
+    double dpN = getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, keith, useArcsin);
+    //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
+    if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway
+  }
+  return mdpN;
+}
+
+int EventHandler::GetNumIsoTracks(const double ptThresh) const{
+  int nisotracks=0;
+  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
+    if ( (isotk_pt->at(itrack) >= ptThresh) &&
+	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
+	 ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
+	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
+	 ){
+      ++nisotracks;
+    }
+  }
+  return nisotracks;
+}
+
+double EventHandler::GetTransverseMass() const{
+  //Find leading lepton
+  if (!recoMuonsUpToDate) {
+    if (cmEnergy>=13) recoMuonCache=GetRecoMuons(true);
+    else recoMuonCache=GetRA2bMuons(true);
+    recoMuonsUpToDate=true;
+  }
+  if (!recoElectronsUpToDate) {
+    if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
+    else recoElectronCache=GetRA2bElectrons(true);
+    recoElectronsUpToDate=true;
+  }
+  double lep_pt(-1.), lep_phi(-1);
+  if (recoMuonCache.size()>0) {
+    if (cmEnergy>=13) {
+      lep_pt=mus_pt->at(recoMuonCache[0]);
+      lep_pt=mus_phi->at(recoMuonCache[0]);
+    }
+    else {
+      lep_pt=pf_mus_pt->at(recoMuonCache[0]);
+      lep_pt=pf_mus_phi->at(recoMuonCache[0]);
+    }
+  }
+  if (recoElectronCache.size()>0) {
+    if (cmEnergy>=13&&els_pt->at(recoElectronCache[0])>lep_pt) {
+      lep_pt=els_pt->at(recoElectronCache[0]);
+      lep_pt=els_phi->at(recoElectronCache[0]);
+    }
+    else if (cmEnergy<13&&pf_els_pt->at(recoElectronCache[0])>lep_pt) {
+      lep_pt=pf_els_pt->at(recoElectronCache[0]);
+      lep_pt=pf_els_phi->at(recoElectronCache[0]);
+    }
+  }
+  if (lep_pt<0.) return -1.;
+  return GetMTW(lep_pt,pfTypeImets_et->at(0),lep_phi,pfTypeImets_phi->at(0));
 }

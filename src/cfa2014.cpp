@@ -129,6 +129,8 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   isotk_charge(0),
   els_isPF(0),
   mus_isPF(0),
+  els_jet_ind(0),
+  mus_jet_ind(0),
   taus_el_ind(0),
   taus_mu_ind(0),
   b_trigger_prescalevalue(),
@@ -247,6 +249,8 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_isotk_charge(),
   b_els_isPF(),
   b_mus_isPF(),
+  b_els_jet_ind(),
+  b_mus_jet_ind(),
   b_taus_el_ind(),
   b_taus_mu_ind(),
   NbeamSpot(0),
@@ -3156,6 +3160,8 @@ void cfA::InitializeA(){
   isotk_charge=0;
   els_isPF=0;
   mus_isPF=0;
+  els_jet_ind=0;
+  mus_jet_ind=0;
   taus_el_ind=0;
   taus_mu_ind=0;
   chainA.SetBranchAddress("trigger_prescalevalue", &trigger_prescalevalue, &b_trigger_prescalevalue);
@@ -3267,18 +3273,21 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
     chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
     chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
+  }
+  else {
+    chainA.SetBranchAddress("els_isPF", &els_isPF, &b_els_isPF);
+    chainA.SetBranchAddress("mus_isPF", &mus_isPF, &b_mus_isPF);
+    chainA.SetBranchAddress("els_jet_ind", &els_jet_ind, &b_els_jet_ind);
+    chainA.SetBranchAddress("mus_jet_ind", &mus_jet_ind, &b_mus_jet_ind);    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
+    chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
+  }
+  if (cfAVersion!=73) {
     chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
     chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
     chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
     chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
     chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
     chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
-  }
-  else {
-    chainA.SetBranchAddress("els_isPF", &els_isPF, &b_els_isPF);
-    chainA.SetBranchAddress("mus_isPF", &mus_isPF, &b_mus_isPF);
-    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
-    chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
 }
 

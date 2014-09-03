@@ -8,10 +8,14 @@ int main(int argc, char *argv[]){
   std::string inFilename("");
   bool iscfA(false), isList(false);
   int c(0);
-  while((c=getopt(argc, argv, "i:cl"))!=-1){
+  int Nentries(-1);
+  while((c=getopt(argc, argv, "i:n:cl"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
+      break;
+    case 'n':
+      Nentries=atoi(optarg);
       break;
     case 'c':
       iscfA=true;
@@ -46,7 +50,7 @@ int main(int argc, char *argv[]){
     std::cout << inFilename << "\n" << baseName << "\n" << outFilename << "\n";
   }
 
-  WeightCalculator w(19399);
-  ReducedTreeMaker rtm(inFilename, isList, w.GetWeight(inFilename));
+  WeightCalculator w(19399,Nentries);
+  ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries);
   rtm.MakeReducedTree(outFilename);
 }
