@@ -180,6 +180,23 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=100.8;
   crossSectionTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=11.99;
   crossSectionTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4.113;
+  // Single top actually calculated at 14 TeV in
+  // http://arxiv.org/abs/1205.3453
+  crossSectionTable["TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=7.87;
+  crossSectionTable["TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=154;
+  crossSectionTable["T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=41.8;
+  crossSectionTable["TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=3.99;
+  crossSectionTable["TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola"]=94;
+  crossSectionTable["Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=41.8;
+  // Calculated at 13 TeV in
+  // https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageAt1314TeV
+  // Higgs branching ratios from
+  // https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageBR
+  crossSectionTable["ZH_HToBB_ZToLL_M-125_13TeV_powheg-herwigpp"]=0.569*0.033658*0.8696;
+  crossSectionTable["ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp"]=0.569*0.2*0.8696;
+  crossSectionTable["WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp"]=0.569*0.1086*1.380;
+  crossSectionTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola"]=0.5085;
+
 }
 
 void WeightCalculator::SetTotalEvents(){
@@ -284,7 +301,7 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=100322;
   totalEventsTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=105964;
   totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=97584;
-  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=8667327;
+  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2000000/*8667327*/;
   totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3181078;
   totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3133549;
   totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2507939;
@@ -310,4 +327,14 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4548024;
   totalEventsTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4453911;
   totalEventsTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4428190;
+  totalEventsTable["TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=499400;
+  totalEventsTable["TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=3976700;
+  totalEventsTable["T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=986100;
+  totalEventsTable["TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=248800;
+  totalEventsTable["TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola"]=1916100;
+  totalEventsTable["Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=971800;
+  totalEventsTable["ZH_HToBB_ZToLL_M-125_13TeV_powheg-herwigpp"]=198566;
+  totalEventsTable["ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp"]=195648;
+  totalEventsTable["WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp"]=200000;
+  totalEventsTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola"]=199000;
 }
