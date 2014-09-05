@@ -3281,7 +3281,7 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("mus_jet_ind", &mus_jet_ind, &b_mus_jet_ind);    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
     chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
-  if (cfAVersion!=73) {
+  if (cfAVersion!=73||sampleName.find("HToBB")!=std::string::npos||sampleName.find("TTbarH")!=std::string::npos) {
     chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
     chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
     chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);

@@ -194,13 +194,13 @@ protected:
 
   double GetMTW(const double, const double, const double, const double) const;
 
-  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool keith, bool useArcsin=false );
-  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,false); };
-  double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool keith, bool useArcsin ); //Ben
-  double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,false,false); }; //Ben, overloaded
+  double getMinDeltaPhiMETN(int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
+  double getMinDeltaPhiMETN(int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };
+  double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin ); //Ben
+  double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,true); }; //Ben, overloaded
 
-  double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid,  bool keith);
-  double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true,false); } //overloaded
+  double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid);
+  double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
 
   int GetNumIsoTracks(const double=10.0) const;
 

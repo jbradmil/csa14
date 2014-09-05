@@ -120,6 +120,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   int lep1, lep2;
 
   float min_delta_phi_met_N;
+  // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
   int num_iso_tracks;
 
   float mT;
@@ -340,6 +341,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("lep2", &lep2);
 
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
+  // reduced_tree.Branch("deltaPhiN_1", &deltaPhiN_1);
+  // reduced_tree.Branch("deltaPhiN_2", &deltaPhiN_2);
+  // reduced_tree.Branch("deltaPhiN_3", &deltaPhiN_3);
+
   reduced_tree.Branch("num_iso_tracks", &num_iso_tracks);
   reduced_tree.Branch("mT", &mT);
 
@@ -363,14 +368,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   Timer timer(n_to_process);
   timer.Start();
   for(int i(0); i<n_to_process; ++i){
-    if(i%1000==0 && i!=0){
+    if((i%10000==0||i==1||i==10||i==100||i==1000) && i!=0){
       timer.PrintRemainingTime();
     }
     timer.Iterate();
-    //        cout << "JERR" << endl;
+    //   cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
-    //    cout << "*****Event " << i << "*****" << endl;
+    //  cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
@@ -754,9 +759,18 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       }
     }
 
+    // cout << "minDeltaPhi..." << endl;
+    min_delta_phi_met_N=getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true);
+    /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
+    deltaPhiN_2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true,true);
+    deltaPhiN_3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true,true);
+    */
+    //  cout << "Done!" << endl;
 
-    min_delta_phi_met_N=getMinDeltaPhiMETN(3);
-    num_iso_tracks=GetNumIsoTracks();
+    if (sampleName.find("QCD_Pt")!=std::string::npos
+	||sampleName.find("ZJets")!=std::string::npos
+	||sampleName.find("DYJets")!=std::string::npos) num_iso_tracks=0;
+    else num_iso_tracks=GetNumIsoTracks();
 
     mT=GetTransverseMass();
     SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT<100.);

@@ -79,32 +79,32 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
     else {
       chainB.SetBranchStatus("pfcand*",0);
       chainB.SetBranchStatus("mc_final*",0);
-   }
+    }
   }
 }
 
 bool EventHandler::jetHasEMu(const int ijet) const{
- // has an isolated (veto) muon
- if (!recoMuonsUpToDate) {
+  // has an isolated (veto) muon
+  if (!recoMuonsUpToDate) {
     if (cmEnergy>=13) recoMuonCache=GetRecoMuons(true);
     else recoMuonCache=GetRA2bMuons(true);
     recoMuonsUpToDate=true;
- }
- for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
-   int mujet = mus_jet_ind->at(recoMuonCache[mu]);
-   if (ijet==mujet) return true;
- }
- // has an isolated (veto) electron
- if (!recoElectronsUpToDate) {
+  }
+  for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
+    int mujet = mus_jet_ind->at(recoMuonCache[mu]);
+    if (ijet==mujet) return true;
+  }
+  // has an isolated (veto) electron
+  if (!recoElectronsUpToDate) {
     if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
     else recoElectronCache=GetRA2bElectrons(true);
     recoElectronsUpToDate=true;
- }
- for (unsigned int el(0); el<recoElectronCache.size(); el++) {
-   int eljet = els_jet_ind->at(recoElectronCache[el]);
-   if (ijet==eljet) return true;
- }
- return false;
+  }
+  for (unsigned int el(0); el<recoElectronCache.size(); el++) {
+    int eljet = els_jet_ind->at(recoElectronCache[el]);
+    if (ijet==eljet) return true;
+  }
+  return false;
 }
 
 bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
@@ -125,7 +125,7 @@ bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
 }
 
 bool EventHandler::isInElectronCollection(const double eta, const double phi) const{
-if (!recoElectronsUpToDate) {
+  if (!recoElectronsUpToDate) {
     if (cmEnergy>=13) recoElectronCache=GetRecoElectrons(true);
     else recoElectronCache=GetRA2bElectrons(true);
     recoElectronsUpToDate=true;
@@ -140,7 +140,7 @@ if (!recoElectronsUpToDate) {
 }
 
 bool EventHandler::isInTauCollection(const double eta, const double phi) const{
-if (!recoTausUpToDate) {
+  if (!recoTausUpToDate) {
     recoTauCache=GetRecoTaus();
     recoTausUpToDate=true;
   }
@@ -288,7 +288,7 @@ bool EventHandler::isProblemJet(const unsigned int ijet) const{
   return jets_AKPF_pt->at(ijet)>50.0
     && fabs(jets_AKPF_eta->at(ijet))>0.9
     && fabs(jets_AKPF_eta->at(ijet))<1.9
-    && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
+				     && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
@@ -446,7 +446,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
 
 double EventHandler::GetRA2bElectronRelIso(const unsigned int k) const{
   //   cout << "GetRA2bElectronRelIso" << endl;
- const double rho(rho_kt6PFJetsForIsolation2012);
+  const double rho(rho_kt6PFJetsForIsolation2012);
   // get effective area from delR=0.3 2011 data table for neutral+gamma based on supercluster eta pf_els_scEta->at(k)
   double AE(0.10); 
   const double abseta(fabs(pf_els_scEta->at(k)));
@@ -1208,7 +1208,7 @@ void EventHandler::GetGenElectrons() const{
     genElectronCache.clear();
     for (unsigned int gen(0); gen<mc_electrons_id->size(); gen++) {
       if(isGenElectron(gen)&&isIsoGenElectron(gen)) {
-      //  if(isGenElectron(gen)&&IsFromB(mc_electrons_mother_id->at(gen), mc_electrons_grandmother_id->at(gen), mc_electrons_ggrandmother_id->at(gen))) {
+	//  if(isGenElectron(gen)&&IsFromB(mc_electrons_mother_id->at(gen), mc_electrons_grandmother_id->at(gen), mc_electrons_ggrandmother_id->at(gen))) {
 	genElectronCache.push_back(GenElectron(TLorentzVector(mc_electrons_px->at(gen),mc_electrons_py->at(gen),mc_electrons_pz->at(gen),mc_electrons_energy->at(gen)),gen,static_cast<int>(mc_electrons_id->at(gen)),static_cast<unsigned int>(mc_electrons_mother_id->at(gen))));
       }
     }
@@ -1347,13 +1347,13 @@ int EventHandler::GetNGenParticles(const int pdgId, const float ptCut, const boo
  
   uint count(0);
   bool fromTop(false);
-    for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
-      if (hard_scatter_only && !(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) continue;
-      if (static_cast<int>(fabs(mc_doc_id->at(imc)))==5) fromTop=true;
-      if (!fromTop) continue;
-      if (mc_doc_pt->at(imc)<ptCut) continue;
-      if (static_cast<int>(fabs(mc_doc_id->at(imc)))==pdgId) count++;
-    }
+  for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+    if (hard_scatter_only && !(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) continue;
+    if (static_cast<int>(fabs(mc_doc_id->at(imc)))==5) fromTop=true;
+    if (!fromTop) continue;
+    if (mc_doc_pt->at(imc)<ptCut) continue;
+    if (static_cast<int>(fabs(mc_doc_id->at(imc)))==pdgId) count++;
+  }
   return count;
 }
 
@@ -1453,7 +1453,7 @@ double EventHandler::GetMuonRelIso(const unsigned int imu) const{
 vector<int> EventHandler::GetRecoTaus() const{
   vector<int> taus;
   for(uint index=0; index<taus_pt->size(); index++)
-      if(isRA2bTau(index)) taus.push_back(index);
+    if(isRA2bTau(index)) taus.push_back(index);
   return taus;
 }
 
@@ -1480,7 +1480,7 @@ vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
 }
 
 bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
-//N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
+  //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
@@ -1545,9 +1545,9 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   }
   // if(k>else_pt->size()) return false;
   // if (level>0) {
-    if (fabs(els_scEta->at(iel)) >= 2.5 ) return false;
-    if (els_pt->at(iel) < pt_cut) return false;
-    // }
+  if (fabs(els_scEta->at(iel)) >= 2.5 ) return false;
+  if (els_pt->at(iel) < pt_cut) return false;
+  // }
 
   if ( fabs(els_dEtaIn->at(iel)) > eta_cut)  return false;
   if ( fabs(els_dPhiIn->at(iel)) > phi_cut)  return false;
@@ -1699,13 +1699,15 @@ double EventHandler::GetMTW(const double lep_pt, const double MET, const double 
   return TMath::Sqrt(2*lep_pt*MET*(1-cos(Math::GetDeltaPhi(lep_phi,MET_phi))));
 }
 
-double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float maineta, bool mainid,float otherpt, float othereta, bool otherid, bool keith, bool useArcsin) {//Ben
+double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float maineta, bool mainid,float otherpt, float othereta, bool otherid, bool useArcsin) {
   //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
   unsigned int ijet = 999999;
   unsigned int goodJetI=0;
-  for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
-    if (isGoodJet(i, mainpt, maineta, mainid)) {
-      if(goodJetI == goodJetN){
+  
+    for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
+      if (isGoodJet(i, mainid,mainpt, maineta)) {
+      //  if (event==421767||event==471069||event==173109) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",goodJetN,jets_AKPF_pt->at(goodJetN),jets_AKPF_eta->at(goodJetN),jets_AKPF_phi->at(goodJetN));
+   if(goodJetI == goodJetN){
 	ijet = i;
 	break;
       }
@@ -1713,9 +1715,10 @@ double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float 
     }
   }
   if(ijet == 999999) return -99;
-  double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid, keith);
+  double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid);
   //calculate deltaPhiMETN
-  double dp = Math::GetDeltaPhi(jets_AKPF_phi->at(ijet), pfTypeImets_phi->at(0));
+  double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(ijet), pfTypeImets_phi->at(0)));
+  //  if (event==421767||event==471069||event==173109) printf("dp, dT for jet %d: %3.2f, %3.2f\n",ijet,dp,deltaT);
   double dpN;
   if(useArcsin) {
     if( deltaT/pfTypeImets_et->at(0) >= 1.0) dpN = dp / (TMath::Pi()/2.0);
@@ -1725,34 +1728,43 @@ double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float 
   return dpN;
 }
 
-double EventHandler::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid, bool keith) {
-if(ijet==999999) return -99;
-double METx = pfTypeImets_et->at(0) * cos(pfTypeImets_phi->at(0));
-double METy = pfTypeImets_et->at(0) * sin(pfTypeImets_phi->at(0));
-//get sum for deltaT
-double sum = 0;
-for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
-if(i==ijet) continue;
-if(isGoodJet(i, otherpt, othereta, otherid)){
-double jetres = 0.1;
-if(keith) sum += pow( jetres*(METx*jets_AKPF_py->at(i) - METy*jets_AKPF_px->at(i)), 2);
-else sum += pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2);
-}//is good jet
-}//i
-double deltaT = keith ? sqrt(sum)/pfTypeImets_et->at(0) : sqrt(sum)/jets_AKPF_pt->at(ijet);
-return deltaT;
+double EventHandler::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid) {
+  if(ijet==999999) return -99;
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
+    if(i==ijet) continue;
+    //  if (event==421767||event==471069||event==173109) cout << "Inspecting other jet " << i << " isGood? " << isGoodJet(i, otherid, otherpt, othereta) << endl;
+    if(isGoodJet(i, otherid, otherpt, othereta)){
+      double jetres = 0.1;
+      // if (event==421767||event==471069||event==173109) {
+      // 	printf("jet1: %d--(px, py) = (%3.2f, %3.2f)\n",ijet,jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet));
+      // 	printf("jet2: %d--(px, py) = (%3.2f, %3.2f)\n",i,jets_AKPF_px->at(i), jets_AKPF_py->at(i));
+      // 	printf("sum += %3.2f\n",pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2));
+      // }
+      sum += pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2);
+    }//is good jet
+  }//i
+  double deltaT = sqrt(sum)/jets_AKPF_pt->at(ijet);
+  return deltaT;
 }
 
-double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
-				     float otherpt, float othereta, bool otherid, 
-					bool keith, bool useArcsin) 
+double EventHandler::getMinDeltaPhiMETN(int maxjets, float mainpt, float maineta, bool mainid,
+					float otherpt, float othereta, bool otherid, bool useArcsin) 
 {
+  //  if (event==421767||event==471069||event==173109) cout << "Found " << GetNumGoodJets() << " good jets." << endl;
   double mdpN=1E12;
-  for (unsigned int i=0; i<maxjets; i++) {
-    if(i>=GetNumGoodJets()) break;
-    double dpN = getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, keith, useArcsin);
-    //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet.
-    if (dpN>=0 && dpN<mdpN) mdpN=dpN;//checking that dpN>=0 shouldn't be necessary after break statement above, but add it anyway
+  int nGoodJets(0);
+  for (unsigned int i=0; i<jets_AKPF_pt->size(); i++) {
+    if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
+    //   if (event==421767||event==471069||event==173109) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",i,jets_AKPF_pt->at(i),jets_AKPF_eta->at(i),jets_AKPF_phi->at(i));
+    nGoodJets++;
+    double dpN = getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, useArcsin);
+    //   if (event==421767||event==471069||event==173109)  printf("i/dpN: %d/%3.2f\n",i,dpN); 
+    //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
+    // Jack --  might have fixed things above...
+    if (dpN>=0&&dpN<mdpN) mdpN=dpN;
+    if (nGoodJets>=maxjets) break;
   }
   return mdpN;
 }
