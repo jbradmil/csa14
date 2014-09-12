@@ -42,6 +42,8 @@ const double EventHandler::CSVLCut(0.244);
 
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
   cfA(fileName, isList),
+  sortedBJetCache(0),
+ bJetsUpToDate(false),
   genMuonCache(0),
   genMuonsUpToDate(false),
   genElectronCache(0),
@@ -80,6 +82,140 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("pfcand*",0);
       chainB.SetBranchStatus("mc_final*",0);
     }
+  }
+}
+
+void EventHandler::GetEntry(const unsigned int entry){
+  cfA::GetEntry(entry);
+  betaUpToDate=false;
+  bJetsUpToDate=false;
+  genMuonsUpToDate=false;
+  genElectronsUpToDate=false;
+  genTausUpToDate=false;
+  recoMuonsUpToDate=false;
+  recoElectronsUpToDate=false;
+  recoTausUpToDate=false;
+}
+
+bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // just check if a specific trigger fired
+  for(unsigned int a=0; a<trigger_name->size(); ++a){
+    if(trigger_name->at(a).find(trigger)!=std::string::npos
+       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
+      return true;
+    }
+  }
+  return false;
+}
+
+void EventHandler::GetSortedBJets() const{
+  if(!bJetsUpToDate){
+    sortedBJetCache.clear();
+    for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+      if(isGoodJet(i,true,20.)){ //lower pt cut
+	sortedBJetCache.push_back(BJet(TLorentzVector(jets_AKPF_px->at(i),jets_AKPF_py->at(i),jets_AKPF_pz->at(i),jets_AKPF_energy->at(i)),jets_AKPF_btag_secVertexCombined->at(i),i,static_cast<unsigned int>(jets_AKPF_parton_Id->at(i)),static_cast<unsigned int>(jets_AKPF_parton_motherId->at(i))));
+      }
+    }
+    std::sort(sortedBJetCache.begin(),sortedBJetCache.end(), std::greater<BJet>());
+    // Key: we're sorting by pt now, not CSV
+    bJetsUpToDate=true;
+  }
+}
+
+double EventHandler::GetMHT(const double pt_cut, const double eta_cut) const {
+  double px(0.), py(0.);
+  for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+    if(isGoodJet(ijet,true,pt_cut,eta_cut)){
+      px+=jets_AKPF_px->at(ijet);
+      py+=jets_AKPF_py->at(ijet);
+    }
+  }
+    return TMath::Sqrt(px*px+py*py);
+}
+
+double EventHandler::GetMHTPhi(const double pt_cut, const double eta_cut) const {
+  double px(0.), py(0.);
+  for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+    if(isGoodJet(ijet,true,pt_cut,eta_cut)){
+      px+=jets_AKPF_px->at(ijet);
+      py+=jets_AKPF_py->at(ijet);
+    }
+  }
+    if (px!=0.) return TMath::ATan(py/px);
+    else return TMath::Pi()/2.;
+}
+
+double EventHandler::GetHighestJetPt(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetLorentzVector().Pt();
+  }
+}
+
+double EventHandler::GetJetXEta(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetLorentzVector().Eta();
+  }
+}
+
+double EventHandler::GetJetXPhi(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetLorentzVector().Phi();
+  }
+}
+
+double EventHandler::GetJetXPartonId(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetPartonId();
+  }
+}
+
+double EventHandler::GetJetXMotherId(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetMotherId();
+  }
+}
+
+double EventHandler::GetJetXCSV(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedBJetCache.at(pos).GetBTag();
+  }
+}
+
+double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
+  std::vector<double> csvs(0);
+  for(unsigned int jet(0); jet<jets_AKPF_btag_secVertexCombined->size(); ++jet){
+    if(isGoodJet(jet,true,20.)){
+      csvs.push_back(jets_AKPF_btag_secVertexCombined->at(jet));
+    }
+  }
+  std::sort(csvs.begin(), csvs.end(), std::greater<double>());
+  if(nth_highest<=csvs.size()){
+    return csvs.at(nth_highest-1);
+  }else{
+    return -DBL_MAX;
   }
 }
 
@@ -228,17 +364,6 @@ void EventHandler::SetScaleFactor(const double crossSection, const double lumino
   }
 }
 
-void EventHandler::GetEntry(const unsigned int entry){
-  cfA::GetEntry(entry);
-  betaUpToDate=false;
-  genMuonsUpToDate=false;
-  genElectronsUpToDate=false;
-  genTausUpToDate=false;
-  recoMuonsUpToDate=false;
-  recoElectronsUpToDate=false;
-  recoTausUpToDate=false;
-}
-
 int EventHandler::GetcfAVersion() const{
   size_t pos(sampleName.rfind("_v"));
   if(pos!=std::string::npos && pos<(sampleName.size()-2)){
@@ -363,17 +488,6 @@ bool EventHandler::jetPassLooseID(const unsigned int ijet) const{
   }
   return false;
 }
-
-bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // just check if a specific trigger fired
-  for(unsigned int a=0; a<trigger_name->size(); ++a){
-    if(trigger_name->at(a).find(trigger)!=std::string::npos
-       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
-      return true;
-    }
-  }
-  return false;
-}
-
 
 bool EventHandler::isRA2bElectron(const unsigned int k,
 				  const unsigned short level,
@@ -1665,30 +1779,30 @@ unsigned int EventHandler::GetNumGoodJets(const double pt) const{
   return numGoodJets;
 }
 
-unsigned int EventHandler::GetNumCSVTJets() const{
+unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVTCut){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVTCut){
       ++numPassing;
     }
   }
   return numPassing;
 }
 
-unsigned int EventHandler::GetNumCSVMJets() const{
+unsigned int EventHandler::GetNumCSVMJets(const double pt_cut) const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut){
       ++numPassing;
     }
   }
   return numPassing;
 }
 
-unsigned int EventHandler::GetNumCSVLJets() const{
+unsigned int EventHandler::GetNumCSVLJets(const double pt_cut) const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i) && jets_AKPF_btag_secVertexCombined->at(i)>CSVLCut){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVLCut){
       ++numPassing;
     }
   }
@@ -1699,26 +1813,11 @@ double EventHandler::GetMTW(const double lep_pt, const double MET, const double 
   return TMath::Sqrt(2*lep_pt*MET*(1-cos(Math::GetDeltaPhi(lep_phi,MET_phi))));
 }
 
-double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float maineta, bool mainid,float otherpt, float othereta, bool otherid, bool useArcsin) {
-  //find the goodJetN-th good jet -- this is the jet deltaPhiN will be calculated for
-  unsigned int ijet = 999999;
-  unsigned int goodJetI=0;
-  
-    for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
-      if (isGoodJet(i, mainid,mainpt, maineta)) {
-      //  if (event==421767||event==471069||event==173109) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",goodJetN,jets_AKPF_pt->at(goodJetN),jets_AKPF_eta->at(goodJetN),jets_AKPF_phi->at(goodJetN));
-   if(goodJetI == goodJetN){
-	ijet = i;
-	break;
-      }
-      goodJetI++;
-    }
-  }
-  if(ijet == 999999) return -99;
-  double deltaT = getDeltaPhiMETN_deltaT(ijet, otherpt, othereta, otherid);
+double EventHandler::getDeltaPhiMETN(unsigned int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {
+  double deltaT = getDeltaPhiMETN_deltaT(goodJetI, otherpt, othereta, otherid);
   //calculate deltaPhiMETN
-  double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(ijet), pfTypeImets_phi->at(0)));
-  //  if (event==421767||event==471069||event==173109) printf("dp, dT for jet %d: %3.2f, %3.2f\n",ijet,dp,deltaT);
+  double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(goodJetI), pfTypeImets_phi->at(0)));
+  //  if (event==77544) printf("dp, dT for jet %d: %3.2f, %3.2f\n",goodJetI,dp,deltaT);
   double dpN;
   if(useArcsin) {
     if( deltaT/pfTypeImets_et->at(0) >= 1.0) dpN = dp / (TMath::Pi()/2.0);
@@ -1728,45 +1827,63 @@ double EventHandler::getDeltaPhiMETN(unsigned int goodJetN, float mainpt, float 
   return dpN;
 }
 
-double EventHandler::getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid) {
-  if(ijet==999999) return -99;
+double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt, float othereta, bool otherid) {
+  if(goodJetI==999999) return -99;
   //get sum for deltaT
   double sum = 0;
   for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
-    if(i==ijet) continue;
-    //  if (event==421767||event==471069||event==173109) cout << "Inspecting other jet " << i << " isGood? " << isGoodJet(i, otherid, otherpt, othereta) << endl;
+    if(i==goodJetI) continue;
+    //    if (event==77544) cout << "Inspecting other jet " << i << " isGood? " << isGoodJet(i, otherid, otherpt, othereta) << endl;
     if(isGoodJet(i, otherid, otherpt, othereta)){
       double jetres = 0.1;
-      // if (event==421767||event==471069||event==173109) {
-      // 	printf("jet1: %d--(px, py) = (%3.2f, %3.2f)\n",ijet,jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet));
+      // if (event==77544) {
+      // 	printf("jet1: %d--(px, py) = (%3.2f, %3.2f)\n",goodJetI,jets_AKPF_px->at(goodJetI), jets_AKPF_py->at(goodJetI));
       // 	printf("jet2: %d--(px, py) = (%3.2f, %3.2f)\n",i,jets_AKPF_px->at(i), jets_AKPF_py->at(i));
-      // 	printf("sum += %3.2f\n",pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2));
+      // 	printf("sum += %3.2f\n",pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2));
       // }
-      sum += pow( jetres*(jets_AKPF_px->at(ijet)*jets_AKPF_py->at(i) - jets_AKPF_py->at(ijet)*jets_AKPF_px->at(i)), 2);
+      sum += pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2);
     }//is good jet
   }//i
-  double deltaT = sqrt(sum)/jets_AKPF_pt->at(ijet);
+  double deltaT = sqrt(sum)/jets_AKPF_pt->at(goodJetI);
   return deltaT;
 }
 
-double EventHandler::getMinDeltaPhiMETN(int maxjets, float mainpt, float maineta, bool mainid,
+double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
 					float otherpt, float othereta, bool otherid, bool useArcsin) 
 {
-  //  if (event==421767||event==471069||event==173109) cout << "Found " << GetNumGoodJets() << " good jets." << endl;
+  //  if (event==77544) cout << "Found " << GetNumGoodJets() << " good jets." << endl;
   double mdpN=1E12;
-  int nGoodJets(0);
+  unsigned int nGoodJets(0);
   for (unsigned int i=0; i<jets_AKPF_pt->size(); i++) {
     if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
-    //   if (event==421767||event==471069||event==173109) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",i,jets_AKPF_pt->at(i),jets_AKPF_eta->at(i),jets_AKPF_phi->at(i));
+    //  if (event==77544) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",i,jets_AKPF_pt->at(i),jets_AKPF_eta->at(i),jets_AKPF_phi->at(i));
     nGoodJets++;
-    double dpN = getDeltaPhiMETN(i, mainpt, maineta, mainid, otherpt, othereta, otherid, useArcsin);
-    //   if (event==421767||event==471069||event==173109)  printf("i/dpN: %d/%3.2f\n",i,dpN); 
+    double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin);
+    //  if (event==77544)  printf("i/dpN: %d/%3.2f\n",i,dpN); 
     //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
     // Jack --  might have fixed things above...
     if (dpN>=0&&dpN<mdpN) mdpN=dpN;
     if (nGoodJets>=maxjets) break;
   }
   return mdpN;
+}
+
+double EventHandler::GetMinDeltaPhiMET(const unsigned int maxjets, const double pt_cut, const double eta_cut) const{
+  std::vector<std::pair<double, double> > jets(0);
+  for(unsigned int i(0); i<jets_AKPF_phi->size(); ++i){
+    if(isGoodJet(i, true, pt_cut, eta_cut)){
+      jets.push_back(std::make_pair(jets_AKPF_pt->at(i),jets_AKPF_phi->at(i)));
+    }
+  }
+  std::sort(jets.begin(), jets.end(), std::greater<std::pair<double, double> >());
+  double mindp(DBL_MAX);
+  for(unsigned int i(0); i<jets.size() && i<maxjets; ++i){
+    const double thisdp(fabs((Math::GetAbsDeltaPhi(jets.at(i).second, pfTypeImets_phi->at(0)))));
+    if(thisdp<mindp){
+      mindp=thisdp;
+    }
+  }
+  return mindp;
 }
 
 int EventHandler::GetNumIsoTracks(const double ptThresh) const{

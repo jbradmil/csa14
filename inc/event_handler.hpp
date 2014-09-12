@@ -42,6 +42,8 @@ public:
   void SetScaleFactor(const double, const double, const int);
 
 protected:
+  mutable std::vector<BJet> sortedBJetCache;//caching for efficiency
+  mutable bool bJetsUpToDate;//cached value correct
   mutable std::vector<GenMuon> genMuonCache;
   mutable bool genMuonsUpToDate;
   mutable std::vector<GenElectron> genElectronCache;
@@ -60,9 +62,19 @@ protected:
   mutable std::vector<double> beta;
 
   int GetcfAVersion() const;
+  void GetSortedBJets() const;
+  double GetHighestJetPt(const unsigned int=1) const;
+  double GetHighestJetCSV(const unsigned int=1) const;
+  double GetJetXEta(const unsigned int=1) const;
+  double GetJetXPhi(const unsigned int=1) const;
+  double GetJetXCSV(const unsigned int=1) const;
+  double GetJetXPartonId(const unsigned int=1) const;
+  double GetJetXMotherId(const unsigned int=1) const;
 
   void GetEntry(const unsigned int);
   void GetBeta(const std::string which="beta") const;
+
+  bool PassesSpecificTrigger(const std::string) const;
 
   bool isInMuonCollection(const double, const double) const;
   bool isInElectronCollection(const double, const double) const;
@@ -78,7 +90,6 @@ protected:
 
   bool PassesPVCut() const;
   bool PassesMETCleaningCut() const;
-  bool PassesSpecificTrigger(const std::string) const;
 
   int GetPBNR() const;
   bool PassesBadJetFilter() const;
@@ -188,23 +199,26 @@ protected:
 
   double GetHT(double=50.) const;
   unsigned int GetNumGoodJets(const double pt=50.) const;
-  unsigned int GetNumCSVTJets() const;
-  unsigned int GetNumCSVMJets() const;
-  unsigned int GetNumCSVLJets() const;
+  unsigned int GetNumCSVTJets(const double=50.) const;
+  unsigned int GetNumCSVMJets(const double=50.) const;
+  unsigned int GetNumCSVLJets(const double=50.) const;
 
   double GetMTW(const double, const double, const double, const double) const;
 
-  double getMinDeltaPhiMETN(int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
-  double getMinDeltaPhiMETN(int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };
-  double getDeltaPhiMETN( unsigned int goodJetN, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin ); //Ben
-  double getDeltaPhiMETN( unsigned int goodJetN ) {return getDeltaPhiMETN(goodJetN,50,2.4,true,30,2.4,true,true); }; //Ben, overloaded
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
+  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };
+  double getDeltaPhiMETN( unsigned int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin ); //Ben
+  double getDeltaPhiMETN( unsigned int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true); }; //Ben, overloaded
 
   double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid);
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
+  double GetMinDeltaPhiMET(const unsigned int=3, const double=50., const double=2.4) const;
 
   int GetNumIsoTracks(const double=10.0) const;
 
   double GetTransverseMass() const;
+  double GetMHT(const double=30., const double=5.) const;
+  double GetMHTPhi(const double=30., const double=5.) const;
 
 };
 

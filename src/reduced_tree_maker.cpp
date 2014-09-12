@@ -33,8 +33,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float weightppb=scaleFactor;
   cout << "Nentries/Weight per pb: " << Nentries << "/" << weightppb << endl;
 
+  bool pass_HLT_PFNoPUHT350_PFMET100(false), pass_HLT_PFNoPUHT650(false), 
+    pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80(false), pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07(false);
+
   bool passesPVCut(false);
 
+
+  float highest_csv(0.0), second_highest_csv(0.0),
+    third_highest_csv(0.0), fourth_highest_csv(0.0), fifth_highest_csv(0.0), sixth_highest_csv(0.);
+  float jet1_pt(0.0), jet2_pt(0.), jet3_pt(0.), jet4_pt(0.), jet5_pt(0.), jet6_pt(0.);
+  float jet1_eta(0.0), jet2_eta(0.), jet3_eta(0.), jet4_eta(0.), jet5_eta(0.), jet6_eta(0.);
+  float jet1_phi(0.0), jet2_phi(0.), jet3_phi(0.), jet4_phi(0.), jet5_phi(0.), jet6_phi(0.);
+  float jet1_csv(0.0), jet2_csv(0.), jet3_csv(0.), jet4_csv(0.), jet5_csv(0.), jet6_csv(0.);
+  float jet1_partonId(0.0), jet2_partonId(0.), jet3_partonId(0.), jet4_partonId(0.), jet5_partonId(0.), jet6_partonId(0.);
+  float jet1_motherId(0.0), jet2_motherId(0.), jet3_motherId(0.), jet4_motherId(0.), jet5_motherId(0.), jet6_motherId(0.);
 
   float pu_num_interactions(0.0), pu_true_num_interactions(0.0);
   unsigned short num_primary_vertices(0);
@@ -42,11 +54,19 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float eoot_pu, loot_pu, oot_pu;
 
   float met(0.0), met_phi(0.0);
+  float mht(0.0), mht_phi(0.0);
   float ht20(0.0), ht30(0.0), ht40(0.0), ht50(0.0), ht60(0.0), ht70(0.0), ht80(0.0);
 
-  unsigned short num_jets_pt20(0), num_jets_pt50(0), num_jets_pt70(0), num_jets_pt100(0), num_jets_pt150(0);
+  float m_eff20(0.0),  m_eff30(0.0), m_eff40(0.0), m_eff50(0.0);
+  float met_over_m_eff20(0.0), met_over_m_eff30(0.0), met_over_m_eff40(0.0), met_over_m_eff50(0.0);
+  float met_over_sqrt_ht20(0.0), met_over_sqrt_ht30(0.0), met_over_sqrt_ht40(0.0), met_over_sqrt_ht50(0.0);
+  unsigned short num_jets_pt20(0), num_jets_pt30(0), num_jets_pt40(0), num_jets_pt50(0), num_jets_pt70(0), num_jets_pt100(0), num_jets_pt150(0);
   unsigned short num_csvt_jets(0), num_csvm_jets(0), num_csvl_jets(0);
-  unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
+  unsigned short num_csvt_jets20(0), num_csvm_jets20(0), num_csvl_jets20(0);
+  unsigned short num_csvt_jets30(0), num_csvm_jets30(0), num_csvl_jets30(0);
+  unsigned short num_csvt_jets40(0), num_csvm_jets40(0), num_csvl_jets40(0);
+
+  // unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
 
 
   /*
@@ -119,7 +139,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   int lep1, lep2;
 
-  float min_delta_phi_met_N;
+  float min_delta_phi_met, min_delta_phi_met_loose_jets;
+  float min_delta_phi_met_N, min_delta_phi_met_N_loose_jets;
   // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
   int num_iso_tracks;
 
@@ -145,6 +166,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("lumiblock", &lumiblock);
   reduced_tree.Branch("entry", &entry);
 
+  reduced_tree.Branch("pass_HLT_PFNoPUHT350_PFMET100", &pass_HLT_PFNoPUHT350_PFMET100);
+  reduced_tree.Branch("pass_HLT_PFNoPUHT650", &pass_HLT_PFNoPUHT650);
+  reduced_tree.Branch("pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80", &pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80);
+  reduced_tree.Branch("pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07", &pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07);
+
   reduced_tree.Branch("pu_true_num_interactions", &pu_true_num_interactions);
   reduced_tree.Branch("pu_num_interactions", &pu_num_interactions);
   reduced_tree.Branch("num_primary_vertices", &num_primary_vertices);
@@ -152,8 +178,54 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("loot_pu", &loot_pu);
   reduced_tree.Branch("oot_pu", &oot_pu);
 
+  reduced_tree.Branch("highest_csv", &highest_csv);
+  reduced_tree.Branch("second_highest_csv", &second_highest_csv);
+  reduced_tree.Branch("third_highest_csv", &third_highest_csv);
+  reduced_tree.Branch("fourth_highest_csv", &fourth_highest_csv);
+  reduced_tree.Branch("fifth_highest_csv", &fifth_highest_csv);
+  reduced_tree.Branch("sixth_highest_csv", &sixth_highest_csv);
+
+  reduced_tree.Branch("jet1_csv", &jet1_csv);
+  reduced_tree.Branch("jet2_csv", &jet2_csv);
+  reduced_tree.Branch("jet3_csv", &jet3_csv);
+  reduced_tree.Branch("jet4_csv", &jet4_csv);
+  reduced_tree.Branch("jet5_csv", &jet5_csv);
+  reduced_tree.Branch("jet6_csv", &jet6_csv);
+  reduced_tree.Branch("jet1_pt", &jet1_pt);
+  reduced_tree.Branch("jet2_pt", &jet2_pt);
+  reduced_tree.Branch("jet3_pt", &jet3_pt);
+  reduced_tree.Branch("jet4_pt", &jet4_pt);
+  reduced_tree.Branch("jet5_pt", &jet5_pt);
+  reduced_tree.Branch("jet6_pt", &jet6_pt);
+  reduced_tree.Branch("jet1_eta", &jet1_eta);
+  reduced_tree.Branch("jet2_eta", &jet2_eta);
+  reduced_tree.Branch("jet3_eta", &jet3_eta);
+  reduced_tree.Branch("jet4_eta", &jet4_eta);
+  reduced_tree.Branch("jet5_eta", &jet5_eta);
+  reduced_tree.Branch("jet6_eta", &jet6_eta);
+  reduced_tree.Branch("jet1_phi", &jet1_phi);
+  reduced_tree.Branch("jet2_phi", &jet2_phi);
+  reduced_tree.Branch("jet3_phi", &jet3_phi);
+  reduced_tree.Branch("jet4_phi", &jet4_phi);
+  reduced_tree.Branch("jet5_phi", &jet5_phi);
+  reduced_tree.Branch("jet6_phi", &jet6_phi);
+  reduced_tree.Branch("jet1_partonId", &jet1_partonId);
+  reduced_tree.Branch("jet2_partonId", &jet2_partonId);
+  reduced_tree.Branch("jet3_partonId", &jet3_partonId);
+  reduced_tree.Branch("jet4_partonId", &jet4_partonId);
+  reduced_tree.Branch("jet5_partonId", &jet5_partonId);
+  reduced_tree.Branch("jet6_partonId", &jet6_partonId);
+  reduced_tree.Branch("jet1_motherId", &jet1_motherId);
+  reduced_tree.Branch("jet2_motherId", &jet2_motherId);
+  reduced_tree.Branch("jet3_motherId", &jet3_motherId);
+  reduced_tree.Branch("jet4_motherId", &jet4_motherId);
+  reduced_tree.Branch("jet5_motherId", &jet5_motherId);
+  reduced_tree.Branch("jet6_motherId", &jet6_motherId);
+
   reduced_tree.Branch("met", &met);
   reduced_tree.Branch("met_phi", &met_phi);
+  reduced_tree.Branch("mht", &mht);
+  reduced_tree.Branch("mht_phi", &mht_phi);
 
   reduced_tree.Branch("ht20", &ht20);
   reduced_tree.Branch("ht30", &ht30);
@@ -163,7 +235,22 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("ht70", &ht70);
   reduced_tree.Branch("ht80", &ht80);
 
+  reduced_tree.Branch("m_eff20", &m_eff20);
+  reduced_tree.Branch("m_eff30", &m_eff30);
+  reduced_tree.Branch("m_eff40", &m_eff40);
+  reduced_tree.Branch("m_eff50", &m_eff50);
+  reduced_tree.Branch("met_over_m_eff20", &met_over_m_eff20);
+  reduced_tree.Branch("met_over_m_eff30", &met_over_m_eff30);
+  reduced_tree.Branch("met_over_m_eff40", &met_over_m_eff40);
+  reduced_tree.Branch("met_over_m_eff50", &met_over_m_eff50);
+  reduced_tree.Branch("met_over_sqrt_ht20", &met_over_sqrt_ht20);
+  reduced_tree.Branch("met_over_sqrt_ht30", &met_over_sqrt_ht30);
+  reduced_tree.Branch("met_over_sqrt_ht40", &met_over_sqrt_ht40);
+  reduced_tree.Branch("met_over_sqrt_ht50", &met_over_sqrt_ht50);
+
   reduced_tree.Branch("num_jets_pt20", &num_jets_pt20); 
+  reduced_tree.Branch("num_jets_pt30", &num_jets_pt30); 
+  reduced_tree.Branch("num_jets_pt40", &num_jets_pt40); 
   reduced_tree.Branch("num_jets_pt50", &num_jets_pt50); 
   reduced_tree.Branch("num_jets_pt70", &num_jets_pt70); 
   reduced_tree.Branch("num_jets_pt100", &num_jets_pt100); 
@@ -172,13 +259,22 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_csvt_jets", &num_csvt_jets); 
   reduced_tree.Branch("num_csvm_jets", &num_csvm_jets); 
   reduced_tree.Branch("num_csvl_jets", &num_csvl_jets); 
+  reduced_tree.Branch("num_csvt_jets20", &num_csvt_jets20); 
+  reduced_tree.Branch("num_csvm_jets20", &num_csvm_jets20); 
+  reduced_tree.Branch("num_csvl_jets20", &num_csvl_jets20); 
+  reduced_tree.Branch("num_csvt_jets30", &num_csvt_jets30); 
+  reduced_tree.Branch("num_csvm_jets30", &num_csvm_jets30); 
+  reduced_tree.Branch("num_csvl_jets30", &num_csvl_jets30); 
+  reduced_tree.Branch("num_csvt_jets40", &num_csvt_jets40); 
+  reduced_tree.Branch("num_csvm_jets40", &num_csvm_jets40); 
+  reduced_tree.Branch("num_csvl_jets40", &num_csvl_jets40); 
 
-  reduced_tree.Branch("num_gen_partons", &num_gen_partons);
-  reduced_tree.Branch("num_gen_partons_pt20", &num_gen_partons_pt20);
-  reduced_tree.Branch("num_gen_partons_pt40", &num_gen_partons_pt40);
-  reduced_tree.Branch("num_gen_partons_pt70", &num_gen_partons_pt70);
-  reduced_tree.Branch("num_gen_partons_pt100", &num_gen_partons_pt100);
-  reduced_tree.Branch("num_gen_partons_pt150", &num_gen_partons_pt150);
+  // reduced_tree.Branch("num_gen_partons", &num_gen_partons);
+  // reduced_tree.Branch("num_gen_partons_pt20", &num_gen_partons_pt20);
+  // reduced_tree.Branch("num_gen_partons_pt40", &num_gen_partons_pt40);
+  // reduced_tree.Branch("num_gen_partons_pt70", &num_gen_partons_pt70);
+  // reduced_tree.Branch("num_gen_partons_pt100", &num_gen_partons_pt100);
+  // reduced_tree.Branch("num_gen_partons_pt150", &num_gen_partons_pt150);
 
   /* 
      reduced_tree.Branch("num_ra2b_veto_electrons", &num_ra2b_veto_electrons);
@@ -341,6 +437,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("lep2", &lep2);
 
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
+  reduced_tree.Branch("min_delta_phi_met_N_loose_jets", &min_delta_phi_met_N_loose_jets);
+  reduced_tree.Branch("min_delta_phi_met", &min_delta_phi_met);
+  reduced_tree.Branch("min_delta_phi_met_loose_jets", &min_delta_phi_met_loose_jets);
   // reduced_tree.Branch("deltaPhiN_1", &deltaPhiN_1);
   // reduced_tree.Branch("deltaPhiN_2", &deltaPhiN_2);
   // reduced_tree.Branch("deltaPhiN_3", &deltaPhiN_3);
@@ -383,10 +482,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     // just xsec/nGen now
     
     // passesMETCleaningCut=PassesMETCleaningCut();
-    passesPVCut=PassesPVCut();
-    
-    num_primary_vertices=GetNumVertices();
+    pass_HLT_PFNoPUHT350_PFMET100=PassesSpecificTrigger("HLT_PFNoPUHT350_PFMET100_v");
+    pass_HLT_PFNoPUHT650=PassesSpecificTrigger("HLT_PFNoPUHT650_v");
+    pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80=PassesSpecificTrigger("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v");
+    pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07=PassesSpecificTrigger("HLT_DiCentralPFJet30_PFMET80_BTagCSV07_v");
 
+    passesPVCut=PassesPVCut();
+    num_primary_vertices=GetNumVertices();
     pu_true_num_interactions=GetTrueNumInteractions();
     pu_num_interactions=GetNumInteractions();
     eoot_pu=GetEarlyOutOfTimePU(1);
@@ -394,6 +496,49 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     oot_pu=eoot_pu+loot_pu;
     //       cout << "JERR1" << endl;
 
+    highest_csv=GetHighestJetCSV(1);
+    second_highest_csv=GetHighestJetCSV(2);
+    third_highest_csv=GetHighestJetCSV(3);
+    fourth_highest_csv=GetHighestJetCSV(4);
+    fifth_highest_csv=GetHighestJetCSV(5);
+    sixth_highest_csv=GetHighestJetCSV(6);
+
+    jet1_pt=GetHighestJetPt(1);
+    jet2_pt=GetHighestJetPt(2);
+    jet3_pt=GetHighestJetPt(3);
+    jet4_pt=GetHighestJetPt(4);
+    jet5_pt=GetHighestJetPt(5);
+    jet6_pt=GetHighestJetPt(6);
+    jet1_eta=GetJetXEta(1);
+    jet2_eta=GetJetXEta(2);
+    jet3_eta=GetJetXEta(3);
+    jet4_eta=GetJetXEta(4);
+    jet5_eta=GetJetXEta(5);
+    jet6_eta=GetJetXEta(6);
+    jet1_phi=GetJetXPhi(1);
+    jet2_phi=GetJetXPhi(2);
+    jet3_phi=GetJetXPhi(3);
+    jet4_phi=GetJetXPhi(4);
+    jet5_phi=GetJetXPhi(5);
+    jet6_phi=GetJetXPhi(6);
+    jet1_csv=GetJetXCSV(1);
+    jet2_csv=GetJetXCSV(2);
+    jet3_csv=GetJetXCSV(3);
+    jet4_csv=GetJetXCSV(4);
+    jet5_csv=GetJetXCSV(5);
+    jet6_csv=GetJetXCSV(6);
+    jet1_partonId=GetJetXPartonId(1);
+    jet2_partonId=GetJetXPartonId(2);
+    jet3_partonId=GetJetXPartonId(3);
+    jet4_partonId=GetJetXPartonId(4);
+    jet5_partonId=GetJetXPartonId(5);
+    jet6_partonId=GetJetXPartonId(6);
+    jet1_motherId=GetJetXMotherId(1);
+    jet2_motherId=GetJetXMotherId(2);
+    jet3_motherId=GetJetXMotherId(3);
+    jet4_motherId=GetJetXMotherId(4);
+    jet5_motherId=GetJetXMotherId(5);
+    jet6_motherId=GetJetXMotherId(6);
     met=pfTypeImets_et->at(0);
     met_phi=pfTypeImets_phi->at(0);
     //        cout << "JERR2" << endl;
@@ -405,6 +550,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     ht70=GetHT(70.);
     ht80=GetHT(80.);
     num_jets_pt20=GetNumGoodJets(20);
+    num_jets_pt30=GetNumGoodJets(30);
+    num_jets_pt40=GetNumGoodJets(40);
     num_jets_pt50=GetNumGoodJets(50);
     num_jets_pt70=GetNumGoodJets(70);
     num_jets_pt100=GetNumGoodJets(100);
@@ -413,14 +560,46 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
     num_csvl_jets=GetNumCSVLJets();
+    num_csvt_jets20=GetNumCSVTJets(20.);
+    num_csvm_jets20=GetNumCSVMJets(20.);
+    num_csvl_jets20=GetNumCSVLJets(20.);
+    num_csvt_jets30=GetNumCSVTJets(30.);
+    num_csvm_jets30=GetNumCSVMJets(30.);
+    num_csvl_jets30=GetNumCSVLJets(30.);
+    num_csvt_jets40=GetNumCSVTJets(40.);
+    num_csvm_jets40=GetNumCSVMJets(40.);
+    num_csvl_jets40=GetNumCSVLJets(40.);
 
-    num_gen_partons=GetNGenPartons();
-    num_gen_partons_pt20=GetNGenPartons(20.);
-    num_gen_partons_pt40=GetNGenPartons(40.);
-    num_gen_partons_pt70=GetNGenPartons(70.);
-    num_gen_partons_pt100=GetNGenPartons(100.);
-    num_gen_partons_pt150=GetNGenPartons(150.);
+    // num_gen_partons=GetNGenPartons();
+    // num_gen_partons_pt20=GetNGenPartons(20.);
+    // num_gen_partons_pt40=GetNGenPartons(40.);
+    // num_gen_partons_pt70=GetNGenPartons(70.);
+    // num_gen_partons_pt100=GetNGenPartons(100.);
+    // num_gen_partons_pt150=GetNGenPartons(150.);
 
+    mht=GetMHT();
+    mht_phi=GetMHTPhi();
+
+    m_eff20=met+ht20;
+    m_eff30=met+ht30;
+    m_eff40=met+ht40;
+    m_eff50=met+ht50;
+    if (m_eff20>0) met_over_m_eff20=met/m_eff20;
+    else met_over_m_eff20=-1.;
+    if (m_eff30>0) met_over_m_eff30=met/m_eff30;
+    else met_over_m_eff30=-1.;
+    if (m_eff40>0) met_over_m_eff40=met/m_eff40;
+    else met_over_m_eff40=-1.;
+    if (m_eff50>0) met_over_m_eff50=met/m_eff50;
+    else met_over_m_eff50=-1.;
+    if (ht20>0) met_over_sqrt_ht20=met/TMath::Sqrt(ht20);
+    else met_over_sqrt_ht20=-1.;
+     if (ht30>0) met_over_sqrt_ht30=met/TMath::Sqrt(ht30);
+    else met_over_sqrt_ht30=-1.;
+    if (ht40>0) met_over_sqrt_ht40=met/TMath::Sqrt(ht40);
+    else met_over_sqrt_ht40=-1.;
+    if (ht50>0) met_over_sqrt_ht50=met/TMath::Sqrt(ht50);
+    else met_over_sqrt_ht50=-1.;
 
     /*
       num_ra2b_veto_electrons=GetNumRA2bElectrons(0);
@@ -760,8 +939,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     }
 
     // cout << "minDeltaPhi..." << endl;
+    min_delta_phi_met=GetMinDeltaPhiMET(3);
+    min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
     min_delta_phi_met_N=getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true);
-    /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
+    if (min_delta_phi_met_N>10e7&&num_jets_pt50>2) cout << "Funky event " << event << endl;
+    min_delta_phi_met_N_loose_jets=getMinDeltaPhiMETN(3,20,5.,true,20,5.,false,true);
+   /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
     deltaPhiN_2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true,true);
     deltaPhiN_3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true,true);
     */

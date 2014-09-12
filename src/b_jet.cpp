@@ -49,15 +49,17 @@ bool BJet::operator!=(const BJet &jet) const{
   return !(*this==jet);
 }
 
+// Note: have changed these relational operators to sort jets by pt rather than CSV!
+
 bool BJet::operator<(const BJet &jet) const{
-  std::pair<double, double> this_one(bTag, -vec.Pt());
-  std::pair<double, double> that_one(jet.bTag, -jet.vec.Pt());
+  std::pair<double, double> this_one(vec.Pt(), bTag);
+  std::pair<double, double> that_one(jet.vec.Pt(), jet.bTag);
   return this_one<that_one;
 }
 
 bool BJet::operator>(const BJet &jet) const{
-  std::pair<double, double> this_one(bTag, -vec.Pt());
-  std::pair<double, double> that_one(jet.bTag, -jet.vec.Pt());
+  std::pair<double, double> this_one(vec.Pt(), bTag);
+  std::pair<double, double> that_one(jet.vec.Pt(), jet.bTag);
   return this_one>that_one;
 }
 

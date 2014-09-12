@@ -9,10 +9,13 @@
 
 
 void set_style(TH1 * h, const TString& p) {
-  if (p.Contains("t1tttt") || p.Contains("t1bbbb")) {
+  if (p.Contains("t1bbbb")) {
         h->SetFillColor (2);
         h->SetMarkerColor(2);
-    } else if (p == "data_obs") {
+    } else if(p.Contains("t1tttt")) {
+        h->SetFillColor(6);
+        h->SetMarkerColor(6);
+  }  else if (p == "data_obs") {
         h->SetMarkerSize(0.8);
         h->SetMarkerStyle(20);
     } else {
