@@ -1,5 +1,3 @@
-// originally developed by Josh Thompson for RA2b 2011 analysis
-
 #include "TMath.h"
 #include "TH1D.h"
 #include "TChain.h"
@@ -19,19 +17,9 @@
 
 using namespace std;
 
-//void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
-void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "reduced_trees/QCD_Pt*.root")
+void ht_in_met_slices(const TString ht_var = "ht50", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "reduced_trees/QCD_Pt*.root")
 { 
   const TCut btag(btag_cut);
-  //const TCut btag = "nbjetsSSVHPT>=2";
-  //const TCut btag = "nbjetsSSVHPT==0";
-  //const TCut btag = "nbjetsSSV0>=1";
-
-  //const TString var ="minDeltaPhiN";
-  //const TString var ="minDeltaPhi";
-  //  const TString var ="bestTopMass";
-  //  const TString var ="MET/(MET+HT)";
-  //  const TString var ="deltaPhiMPTcaloMET";
 
   const bool drawLSB = true;
   const bool drawMSB = true;
@@ -43,34 +31,26 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   //const float customMax = -1;
   const bool doRatio=false; //hack for a specific ratio plot
 
-  const  int nbins=10;
+  const  int nbins=20;
   float min=0;
-  float max=0;
-  if (var=="bestTopMass") max=800;
-  else if (var=="min_delta_phi_met"||var=="min_delta_phi_met_loose_jets") max=TMath::Pi();
-  else if (var.Contains("min_delta_phi_met_N")) max=20;
-  else if (var.Contains("minDeltaPhiK")) max=20;
-  else if (var=="deltaPhiMPTcaloMET")    max=TMath::Pi();
-  else max = 0.6; 
+  float max=2500;
+
 
   //updated to use reducedTrees
 
   bool addOverflow = true;
-  if (var.Contains("min_delta_phi_met")) addOverflow=false;
-  else  if (var=="bestTopMass") addOverflow=false;
-  else  if (var=="deltaPhiMPTcaloMET") addOverflow=false;
-
+ 
   //  gROOT->SetStyle("CMS");
   gStyle->SetOptStat(0);
 
-  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50&&weightppb<100"; //no mindp, no MET
-  TString dp_cut(var);
-  if (var.Contains("min_delta_phi_met_N")) dp_cut+=">4.";
-  else if (var.Contains("min_delta_phi_met")) dp_cut+=">0.3";
+  TCut baseline ="weightppb<100"; //no mindp, no MET
+  TString dp_cut(ht_var);
+  if (ht_var.Contains("min_delta_phi_met_N")) dp_cut+=">4.";
+  else if (ht_var.Contains("min_delta_phi_met")) dp_cut+=">0.3";
 
   TCut minDPcut(dp_cut);
   //TCut minDPcut = "minDeltaPhi > 0.2"; cout<<"warning -- using special minDeltaPhi cut! "<<minDPcut.GetTitle()<<endl;
-  if (!var.Contains("min_delta_phi_met")) baseline = baseline&&minDPcut;
+  if (!ht_var.Contains("min_delta_phi_met")) baseline = baseline&&minDPcut;
   TCut LSB = "met<75";
   TCut MSB = "met>=75 && met<150";
   TCut SB = "met>=150 && met <225";
@@ -101,7 +81,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   TH1::SetDefaultSumw2(); //trick to turn on Sumw2 for all histos
 
   //constint nbins=6;
-  //  const double varbins[]={0.,160.,180.,260.,400.,800.,2000};
+  //  const double ht_varbins[]={0.,160.,180.,260.,400.,800.,2000};
 
   int height= doRatio ? 800 : 600;
   TCanvas * thecanvas= new TCanvas("thecanvas","the canvas",700,height);
@@ -159,13 +139,13 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   }
 
   cout << "drawLSB" << endl;
-  if (drawLSB) pypu->Draw(var+">>Hlow", selection1);
+  if (drawLSB) pypu->Draw(ht_var+">>Hlow", selection1);
   cout << "drawMSB" << endl;
-  if (drawMSB) pypu->Draw(var+">>Hmed", selection2);
+  if (drawMSB) pypu->Draw(ht_var+">>Hmed", selection2);
   cout << "drawSB" << endl;
-  if (drawSB)  pypu->Draw(var+">>Hmh",  selection3);
+  if (drawSB)  pypu->Draw(ht_var+">>Hmh",  selection3);
   cout << "drawSIG" << endl;
-  if (drawSIG) pypu->Draw(var+">>Hhigh",selection4);
+  if (drawSIG) pypu->Draw(ht_var+">>Hhigh",selection4);
   gPad->SetRightMargin(0.1);
   gPad->SetLogy(logy);
   gPad->Modified();
@@ -182,20 +162,8 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   if (Hmh->Integral()>0) Hmh->Scale( 1.0 / Hmh->Integral());
   if (Hhigh->Integral()>0) Hhigh->Scale( 1.0 / Hhigh->Integral());
   
-  if (var=="min_delta_phi_met"||var=="min_delta_phi_met_loose_jets")  Hhigh->SetXTitle("#Delta #phi_{min} [rad.]");
-  else if (var=="bestTopMass")  {
-    TString title="best 3-jet mass (GeV)";
-    Hhigh->SetXTitle(title);
-    Hmh->SetXTitle(title);
-    Hmed->SetXTitle(title);
-    Hlow->SetXTitle(title);
-  }
-  else if (var.Contains("min_delta_phi_met_N")) {
-    Hhigh->SetXTitle("#Delta #hat{#phi}_{N}^{min}");
-  }
-  else {
-    Hhigh->SetXTitle(var);
-  }
+
+  Hhigh->SetXTitle(ht_var);
   TString ytitle="(a.u.)";
   Hhigh->SetYTitle(ytitle);
   Hmh->SetYTitle(ytitle);
@@ -210,10 +178,10 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   Hlow->SetTitle(thetitle);
 
   TString drawopt="hist e";
-  if (drawSIG)  {Hhigh->Draw(drawopt); drawopt="hist e SAME"; if (customMax>0) Hhigh->SetMaximum(customMax);}
-  if (drawSB)   {Hmh->Draw(drawopt); drawopt="hist e SAME";   if (customMax>0) Hmh->SetMaximum(customMax);}
-  if (drawMSB)  {Hmed->Draw(drawopt); drawopt="hist e SAME";  if (customMax>0) Hmed->SetMaximum(customMax);}
-  if (drawLSB)  {Hlow->Draw(drawopt); drawopt="hist e SAME";  if (customMax>0) Hlow->SetMaximum(customMax);}
+  if (drawSIG)  {Hhigh->Draw(drawopt); drawopt="hist e SAME"; if (Hhigh->GetMaximum()<0.5) Hhigh->SetMaximum(0.75);}
+  if (drawSB)   {Hmh->Draw(drawopt); drawopt="hist e SAME";   if (Hmh->GetMaximum()<0.5) Hmh->SetMaximum(0.75);}
+  if (drawMSB)  {Hmed->Draw(drawopt); drawopt="hist e SAME";  if (Hmed->GetMaximum()<0.5) Hmed->SetMaximum(0.75);}
+  if (drawLSB)  {Hlow->Draw(drawopt); drawopt="hist e SAME";  if (Hlow->GetMaximum()<0.5) Hlow->SetMaximum(0.75);}
 
 //   if (var=="minDeltaPhi") {
 //     Hhigh->SetMinimum(0);
@@ -232,19 +200,19 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   if(logy) leg->SetTextSize(0.03);
   char label[100];
   if (drawLSB)  {
-    sprintf(label,"E_{T}^{miss} < 60 GeV (#mu=%3.2f)",Hlow->GetMean());
+    sprintf(label,"E_{T}^{miss} < 75 GeV (#mu=%3.2f)",Hlow->GetMean());
     leg->AddEntry(Hlow,label);
   }
   if (drawMSB)  {
-    sprintf(label,"60 < E_{T}^{miss} < 120 GeV (#mu=%3.2f)",Hmed->GetMean());
+    sprintf(label,"75 < E_{T}^{miss} < 150 GeV (#mu=%3.2f)",Hmed->GetMean());
     leg->AddEntry(Hmed,label);
   } 
   if (drawSB)   {
-    sprintf(label,"120 < E_{T}^{miss} < 175 Ge (#mu=%3.2f)",Hmh->GetMean());
+    sprintf(label,"150 < E_{T}^{miss} < 225 Ge (#mu=%3.2f)",Hmh->GetMean());
     leg->AddEntry(Hmh,label);
   }
   if (drawSIG)  {
-    sprintf(label,"E_{T}^{miss} > 175 GeV (#mu=%3.2f)",Hhigh->GetMean());
+    sprintf(label,"E_{T}^{miss} > 225 GeV (#mu=%3.2f)",Hhigh->GetMean());
    leg->AddEntry(Hhigh,label);
   }
   leg->Draw();
@@ -284,12 +252,12 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
 //   Hlow->Chi2Test(Hmh,"WW p");
 
   if (plotTitle=="") {
-    if(logy) {thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+"_logy.png");thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+"_logy.pdf");}
-    else {thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+".png"); thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+".pdf"); }
+    if(logy) {thecanvas->Print("macros/correlations/plots/METcorrelation_"+ht_var+"_logy.pdf");}
+    else { thecanvas->Print("macros/correlations/plots/METcorrelation_"+ht_var+".pdf"); }
   }  
   else {
-    if(logy) {thecanvas->Print("macros/qcd_control/plots/"+plotTitle+"_logy.png");thecanvas->Print("macros/qcd_control/plots/"+plotTitle+"_logy.pdf");}
-    else {thecanvas->Print("macros/qcd_control/plots/"+plotTitle+".png"); thecanvas->Print("macros/qcd_control/plots/"+plotTitle+".pdf"); }
+    if(logy) {thecanvas->Print("macros/correlations/plots/"+plotTitle+"_logy.pdf");}
+    else {thecanvas->Print("macros/correlations/plots/"+plotTitle+".pdf"); }
   }
 
   delete pypu;
