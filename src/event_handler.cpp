@@ -1594,7 +1594,7 @@ vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
 }
 
 bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
-  //N.B.: cut does not have the fabs(1/E-1/p) and conversion rejection cuts from the EGamma POG!!!
+  //N.B.: cut does not have the fabs(1/E-1/p) / ooEmooP and conversion rejection cuts from the EGamma POG!!!
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
@@ -1644,16 +1644,18 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   default:
     pt_cut=10.0;
     if(fabs(els_scEta->at(iel))<=1.479){ // barrel
-      dEtaIn_cut=0.02; phi_cut=0.2579; sigmaietaieta_cut=0.0125; h_over_e_cut=0.2564;
-      d0_cut=0.025; dz_cut=0.5863; iso_cut=0.3313;
-      if (cmEnergy>=13) {
-	dEtaIn_cut=0.012; iso_cut=0.23;
-      }
-    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){ // endcap
-      dEtaIn_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
+      dEtaIn_cut=0.07; phi_cut=0.8; sigmaietaieta_cut=0.01; h_over_e_cut=0.15;
       d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
       if (cmEnergy>=13) {
-	dEtaIn_cut=0.015; sigmaietaieta_cut=0.033; iso_cut=0.25;
+	dEtaIn_cut=0.02; phi_cut=0.2579; sigmaietaieta_cut=0.0125; h_over_e_cut=0.2564;
+	d0_cut=0.025; dz_cut=0.5863; iso_cut=0.3313;     
+      }
+    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){ // endcap
+	dEtaIn_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
+	d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
+      if (cmEnergy>=13) {
+	dEtaIn_cut=0.0141; phi_cut=0.2591; sigmaietaieta_cut=0.0371; h_over_e_cut=0.1335;
+	d0_cut=0.2232; dz_cut=0.9513; iso_cut=0.3816; 
       }
     }
     break;
