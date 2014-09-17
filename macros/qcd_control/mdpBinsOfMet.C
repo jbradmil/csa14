@@ -63,7 +63,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   //  gROOT->SetStyle("CMS");
   gStyle->SetOptStat(0);
 
-  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50&&weightppb<100"; //no mindp, no MET
+  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50"; //no mindp, no MET
   TString dp_cut(var);
   if (var.Contains("min_delta_phi_met_N")) dp_cut+=">4.";
   else if (var.Contains("min_delta_phi_met")) dp_cut+=">0.3";
@@ -140,12 +140,12 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   Hmh->SetMarkerStyle(21);
   Hhigh->SetMarkerStyle(20);
 
-  Hlow->SetMarkerSize(2);
-  Hmed->SetMarkerSize(2);
-  Hmh->SetMarkerSize(2);
-  Hhigh->SetMarkerSize(2);
+  Hlow->SetMarkerSize(1);
+  Hmed->SetMarkerSize(1);
+  Hmh->SetMarkerSize(1);
+  Hhigh->SetMarkerSize(1);
 
-  float width=2.5;
+  Width_t width=2;
   Hlow->SetLineWidth(width);
   Hmed->SetLineWidth(width);
   Hmh->SetLineWidth(width);
@@ -232,19 +232,19 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   if(logy) leg->SetTextSize(0.03);
   char label[100];
   if (drawLSB)  {
-    sprintf(label,"E_{T}^{miss} < 60 GeV (#mu=%3.2f)",Hlow->GetMean());
+    sprintf(label,"E_{T}^{miss} < 75 GeV (#mu=%3.2f)",Hlow->GetMean());
     leg->AddEntry(Hlow,label);
   }
   if (drawMSB)  {
-    sprintf(label,"60 < E_{T}^{miss} < 120 GeV (#mu=%3.2f)",Hmed->GetMean());
+    sprintf(label,"75 < E_{T}^{miss} < 150 GeV (#mu=%3.2f)",Hmed->GetMean());
     leg->AddEntry(Hmed,label);
   } 
   if (drawSB)   {
-    sprintf(label,"120 < E_{T}^{miss} < 175 Ge (#mu=%3.2f)",Hmh->GetMean());
+    sprintf(label,"150 < E_{T}^{miss} < 225 Ge (#mu=%3.2f)",Hmh->GetMean());
     leg->AddEntry(Hmh,label);
   }
   if (drawSIG)  {
-    sprintf(label,"E_{T}^{miss} > 175 GeV (#mu=%3.2f)",Hhigh->GetMean());
+    sprintf(label,"E_{T}^{miss} > 225 GeV (#mu=%3.2f)",Hhigh->GetMean());
    leg->AddEntry(Hhigh,label);
   }
   leg->Draw();

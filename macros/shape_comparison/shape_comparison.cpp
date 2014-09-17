@@ -143,7 +143,8 @@ void draw_from_trees(TString var, TCut other_cuts,
 
 
   double ymax = TMath::Max(hqcd->GetMaximum(),ht1bbbb_1000_900->GetMaximum());
-  hqcd->GetMaximum();
+  if (httbar->GetMaximum()>ymax) ymax = httbar->GetMaximum();
+  if (ht1tttt_1500_100->GetMaximum()>ymax) ymax = ht1tttt_1500_100->GetMaximum();
   // double ymin = TMath::Min(ht1tttt_1200_800->GetMinimum(),ht1bbbb_1000_900->GetMinimum());
   //  double binwidth = (xup - xlow) / nbinsx;
   TString ytitle = Form("Fraction of events");
@@ -309,7 +310,7 @@ int main() {
   */
 
   // Start--just shapes, no cuts
-  /*
+  
   draw_from_trees("mht",shape,"(weightppb*20000)",
     		  ";H_{T}^{miss} [GeV];Events / 20 fb^{-1}", 70, 100., 1500.,
     		  "plotSig:plotLog",-1,-1,
@@ -459,7 +460,7 @@ int main() {
   		 ";4^{th}-Highest CSV;Events / 20 fb^{-1}", 50, 0., 1.,
   		 "",0.244,0.679,
   		 "4th_csv");
-*/ 
+
  draw_from_trees("m_eff30",shape,"(weightppb*20000)",
   		 ";M_{eff} [GeV];Events / 20 fb^{-1}", 75, 0., 7500.,
   		 "",-1,-1,

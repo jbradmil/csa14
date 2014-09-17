@@ -1598,43 +1598,44 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
-  double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
-  if (cmEnergy>8&&!els_isPF->at(iel)) return false;
+  double dEtaIn_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
+  //  if (cmEnergy>8&&!els_isPF->at(iel)) return false;
 
   switch(level){
   case 1:
     pt_cut=20.0;
-    if(els_isEB->at(iel)){
-      eta_cut=0.007; phi_cut=0.15; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+    if(fabs(els_scEta->at(iel))<=1.479){
+      dEtaIn_cut=0.007; phi_cut=0.15; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.2; iso_cut=0.15;
-    }else if(els_isEE->at(iel)){
-      eta_cut=0.009; phi_cut=0.10; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){
+      dEtaIn_cut=0.009; phi_cut=0.10; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
       d0_cut=0.02; dz_cut=0.2; iso_cut=(els_pt->at(iel)>20.0?0.15:0.10);
     }
     break;
   case 2:
     pt_cut=20.0;
-    if(els_isEB->at(iel)){
-      eta_cut=0.004; phi_cut=0.06; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+    if(fabs(els_scEta->at(iel))<=1.479){
+      dEtaIn_cut=0.004; phi_cut=0.06; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.1; iso_cut=0.15;
-    }else if(els_isEE->at(iel)){
-      eta_cut=0.007; phi_cut=0.03; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){
+      dEtaIn_cut=0.007; phi_cut=0.03; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
       d0_cut=0.02; dz_cut=0.1; iso_cut=(els_pt->at(iel)>20.0?0.15:0.10);
     }
     break;
   case 3:
     pt_cut=20.0;
-    if(els_isEB->at(iel)){
-      eta_cut=0.004; phi_cut=0.03; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
+    if(fabs(els_scEta->at(iel))<=1.479){
+
+      dEtaIn_cut=0.004; phi_cut=0.03; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.1; iso_cut=0.10;
       if (cmEnergy==13) {
-	eta_cut=0.009; iso_cut=0.18;
+	dEtaIn_cut=0.009; iso_cut=0.18;
       }
-    }else if(els_isEE->at(iel)){
-      eta_cut=0.005; phi_cut=0.02; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
+    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){
+      dEtaIn_cut=0.005; phi_cut=0.02; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
       d0_cut=0.02; dz_cut=0.1; iso_cut=(els_pt->at(iel)>20.0?0.10:0.07);
       if (cmEnergy==13) {
-	eta_cut=0.01; sigmaietaieta_cut=0.031;
+	dEtaIn_cut=0.01; sigmaietaieta_cut=0.031;
 	h_over_e_cut=0.12; iso_cut=0.16;
       }    
     }
@@ -1642,17 +1643,17 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   case 0: //intentionally falling through to default "veto" case
   default:
     pt_cut=10.0;
-    if(els_isEB->at(iel)){
-      eta_cut=0.007; phi_cut=0.8; sigmaietaieta_cut=0.01; h_over_e_cut=0.15;
-      d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
+    if(fabs(els_scEta->at(iel))<=1.479){ // barrel
+      dEtaIn_cut=0.02; phi_cut=0.2579; sigmaietaieta_cut=0.0125; h_over_e_cut=0.2564;
+      d0_cut=0.025; dz_cut=0.5863; iso_cut=0.3313;
       if (cmEnergy>=13) {
-	eta_cut=0.012; iso_cut=0.23;
+	dEtaIn_cut=0.012; iso_cut=0.23;
       }
-    }else if(els_isEE->at(iel)){
-      eta_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
+    }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){ // endcap
+      dEtaIn_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
       d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
       if (cmEnergy>=13) {
-	eta_cut=0.015; sigmaietaieta_cut=0.033; iso_cut=0.25;
+	dEtaIn_cut=0.015; sigmaietaieta_cut=0.033; iso_cut=0.25;
       }
     }
     break;
@@ -1663,7 +1664,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level) const{
   if (els_pt->at(iel) < pt_cut) return false;
   // }
 
-  if ( fabs(els_dEtaIn->at(iel)) > eta_cut)  return false;
+  if ( fabs(els_dEtaIn->at(iel)) > dEtaIn_cut)  return false;
   if ( fabs(els_dPhiIn->at(iel)) > phi_cut)  return false;
   if (cmEnergy<13 && els_sigmaIEtaIEta->at(iel) > sigmaietaieta_cut) return false;
   if (cmEnergy>=13 && els_full5x5_sigmaIetaIeta->at(iel) > sigmaietaieta_cut) return false;
@@ -1718,12 +1719,12 @@ bool EventHandler::passedCSABaseElectronSelection(uint iel, float ElectronPTThre
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
 	  && hasPFMatch(iel, 11) 
 	  && fabs(d0PV) < 0.02 
-	  && ((els_isEB->at(iel) // Endcap selection
+	  && ((fabs(els_scEta->at(iel))<=1.479 // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004
 	       && fabs(els_dPhiIn->at(iel)) < 0.06
 	       && els_sigmaIEtaIEta->at(iel) < 0.01
 	       && els_hadOverEm->at(iel) < 0.12 ) ||
-	      (els_isEE->at(iel)  // Barrel selection
+	      (fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5  // Barrel selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.007
 	       && fabs(els_dPhiIn->at(iel)) < 0.03
 	       && els_sigmaIEtaIEta->at(iel) < 0.03

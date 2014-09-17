@@ -120,12 +120,12 @@ void ht_in_met_slices(const TString ht_var = "ht50", const TString btag_cut="num
   Hmh->SetMarkerStyle(21);
   Hhigh->SetMarkerStyle(20);
 
-  Hlow->SetMarkerSize(2);
-  Hmed->SetMarkerSize(2);
-  Hmh->SetMarkerSize(2);
-  Hhigh->SetMarkerSize(2);
+  Hlow->SetMarkerSize(1);
+  Hmed->SetMarkerSize(1);
+  Hmh->SetMarkerSize(1);
+  Hhigh->SetMarkerSize(1);
 
-  float width=2.5;
+  short width=2;
   Hlow->SetLineWidth(width);
   Hmed->SetLineWidth(width);
   Hmh->SetLineWidth(width);
@@ -163,7 +163,7 @@ void ht_in_met_slices(const TString ht_var = "ht50", const TString btag_cut="num
   if (Hhigh->Integral()>0) Hhigh->Scale( 1.0 / Hhigh->Integral());
   
 
-  Hhigh->SetXTitle(ht_var);
+  Hhigh->SetXTitle("H_{T} [GeV]");
   TString ytitle="(a.u.)";
   Hhigh->SetYTitle(ytitle);
   Hmh->SetYTitle(ytitle);
@@ -178,10 +178,16 @@ void ht_in_met_slices(const TString ht_var = "ht50", const TString btag_cut="num
   Hlow->SetTitle(thetitle);
 
   TString drawopt="hist e";
-  if (drawSIG)  {Hhigh->Draw(drawopt); drawopt="hist e SAME"; if (Hhigh->GetMaximum()<0.5) Hhigh->SetMaximum(0.75);}
-  if (drawSB)   {Hmh->Draw(drawopt); drawopt="hist e SAME";   if (Hmh->GetMaximum()<0.5) Hmh->SetMaximum(0.75);}
-  if (drawMSB)  {Hmed->Draw(drawopt); drawopt="hist e SAME";  if (Hmed->GetMaximum()<0.5) Hmed->SetMaximum(0.75);}
-  if (drawLSB)  {Hlow->Draw(drawopt); drawopt="hist e SAME";  if (Hlow->GetMaximum()<0.5) Hlow->SetMaximum(0.75);}
+  double ymax = TMath::Max(Hhigh->GetMaximum(),Hlow->GetMaximum());
+  if (Hmh->GetMaximum()>ymax) ymax = Hmh->GetMaximum();
+  if (Hmed->GetMaximum()>ymax) ymax = Hmed->GetMaximum();
+
+  Hhigh->SetMaximum(ymax*1.1);
+
+  if (drawSIG)  {Hhigh->Draw(drawopt); drawopt="hist e SAME";}
+  if (drawSB)   {Hmh->Draw(drawopt); drawopt="hist e SAME";}
+  if (drawMSB)  {Hmed->Draw(drawopt); drawopt="hist e SAME";}
+  if (drawLSB)  {Hlow->Draw(drawopt); drawopt="hist e SAME";}
 
 //   if (var=="minDeltaPhi") {
 //     Hhigh->SetMinimum(0);

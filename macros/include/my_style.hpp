@@ -10,50 +10,51 @@
 
 void set_style(TH1 * h, const TString& p) {
   if (p.Contains("t1bbbb")) {
-        h->SetFillColor (2);
-        h->SetMarkerColor(2);
-    } else if(p.Contains("t1tttt")) {
-        h->SetFillColor(6);
-        h->SetMarkerColor(6);
+    h->SetFillColor (2);
+    h->SetMarkerColor(2);
+  } else if(p.Contains("t1tttt")) {
+    h->SetFillColor(6);
+    h->SetMarkerColor(6);
   }  else if (p == "data_obs") {
-        h->SetMarkerSize(0.8);
-        h->SetMarkerStyle(20);
-    } else {
-        h->SetLineColor(kBlack);
-        if (p == "znn") {
-            h->SetFillColor (814);
-            h->SetMarkerColor(814);
-        } else if (p == "qcd") {
-            h->SetFillColor (42);
-            h->SetMarkerColor(42);
-        } else if (p == "ttbar") {
-            h->SetFillColor (596);
-            h->SetMarkerColor(596);
-        } else if (p == "wjets") {
-            h->SetFillColor (840);
-            h->SetMarkerColor(840);
-        } else if (p == "single_top") {
-            h->SetFillColor (kYellow-7);
-            h->SetMarkerColor(kYellow-7);
-        } else if (p == "other") {
-            h->SetFillColor (922);
-            h->SetMarkerColor(922);
-        } else if (p== "bg") {
-	  h->SetFillColor(kAzure+1);
-	  h->SetMarkerColor(kAzure+1);
-	}
+    h->SetMarkerSize(0.8);
+    h->SetMarkerStyle(20);
+  } else {
+    h->SetLineColor(kBlack);
+    if (p == "znn") {
+      h->SetFillColor (814);
+      h->SetMarkerColor(814);
+    } else if (p == "qcd") {
+      h->SetFillColor (42);
+      h->SetMarkerColor(42);
+    } else if (p == "ttbar") {
+      h->SetFillColor (596);
+      h->SetMarkerColor(596);
+    } else if (p == "wjets") {
+      h->SetFillColor (840);
+      h->SetMarkerColor(840);
+    } else if (p == "single_top") {
+      h->SetFillColor (kYellow-7);
+      h->SetMarkerColor(kYellow-7);
+    } else if (p == "other") {
+      h->SetFillColor (922);
+      h->SetMarkerColor(922);
+    } else if (p== "bg") {
+      h->SetFillColor(kAzure+1);
+      h->SetMarkerColor(kAzure+1);
     }
-    return;
+  }
+  return;
 }
 
-void set_style(TLegend* leg, float text_size=0.045) {
-    leg->SetFillColor(0);
-    leg->SetLineColor(0);
-    leg->SetShadowColor(0);
-    leg->SetTextFont(62);
-    leg->SetTextSize(text_size);
-    leg->SetBorderSize(1);
-    return;
+void set_style(TLegend* leg, float text_size=0.045, bool transparent=false) {
+  if (transparent) leg->SetFillStyle(0);
+  leg->SetFillColor(0);
+  leg->SetLineColor(0);
+  leg->SetShadowColor(0);
+  leg->SetTextFont(62);
+  leg->SetTextSize(text_size);
+  leg->SetBorderSize(1);
+  return;
 }
 
 void set_style(TLine* line) {
@@ -66,7 +67,7 @@ void setTDRStyle(TStyle* tdrStyle) {
 
   // TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
 
-// For the canvas:
+  // For the canvas:
   tdrStyle->SetCanvasBorderMode(0);
   tdrStyle->SetCanvasColor(kWhite);
   tdrStyle->SetCanvasDefH(600); //Height of canvas
@@ -74,7 +75,7 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->SetCanvasDefX(0);   //POsition on screen
   tdrStyle->SetCanvasDefY(0);
 
-// For the Pad:
+  // For the Pad:
   tdrStyle->SetPadBorderMode(0);
   // tdrStyle->SetPadBorderSize(Width_t size = 1);
   tdrStyle->SetPadColor(kWhite);
@@ -84,7 +85,7 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->SetGridStyle(3);
   tdrStyle->SetGridWidth(1);
 
-// For the frame:
+  // For the frame:
   tdrStyle->SetFrameBorderMode(0);
   tdrStyle->SetFrameBorderSize(1);
   tdrStyle->SetFrameFillColor(0);
@@ -93,7 +94,7 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->SetFrameLineStyle(1);
   tdrStyle->SetFrameLineWidth(2);
 
-// For the histo:
+  // For the histo:
   // tdrStyle->SetHistFillColor(1);
   // tdrStyle->SetHistFillStyle(0);
   tdrStyle->SetHistLineColor(1);
@@ -109,19 +110,19 @@ void setTDRStyle(TStyle* tdrStyle) {
   
   tdrStyle->SetMarkerStyle(20);
 
-//For the fit/function:
+  //For the fit/function:
   tdrStyle->SetOptFit(1);
   tdrStyle->SetFitFormat("5.4g");
   tdrStyle->SetFuncColor(2);
   tdrStyle->SetFuncStyle(1);
   tdrStyle->SetFuncWidth(1);
 
-//For the date:
+  //For the date:
   tdrStyle->SetOptDate(0);
   // tdrStyle->SetDateX(Float_t x = 0.01);
   // tdrStyle->SetDateY(Float_t y = 0.01);
 
-// For the statistics box:
+  // For the statistics box:
   tdrStyle->SetOptFile(0);
   tdrStyle->SetOptStat(0); // To display the mean and RMS:   SetOptStat("mr");
   tdrStyle->SetStatColor(kWhite);
@@ -136,13 +137,13 @@ void setTDRStyle(TStyle* tdrStyle) {
   // tdrStyle->SetStatX(Float_t x = 0);
   // tdrStyle->SetStatY(Float_t y = 0);
 
-// Margins:
+  // Margins:
   tdrStyle->SetPadTopMargin(0.05);
   tdrStyle->SetPadBottomMargin(0.13);
   tdrStyle->SetPadLeftMargin(0.15);
   tdrStyle->SetPadRightMargin(0.03);
 
-// For the Global title:
+  // For the Global title:
 
   tdrStyle->SetOptTitle(0);
   tdrStyle->SetTitleFont(42);
@@ -157,7 +158,7 @@ void setTDRStyle(TStyle* tdrStyle) {
   // tdrStyle->SetTitleStyle(Style_t style = 1001);
   // tdrStyle->SetTitleBorderSize(2);
 
-// For the axis titles:
+  // For the axis titles:
 
   tdrStyle->SetTitleColor(1, "XYZ");
   tdrStyle->SetTitleFont(42, "XYZ");
@@ -168,14 +169,14 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->SetTitleYOffset(1.25);
   // tdrStyle->SetTitleOffset(1.1, "Y"); // Another way to set the Offset
 
-// For the axis labels:
+  // For the axis labels:
 
   tdrStyle->SetLabelColor(1, "XYZ");
   tdrStyle->SetLabelFont(42, "XYZ");
   tdrStyle->SetLabelOffset(0.007, "XYZ");
   tdrStyle->SetLabelSize(0.05, "XYZ");
 
-// For the axis:
+  // For the axis:
 
   tdrStyle->SetAxisColor(1, "XYZ");
   tdrStyle->SetStripDecimals(kTRUE);
@@ -184,12 +185,12 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
   tdrStyle->SetPadTickY(1);
 
-// Change for log plots:
+  // Change for log plots:
   tdrStyle->SetOptLogx(0);
   tdrStyle->SetOptLogy(0);
   tdrStyle->SetOptLogz(0);
 
-// Postscript options:
+  // Postscript options:
   tdrStyle->SetPaperSize(20.,20.);
   // tdrStyle->SetLineScalePS(Float_t scale = 3);
   // tdrStyle->SetLineStyleString(Int_t i, const char* text);
