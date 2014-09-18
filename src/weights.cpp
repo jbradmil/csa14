@@ -305,10 +305,10 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=105964;
   totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=97584;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2000000/*8667327*/;
-  totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3181078;
-  totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=3133549;
-  totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2507939;
-  totalEventsTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=2399709;
+  totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4087868/*3181078*/;
+  totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4933933/*3133549*/;
+  totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4642823/*2507939*/;
+  totalEventsTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4634811/*2399709*/;
   totalEventsTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod"]=4791146;
   totalEventsTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod"]=4510630;
   totalEventsTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod"]=4655329;

@@ -1630,6 +1630,47 @@ protected:
   UInt_t orbitNumber;
   Float_t weight;
   std::string *model_params;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_px;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_py;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_pz;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_energy;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_phi;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT10_eta;
+  std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5pT10_index;
+  std::vector<int>     *fastjets_AK4_R1p2_R0p5pT10_nconstituents;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_px;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_py;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_pz;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_energy;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_phi;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT15_eta;
+  std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5pT15_index;
+  std::vector<int>     *fastjets_AK4_R1p2_R0p5pT15_nconstituents;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_px;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_py;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_pz;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_energy;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_phi;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT20_eta;
+  std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5pT20_index;
+  std::vector<int>     *fastjets_AK4_R1p2_R0p5pT20_nconstituents;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_px;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_py;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_pz;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_energy;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_phi;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT25_eta;
+  std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5pT25_index;
+  std::vector<int>     *fastjets_AK4_R1p2_R0p5pT25_nconstituents;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_px;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_py;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_pz;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_energy;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_phi;
+  std::vector<float>   *fastjets_AK4_R1p2_R0p5pT30_eta;
+  std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5pT30_index;
+  std::vector<int>     *fastjets_AK4_R1p2_R0p5pT30_nconstituents;
+
   TBranch *b_NbeamSpot;
   TBranch *b_beamSpot_x;
   TBranch *b_beamSpot_y;
@@ -2983,6 +3024,46 @@ protected:
   TBranch *b_orbitNumber;
   TBranch *b_weight;
   TBranch *b_model_params;
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_px;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_py;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_pz;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_energy;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_phi;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_eta;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_index;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT10_nconstituents;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_px;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_py;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_pz;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_energy;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_phi;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_eta;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_index;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT15_nconstituents;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_px;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_py;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_pz;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_energy;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_phi;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_eta;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_index;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT20_nconstituents;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_px;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_py;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_pz;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_energy;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_phi;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_eta;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_index;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT25_nconstituents;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_px;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_py;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_pz;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_energy;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_phi;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_eta;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_index;   //!
+  TBranch        *b_fastjets_AK4_R1p2_R0p5pT30_nconstituents;   //!
 };
 
 #endif

@@ -1766,12 +1766,68 @@ bool EventHandler::IsMC(){
   return (sampleName.find("Run201") == std::string::npos);
 }
 
-double EventHandler::GetHT(double pt_cut) const{
+double EventHandler::GetFatJetPt(const unsigned int index) const{
+  if (cfAVersion!=75) return -9999.;
+  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
+  double px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
+  return TMath::Sqrt(px*px+py*py);
+}
+
+int EventHandler::GetFatJetnConst(const unsigned int index) const{
+  if (cfAVersion!=75) return -1;
+  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -1;
+  return fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index); 
+}
+
+double EventHandler::GetFatJetmJ(const unsigned int index) const{
+  if (cfAVersion!=75) return -9999.;
+  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -1;
+  TLorentzVector TLV(fastjets_AK4_R1p2_R0p5pT30_px->at(index),fastjets_AK4_R1p2_R0p5pT30_py->at(index),fastjets_AK4_R1p2_R0p5pT30_pz->at(index),fastjets_AK4_R1p2_R0p5pT30_energy->at(index));
+  return TLV.M();
+}
+
+int EventHandler::GetNFatJets(const double fat_jet_pt_cut) const{
+  if (cfAVersion!=75) return -1;
+  uint nJ(0);
+  for (uint ifj(0); ifj<fastjets_AK4_R1p2_R0p5pT30_px->size(); ifj++) {
+    if (GetFatJetPt(ifj)>fat_jet_pt_cut) nJ++;
+  }
+  return nJ;
+}
+
+double EventHandler::GetMJ(const double fat_jet_pt_cut) const{
+  if (cfAVersion!=75) return -9999.;
+  double MJ(0.);
+  for (uint ifj(0); ifj<fastjets_AK4_R1p2_R0p5pT30_px->size(); ifj++) {
+    if (GetFatJetPt(ifj)>fat_jet_pt_cut) MJ+=GetFatJetmJ(ifj);
+  }
+  return MJ;
+}
+
+double EventHandler::GetHT(const double pt_cut) const{
   double HT(0.0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
     if(isGoodJet(i,true,pt_cut)) HT+=jets_AKPF_pt->at(i);
   }
   return HT;
+}
+
+double EventHandler::GetSumP(const double pt_cut) const{
+  double px(0.0), py(0.0), pz(0.0), energy(0.0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i,true,pt_cut)) {
+      px+=jets_AKPF_px->at(i);
+      py+=jets_AKPF_py->at(i);
+      pz+=jets_AKPF_pz->at(i);
+      energy+=jets_AKPF_energy->at(i);
+    }
+  }
+  TLorentzVector TLV(px,py,pz,energy);
+  return TLV.M();
+}
+
+double EventHandler::GetCentrality(const double pt_cut) const{
+  return GetHT(pt_cut)/GetSumP(pt_cut);
 }
 
 unsigned int EventHandler::GetNumGoodJets(const double pt) const{

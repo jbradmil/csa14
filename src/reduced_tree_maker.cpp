@@ -57,6 +57,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float mht(0.0), mht_phi(0.0);
   float ht20(0.0), ht30(0.0), ht40(0.0), ht50(0.0), ht60(0.0), ht70(0.0), ht80(0.0);
 
+  float sumP30(0.), sumP50(0.);
+  float cent30(0.), cent50(0.);
+
   float m_eff20(0.0),  m_eff30(0.0), m_eff40(0.0), m_eff50(0.0);
   float met_over_m_eff20(0.0), met_over_m_eff30(0.0), met_over_m_eff40(0.0), met_over_m_eff50(0.0);
   float met_over_sqrt_ht20(0.0), met_over_sqrt_ht30(0.0), met_over_sqrt_ht40(0.0), met_over_sqrt_ht50(0.0);
@@ -150,6 +153,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   bool met_bin1, met_bin2, met_bin3, met_bin4;
   bool nb_bin1, nb_bin2, nb_bin3;
 
+  double fat_jet1_pt(-9999.), fat_jet2_pt(-9999.), fat_jet3_pt(-9999.), fat_jet4_pt(-9999.);
+  int fat_jet1_nConst(-1), fat_jet2_nConst(-1), fat_jet3_nConst(-1), fat_jet4_nConst(-1);
+  double fat_jet1_mJ(-9999.), fat_jet2_mJ(-9999.), fat_jet3_mJ(-9999.), fat_jet4_mJ(-9999.);
+  int num_fat_jets(-1), num_fat_jets_pt100(-1);
+  double MJ(-9999.), MJ_pt100(-9999.);
+
   reduced_tree.Branch("weightppb", &weightppb);
 
   reduced_tree.Branch("passesPVCut",&passesPVCut);
@@ -234,6 +243,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("ht60", &ht60);
   reduced_tree.Branch("ht70", &ht70);
   reduced_tree.Branch("ht80", &ht80);
+ 
+  reduced_tree.Branch("sumP30", &sumP30);
+  reduced_tree.Branch("sumP50", &sumP50);
+  reduced_tree.Branch("cent30", &cent30);
+  reduced_tree.Branch("cent50", &cent50);
 
   reduced_tree.Branch("m_eff20", &m_eff20);
   reduced_tree.Branch("m_eff30", &m_eff30);
@@ -462,6 +476,23 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("nb_bin2", &nb_bin2);
   reduced_tree.Branch("nb_bin3", &nb_bin3);
 
+  reduced_tree.Branch("fat_jet1_pt", &fat_jet1_pt);
+  reduced_tree.Branch("fat_jet2_pt", &fat_jet2_pt);
+  reduced_tree.Branch("fat_jet3_pt", &fat_jet3_pt);
+  reduced_tree.Branch("fat_jet4_pt", &fat_jet4_pt);
+  reduced_tree.Branch("fat_jet1_mJ", &fat_jet1_mJ);
+  reduced_tree.Branch("fat_jet2_mJ", &fat_jet2_mJ);
+  reduced_tree.Branch("fat_jet3_mJ", &fat_jet3_mJ);
+  reduced_tree.Branch("fat_jet4_mJ", &fat_jet4_mJ);
+  reduced_tree.Branch("fat_jet1_nConst", &fat_jet1_nConst);
+  reduced_tree.Branch("fat_jet2_nConst", &fat_jet2_nConst);
+  reduced_tree.Branch("fat_jet3_nConst", &fat_jet3_nConst);
+  reduced_tree.Branch("fat_jet4_nConst", &fat_jet4_nConst);
+  reduced_tree.Branch("num_fat_jets", &num_fat_jets);
+  reduced_tree.Branch("num_fat_jets_pt100", &num_fat_jets_pt100);
+  reduced_tree.Branch("MJ", &MJ);
+  reduced_tree.Branch("MJ_pt100", &MJ_pt100);
+
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
   Timer timer(n_to_process);
@@ -549,6 +580,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     ht60=GetHT(60.);
     ht70=GetHT(70.);
     ht80=GetHT(80.);
+    sumP30=GetSumP(30.);
+    sumP50=GetSumP(50.);
+    cent30=GetCentrality(30.);
+    cent50=GetCentrality(50.);
+
     num_jets_pt20=GetNumGoodJets(20);
     num_jets_pt30=GetNumGoodJets(30);
     num_jets_pt40=GetNumGoodJets(40);
@@ -950,10 +986,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     */
     //  cout << "Done!" << endl;
 
-    if (sampleName.find("QCD_Pt")!=std::string::npos
-	||sampleName.find("ZJets")!=std::string::npos
-	||sampleName.find("DYJets")!=std::string::npos) num_iso_tracks=0;
-    else num_iso_tracks=GetNumIsoTracks();
+    // if (sampleName.find("QCD_Pt")!=std::string::npos
+    // 	||sampleName.find("ZJets")!=std::string::npos
+    // 	||sampleName.find("DYJets")!=std::string::npos) num_iso_tracks=0;
+    // else num_iso_tracks=GetNumIsoTracks();
 
     mT=GetTransverseMass();
     SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT<100.);
@@ -973,6 +1009,28 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     nb_bin2=(num_csvm_jets==2);
     nb_bin3=(num_csvm_jets>=3);
 
+    //    cout << "JERR" << endl;
+    if (cfAVersion==75) {
+    fat_jet1_pt=GetFatJetPt(0);    
+    fat_jet2_pt=GetFatJetPt(1);
+    fat_jet3_pt=GetFatJetPt(2);
+    fat_jet4_pt=GetFatJetPt(3);
+    // cout << "JERR1" << endl;
+    fat_jet1_nConst=GetFatJetnConst(0);
+    fat_jet2_nConst=GetFatJetnConst(1);
+    fat_jet3_nConst=GetFatJetnConst(2);
+    fat_jet4_nConst=GetFatJetnConst(3);
+    fat_jet1_mJ=GetFatJetmJ(0);
+    fat_jet2_mJ=GetFatJetmJ(1);
+    fat_jet3_mJ=GetFatJetmJ(2);
+    fat_jet4_mJ=GetFatJetmJ(3);
+    //  cout << "JERR2" << endl;
+    num_fat_jets=GetNFatJets(0.);
+    num_fat_jets_pt100=GetNFatJets(100.);
+    //  cout << "JERR3" << endl;
+    MJ=GetMJ(0.);
+    MJ_pt100=GetMJ(100.);
+    }
     reduced_tree.Fill(); 
     //  if (i==20) break;
 

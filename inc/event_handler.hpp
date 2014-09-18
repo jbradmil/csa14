@@ -197,7 +197,15 @@ protected:
  
   bool IsMC();
 
-  double GetHT(double=50.) const;
+  double GetFatJetPt(const unsigned int) const;
+  int GetFatJetnConst(const unsigned int) const;
+  double GetFatJetmJ(const unsigned int) const;
+  int GetNFatJets(const double=0.) const;
+  double GetMJ(const double=0.) const;
+
+  double GetHT(const double=50.) const;
+  double GetSumP(const double=50.) const;
+  double GetCentrality(const double=50.) const;
   unsigned int GetNumGoodJets(const double pt=50.) const;
   unsigned int GetNumCSVTJets(const double=50.) const;
   unsigned int GetNumCSVMJets(const double=50.) const;

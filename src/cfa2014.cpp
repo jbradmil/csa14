@@ -1605,6 +1605,46 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   orbitNumber(0),
   weight(0),
   model_params(0),
+  fastjets_AK4_R1p2_R0p5pT10_px(0),
+  fastjets_AK4_R1p2_R0p5pT10_py(0),
+  fastjets_AK4_R1p2_R0p5pT10_pz(0),
+  fastjets_AK4_R1p2_R0p5pT10_energy(0),
+  fastjets_AK4_R1p2_R0p5pT10_phi(0),
+  fastjets_AK4_R1p2_R0p5pT10_eta(0),
+  fastjets_AK4_R1p2_R0p5pT10_index(0),
+  fastjets_AK4_R1p2_R0p5pT10_nconstituents(0),
+  fastjets_AK4_R1p2_R0p5pT15_px(0),
+  fastjets_AK4_R1p2_R0p5pT15_py(0),
+  fastjets_AK4_R1p2_R0p5pT15_pz(0),
+  fastjets_AK4_R1p2_R0p5pT15_energy(0),
+  fastjets_AK4_R1p2_R0p5pT15_phi(0),
+  fastjets_AK4_R1p2_R0p5pT15_eta(0),
+  fastjets_AK4_R1p2_R0p5pT15_index(0),
+  fastjets_AK4_R1p2_R0p5pT15_nconstituents(0),
+  fastjets_AK4_R1p2_R0p5pT20_px(0),
+  fastjets_AK4_R1p2_R0p5pT20_py(0),
+  fastjets_AK4_R1p2_R0p5pT20_pz(0),
+  fastjets_AK4_R1p2_R0p5pT20_energy(0),
+  fastjets_AK4_R1p2_R0p5pT20_phi(0),
+  fastjets_AK4_R1p2_R0p5pT20_eta(0),
+  fastjets_AK4_R1p2_R0p5pT20_index(0),
+  fastjets_AK4_R1p2_R0p5pT20_nconstituents(0),
+  fastjets_AK4_R1p2_R0p5pT25_px(0),
+  fastjets_AK4_R1p2_R0p5pT25_py(0),
+  fastjets_AK4_R1p2_R0p5pT25_pz(0),
+  fastjets_AK4_R1p2_R0p5pT25_energy(0),
+  fastjets_AK4_R1p2_R0p5pT25_phi(0),
+  fastjets_AK4_R1p2_R0p5pT25_eta(0),
+  fastjets_AK4_R1p2_R0p5pT25_index(0),
+  fastjets_AK4_R1p2_R0p5pT25_nconstituents(0),
+  fastjets_AK4_R1p2_R0p5pT30_px(0),
+  fastjets_AK4_R1p2_R0p5pT30_py(0),
+  fastjets_AK4_R1p2_R0p5pT30_pz(0),
+  fastjets_AK4_R1p2_R0p5pT30_energy(0),
+  fastjets_AK4_R1p2_R0p5pT30_phi(0),
+  fastjets_AK4_R1p2_R0p5pT30_eta(0),
+  fastjets_AK4_R1p2_R0p5pT30_index(0),
+  fastjets_AK4_R1p2_R0p5pT30_nconstituents(0),
   b_NbeamSpot(),
   b_beamSpot_x(),
   b_beamSpot_y(),
@@ -2957,7 +2997,47 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_bunchCrossing(),
   b_orbitNumber(),
   b_weight(),
-  b_model_params(){
+  b_model_params(),
+  b_fastjets_AK4_R1p2_R0p5pT10_px(),
+  b_fastjets_AK4_R1p2_R0p5pT10_py(),
+  b_fastjets_AK4_R1p2_R0p5pT10_pz(),
+  b_fastjets_AK4_R1p2_R0p5pT10_energy(),
+  b_fastjets_AK4_R1p2_R0p5pT10_phi(),
+  b_fastjets_AK4_R1p2_R0p5pT10_eta(),
+  b_fastjets_AK4_R1p2_R0p5pT10_index(),
+  b_fastjets_AK4_R1p2_R0p5pT10_nconstituents(),
+  b_fastjets_AK4_R1p2_R0p5pT15_px(),
+  b_fastjets_AK4_R1p2_R0p5pT15_py(),
+  b_fastjets_AK4_R1p2_R0p5pT15_pz(),
+  b_fastjets_AK4_R1p2_R0p5pT15_energy(),
+  b_fastjets_AK4_R1p2_R0p5pT15_phi(),
+  b_fastjets_AK4_R1p2_R0p5pT15_eta(),
+  b_fastjets_AK4_R1p2_R0p5pT15_index(),
+  b_fastjets_AK4_R1p2_R0p5pT15_nconstituents(),
+  b_fastjets_AK4_R1p2_R0p5pT20_px(),
+  b_fastjets_AK4_R1p2_R0p5pT20_py(),
+  b_fastjets_AK4_R1p2_R0p5pT20_pz(),
+  b_fastjets_AK4_R1p2_R0p5pT20_energy(),
+  b_fastjets_AK4_R1p2_R0p5pT20_phi(),
+  b_fastjets_AK4_R1p2_R0p5pT20_eta(),
+  b_fastjets_AK4_R1p2_R0p5pT20_index(),
+  b_fastjets_AK4_R1p2_R0p5pT20_nconstituents(),
+  b_fastjets_AK4_R1p2_R0p5pT25_px(),
+  b_fastjets_AK4_R1p2_R0p5pT25_py(),
+  b_fastjets_AK4_R1p2_R0p5pT25_pz(),
+  b_fastjets_AK4_R1p2_R0p5pT25_energy(),
+  b_fastjets_AK4_R1p2_R0p5pT25_phi(),
+  b_fastjets_AK4_R1p2_R0p5pT25_eta(),
+  b_fastjets_AK4_R1p2_R0p5pT25_index(),
+  b_fastjets_AK4_R1p2_R0p5pT25_nconstituents(),
+  b_fastjets_AK4_R1p2_R0p5pT30_px(),
+  b_fastjets_AK4_R1p2_R0p5pT30_py(),
+  b_fastjets_AK4_R1p2_R0p5pT30_pz(),
+  b_fastjets_AK4_R1p2_R0p5pT30_energy(),
+  b_fastjets_AK4_R1p2_R0p5pT30_phi(),
+  b_fastjets_AK4_R1p2_R0p5pT30_eta(),
+  b_fastjets_AK4_R1p2_R0p5pT30_index(),
+  b_fastjets_AK4_R1p2_R0p5pT30_nconstituents(){
   GetVersion();
   GetCMEnergy();
   AddFiles(fileIn, isList);
@@ -3281,14 +3361,14 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("mus_jet_ind", &mus_jet_ind, &b_mus_jet_ind);    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
     chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
-  if (cfAVersion!=73||sampleName.find("HToBB")!=std::string::npos||sampleName.find("TTbarH")!=std::string::npos) {
-    chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
-    chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
-    chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
-    chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
-    chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
-    chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
-  }
+  // if (cfAVersion!=73||sampleName.find("HToBB")!=std::string::npos||sampleName.find("TTbarH")!=std::string::npos) {
+  //   chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
+  //   chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
+  //   chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
+  //   chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
+  //   chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
+  //   chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  // }
 }
 
 void cfA::InitializeB(){
@@ -4647,6 +4727,46 @@ void cfA::InitializeB(){
   orbitNumber=0;
   weight=0;
   model_params=0;
+  fastjets_AK4_R1p2_R0p5pT10_px = 0;
+  fastjets_AK4_R1p2_R0p5pT10_py = 0;
+  fastjets_AK4_R1p2_R0p5pT10_pz = 0;
+  fastjets_AK4_R1p2_R0p5pT10_energy = 0;
+  fastjets_AK4_R1p2_R0p5pT10_phi = 0;
+  fastjets_AK4_R1p2_R0p5pT10_eta = 0;
+  fastjets_AK4_R1p2_R0p5pT10_index = 0;
+  fastjets_AK4_R1p2_R0p5pT10_nconstituents = 0;
+  fastjets_AK4_R1p2_R0p5pT15_px = 0;
+  fastjets_AK4_R1p2_R0p5pT15_py = 0;
+  fastjets_AK4_R1p2_R0p5pT15_pz = 0;
+  fastjets_AK4_R1p2_R0p5pT15_energy = 0;
+  fastjets_AK4_R1p2_R0p5pT15_phi = 0;
+  fastjets_AK4_R1p2_R0p5pT15_eta = 0;
+  fastjets_AK4_R1p2_R0p5pT15_index = 0;
+  fastjets_AK4_R1p2_R0p5pT15_nconstituents = 0;
+  fastjets_AK4_R1p2_R0p5pT20_px = 0;
+  fastjets_AK4_R1p2_R0p5pT20_py = 0;
+  fastjets_AK4_R1p2_R0p5pT20_pz = 0;
+  fastjets_AK4_R1p2_R0p5pT20_energy = 0;
+  fastjets_AK4_R1p2_R0p5pT20_phi = 0;
+  fastjets_AK4_R1p2_R0p5pT20_eta = 0;
+  fastjets_AK4_R1p2_R0p5pT20_index = 0;
+  fastjets_AK4_R1p2_R0p5pT20_nconstituents = 0;
+  fastjets_AK4_R1p2_R0p5pT25_px = 0;
+  fastjets_AK4_R1p2_R0p5pT25_py = 0;
+  fastjets_AK4_R1p2_R0p5pT25_pz = 0;
+  fastjets_AK4_R1p2_R0p5pT25_energy = 0;
+  fastjets_AK4_R1p2_R0p5pT25_phi = 0;
+  fastjets_AK4_R1p2_R0p5pT25_eta = 0;
+  fastjets_AK4_R1p2_R0p5pT25_index = 0;
+  fastjets_AK4_R1p2_R0p5pT25_nconstituents = 0;
+  fastjets_AK4_R1p2_R0p5pT30_px = 0;
+  fastjets_AK4_R1p2_R0p5pT30_py = 0;
+  fastjets_AK4_R1p2_R0p5pT30_pz = 0;
+  fastjets_AK4_R1p2_R0p5pT30_energy = 0;
+  fastjets_AK4_R1p2_R0p5pT30_phi = 0;
+  fastjets_AK4_R1p2_R0p5pT30_eta = 0;
+  fastjets_AK4_R1p2_R0p5pT30_index = 0;
+  fastjets_AK4_R1p2_R0p5pT30_nconstituents = 0;
   chainB.SetBranchAddress("NbeamSpot", &NbeamSpot, &b_NbeamSpot);
   chainB.SetBranchAddress("beamSpot_x", &beamSpot_x, &b_beamSpot_x);
   chainB.SetBranchAddress("beamSpot_y", &beamSpot_y, &b_beamSpot_y);
@@ -6101,5 +6221,47 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("orbitNumber", &orbitNumber, &b_orbitNumber);
     chainB.SetBranchAddress("weight", &weight, &b_weight);
     chainB.SetBranchAddress("model_params", &model_params, &b_model_params);
+    if (cfAVersion==75) { // temporary fix, calling this v75
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_px", &fastjets_AK4_R1p2_R0p5pT10_px, &b_fastjets_AK4_R1p2_R0p5pT10_px);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_py", &fastjets_AK4_R1p2_R0p5pT10_py, &b_fastjets_AK4_R1p2_R0p5pT10_py);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_pz", &fastjets_AK4_R1p2_R0p5pT10_pz, &b_fastjets_AK4_R1p2_R0p5pT10_pz);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_energy", &fastjets_AK4_R1p2_R0p5pT10_energy, &b_fastjets_AK4_R1p2_R0p5pT10_energy);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_phi", &fastjets_AK4_R1p2_R0p5pT10_phi, &b_fastjets_AK4_R1p2_R0p5pT10_phi);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_eta", &fastjets_AK4_R1p2_R0p5pT10_eta, &b_fastjets_AK4_R1p2_R0p5pT10_eta);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_index", &fastjets_AK4_R1p2_R0p5pT10_index, &b_fastjets_AK4_R1p2_R0p5pT10_index);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_nconstituents", &fastjets_AK4_R1p2_R0p5pT10_nconstituents, &b_fastjets_AK4_R1p2_R0p5pT10_nconstituents);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_px", &fastjets_AK4_R1p2_R0p5pT15_px, &b_fastjets_AK4_R1p2_R0p5pT15_px);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_py", &fastjets_AK4_R1p2_R0p5pT15_py, &b_fastjets_AK4_R1p2_R0p5pT15_py);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_pz", &fastjets_AK4_R1p2_R0p5pT15_pz, &b_fastjets_AK4_R1p2_R0p5pT15_pz);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_energy", &fastjets_AK4_R1p2_R0p5pT15_energy, &b_fastjets_AK4_R1p2_R0p5pT15_energy);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_phi", &fastjets_AK4_R1p2_R0p5pT15_phi, &b_fastjets_AK4_R1p2_R0p5pT15_phi);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_eta", &fastjets_AK4_R1p2_R0p5pT15_eta, &b_fastjets_AK4_R1p2_R0p5pT15_eta);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_index", &fastjets_AK4_R1p2_R0p5pT15_index, &b_fastjets_AK4_R1p2_R0p5pT15_index);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT15_nconstituents", &fastjets_AK4_R1p2_R0p5pT15_nconstituents, &b_fastjets_AK4_R1p2_R0p5pT15_nconstituents);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_px", &fastjets_AK4_R1p2_R0p5pT20_px, &b_fastjets_AK4_R1p2_R0p5pT20_px);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_py", &fastjets_AK4_R1p2_R0p5pT20_py, &b_fastjets_AK4_R1p2_R0p5pT20_py);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_pz", &fastjets_AK4_R1p2_R0p5pT20_pz, &b_fastjets_AK4_R1p2_R0p5pT20_pz);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_energy", &fastjets_AK4_R1p2_R0p5pT20_energy, &b_fastjets_AK4_R1p2_R0p5pT20_energy);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_phi", &fastjets_AK4_R1p2_R0p5pT20_phi, &b_fastjets_AK4_R1p2_R0p5pT20_phi);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_eta", &fastjets_AK4_R1p2_R0p5pT20_eta, &b_fastjets_AK4_R1p2_R0p5pT20_eta);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_index", &fastjets_AK4_R1p2_R0p5pT20_index, &b_fastjets_AK4_R1p2_R0p5pT20_index);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT20_nconstituents", &fastjets_AK4_R1p2_R0p5pT20_nconstituents, &b_fastjets_AK4_R1p2_R0p5pT20_nconstituents);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_px", &fastjets_AK4_R1p2_R0p5pT25_px, &b_fastjets_AK4_R1p2_R0p5pT25_px);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_py", &fastjets_AK4_R1p2_R0p5pT25_py, &b_fastjets_AK4_R1p2_R0p5pT25_py);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_pz", &fastjets_AK4_R1p2_R0p5pT25_pz, &b_fastjets_AK4_R1p2_R0p5pT25_pz);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_energy", &fastjets_AK4_R1p2_R0p5pT25_energy, &b_fastjets_AK4_R1p2_R0p5pT25_energy);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_phi", &fastjets_AK4_R1p2_R0p5pT25_phi, &b_fastjets_AK4_R1p2_R0p5pT25_phi);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_eta", &fastjets_AK4_R1p2_R0p5pT25_eta, &b_fastjets_AK4_R1p2_R0p5pT25_eta);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_index", &fastjets_AK4_R1p2_R0p5pT25_index, &b_fastjets_AK4_R1p2_R0p5pT25_index);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT25_nconstituents", &fastjets_AK4_R1p2_R0p5pT25_nconstituents, &b_fastjets_AK4_R1p2_R0p5pT25_nconstituents);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_px", &fastjets_AK4_R1p2_R0p5pT30_px, &b_fastjets_AK4_R1p2_R0p5pT30_px);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_py", &fastjets_AK4_R1p2_R0p5pT30_py, &b_fastjets_AK4_R1p2_R0p5pT30_py);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_pz", &fastjets_AK4_R1p2_R0p5pT30_pz, &b_fastjets_AK4_R1p2_R0p5pT30_pz);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_energy", &fastjets_AK4_R1p2_R0p5pT30_energy, &b_fastjets_AK4_R1p2_R0p5pT30_energy);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_phi", &fastjets_AK4_R1p2_R0p5pT30_phi, &b_fastjets_AK4_R1p2_R0p5pT30_phi);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_eta", &fastjets_AK4_R1p2_R0p5pT30_eta, &b_fastjets_AK4_R1p2_R0p5pT30_eta);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_index", &fastjets_AK4_R1p2_R0p5pT30_index, &b_fastjets_AK4_R1p2_R0p5pT30_index);
+      chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT30_nconstituents", &fastjets_AK4_R1p2_R0p5pT30_nconstituents, &b_fastjets_AK4_R1p2_R0p5pT30_nconstituents);
+    }
   }
 
