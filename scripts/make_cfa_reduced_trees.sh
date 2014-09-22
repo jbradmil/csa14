@@ -26,3 +26,14 @@ bsub -mail ./scripts/make_reduced_tree.exe -c -i ZH_HToBB_ZToLL_M-125_13TeV_powh
 bsub -mail ./scripts/make_reduced_tree.exe -c -i ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2132_v73 
 bsub -mail ./scripts/make_reduced_tree.exe -c -i WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2133_v73 
 bsub -mail ./scripts/make_reduced_tree.exe -c -i TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2134_v73 
+
+# 8 TeV QCD
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1903_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-470to600_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1900_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1902_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-120to170_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3_AODSIM_UCSB1897_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-600to800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1901_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1904_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1898_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-1800_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1905_v71
+bsub -mail ./scripts/make_reduced_tree.exe -c -i QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v2_AODSIM_UCSB1899_v71

@@ -96,9 +96,9 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["QCD_Pt-1000to1400_TuneZ2star_8TeV_pythia6"]=0.737844;
   crossSectionTable["QCD_Pt-120to170_TuneZ2star_8TeV_pythia6"]=156293.3;
   crossSectionTable["QCD_Pt-1400to1800_TuneZ2star_8TeV_pythia6"]=0.03352235;
-  crossSectionTable["QCD_Pt-170to300_TuneZ2star_8TeV_pythia6_v2"]=34138.15;
+  crossSectionTable["QCD_Pt-170to300_TuneZ2star_8TeV_pythia6"]=34138.15;
   crossSectionTable["QCD_Pt-1800_TuneZ2star_8TeV_pythia6"]=0.001829005;
-  crossSectionTable["QCD_Pt-300to470_TuneZ2star_8TeV_pythia6_v3"]=1759.549;
+  crossSectionTable["QCD_Pt-300to470_TuneZ2star_8TeV_pythia6"]=1759.549;
   crossSectionTable["QCD_Pt-470to600_TuneZ2star_8TeV_pythia6"]=113.8791;
   crossSectionTable["QCD_Pt-600to800_TuneZ2star_8TeV_pythia6"]=26.9921;
   crossSectionTable["QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6"]=3.550036;
@@ -180,14 +180,12 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=100.8;
   crossSectionTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=11.99;
   crossSectionTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4.113;
-  // Single top actually calculated at 14 TeV in
-  // http://arxiv.org/abs/1205.3453
-  crossSectionTable["TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=7.87;
-  crossSectionTable["TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=154;
-  crossSectionTable["T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=41.8;
-  crossSectionTable["TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=3.99;
-  crossSectionTable["TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola"]=94;
-  crossSectionTable["Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=41.8;
+  crossSectionTable["TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=2.;
+  crossSectionTable["TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=45.;
+  crossSectionTable["T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=35.;
+  crossSectionTable["TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=1.;
+  crossSectionTable["TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola"]=16.9;
+  crossSectionTable["Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=35.;
   // Calculated at 13 TeV in
   // https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageAt1314TeV
   // Higgs branching ratios from

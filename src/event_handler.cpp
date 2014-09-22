@@ -449,11 +449,7 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   // if(!betaUpToDate) GetBeta();
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
   if (cmEnergy>8) { // overlap removal
-    // cout << "JET " << ijet << endl; 
     if (jetHasEMu(ijet)) return false;
-    //if (isInMuonCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
-    // if (isInElectronCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
-    //   if (isInTauCollection(jets_AKPF_eta->at(ijet), jets_AKPF_phi->at(ijet))) return false;
   }
   return true;
 }
