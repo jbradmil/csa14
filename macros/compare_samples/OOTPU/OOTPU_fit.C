@@ -18,6 +18,7 @@ void ootpu_fit(TString files, TString comments="") {
   TH1::SetDefaultSumw2();
 
   TH1F* hrelIso = new TH1F("hrelIso","", 30, 0, 0.5);
+  TH1F* hOOTPU = new TH1F("hOOTPU","", 75, 0, 75);
   TH1F* hOOTPUvsIso = new TH1F("hOOTPUvsIso",";Out-of-time ints.;Isolation cut efficiency", 15, 0, 75);
 
   hrelIso->StatOverflows(true);
@@ -46,6 +47,7 @@ void ootpu_fit(TString files, TString comments="") {
     TString cuts = Form("(%s)&&(oot_pu>=%d&&oot_pu<%d)",mu.Data(),low,low+4);
     cout << "Cuts: " << cuts.Data() << endl;
     chain->Project(hrelIso->GetName(), "muon_relIso", cuts);
+    chain->Project(hOOTPU->GetName(), "oot_pu", cuts);
     hrelIso->Scale(1/hrelIso->GetEntries());
     Double_t left(0.), lerror(0.), right(0.), rerror(0.);
     left = hrelIso->IntegralAndError(1,12,lerror);

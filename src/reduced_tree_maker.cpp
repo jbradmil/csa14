@@ -13,7 +13,7 @@ ReducedTreeMaker::ReducedTreeMaker(const std::string& in_file_name,
 				   const int Nentries_in):
   EventHandler(in_file_name, is_list, weight_in, true),
   Nentries(Nentries_in){
-}
+  }
 
 void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   TFile file(out_file_name.c_str(), "recreate");
@@ -36,7 +36,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   bool pass_HLT_PFNoPUHT350_PFMET100(false), pass_HLT_PFNoPUHT650(false), 
     pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80(false), pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07(false);
 
-  bool passesPVCut(false);
+  bool passesPVCut(false), passes2012METCleaningCut(false), passesCSA14METCleaningCut(false);
+  bool passesBadJetFilter(false);
+  int PBNRcode(0);
 
 
   float highest_csv(0.0), second_highest_csv(0.0),
@@ -62,7 +64,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   float m_eff20(0.0),  m_eff30(0.0), m_eff40(0.0), m_eff50(0.0);
   float met_over_m_eff20(0.0), met_over_m_eff30(0.0), met_over_m_eff40(0.0), met_over_m_eff50(0.0);
-  float met_over_sqrt_ht20(0.0), met_over_sqrt_ht30(0.0), met_over_sqrt_ht40(0.0), met_over_sqrt_ht50(0.0);
+  float met_over_sqrt_ht20(0.0), met_over_sqrt_ht30(0.0), met_over_sqrt_ht40(0.0), met_over_sqrt_ht50(0.0), met_over_sqrt_ht80(0.0);
   unsigned short num_jets_pt20(0), num_jets_pt30(0), num_jets_pt40(0), num_jets_pt50(0), num_jets_pt70(0), num_jets_pt100(0), num_jets_pt150(0);
   unsigned short num_csvt_jets(0), num_csvm_jets(0), num_csvl_jets(0);
   unsigned short num_csvt_jets20(0), num_csvm_jets20(0), num_csvl_jets20(0);
@@ -86,9 +88,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
  
   // float full_weight(0.0), lumi_weight(0.0), top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0);
 
-  unsigned short num_gen_electrons(0), num_gen_muons(0), num_iso_gen_electrons(0), num_iso_gen_muons(0), num_gen_leptons(0), num_iso_gen_leptons(0);
+  unsigned short num_gen_electrons(0), num_gen_muons(0), num_gen_taus(0);
   // num_gen_taus(0), num_gen_nus(0);
-  unsigned short num_ignored_gen_muons(0), num_ignored_gen_electrons(0);
 
   // const int nptbins(6);
   // float pt_thresholds[nptbins] = {0., 5., 10., 20., 30., 40};
@@ -111,15 +112,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float muon_NH_Et, muon_CH_pt, muon_ph_Et, muon_PU_pt;
   float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
   float muon_minDR_jet, muon_mT;
-  int muon2_gen_mother_id;
-  float muon2_gen_pt, muon2_gen_eta, muon2_gen_phi;
-  int muon2_reco_match;
-  int muon2_signal, muon2_veto, muon2_PFmatched;
-  float muon2_pt, muon2_eta, muon2_phi;
-  float muon2_relIso;
-  float muon2_NH_Et, muon2_CH_pt, muon2_ph_Et, muon2_PU_pt;
-  float muon2_NH_Iso, muon2_CH_Iso, muon2_ph_Iso, muon2_PU_Iso;
-  float muon2_minDR_jet, muon2_mT;
+  // int muon2_gen_mother_id;
+  // float muon2_gen_pt, muon2_gen_eta, muon2_gen_phi;
+  // int muon2_reco_match;
+  // int muon2_signal, muon2_veto, muon2_PFmatched;
+  // float muon2_pt, muon2_eta, muon2_phi;
+  // float muon2_relIso;
+  // float muon2_NH_Et, muon2_CH_pt, muon2_ph_Et, muon2_PU_pt;
+  // float muon2_NH_Iso, muon2_CH_Iso, muon2_ph_Iso, muon2_PU_Iso;
+  // float muon2_minDR_jet, muon2_mT;
 
   int electron_gen_mother_id;
   float electron_gen_pt, electron_gen_eta, electron_gen_phi;
@@ -130,15 +131,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float electron_NH_Et, electron_CH_pt, electron_ph_Et;
   float electron_NH_Iso, electron_CH_Iso, electron_ph_Iso;
   float electron_minDR_jet, electron_mT;
-  int electron2_gen_mother_id;
-  float electron2_gen_pt, electron2_gen_eta, electron2_gen_phi;
-  int electron2_reco_match;
-  int electron2_signal, electron2_veto, electron2_PFmatched;
-  float electron2_pt, electron2_eta, electron2_phi;
-  float electron2_relIso;
-  float electron2_NH_Et, electron2_CH_pt, electron2_ph_Et;
-  float electron2_NH_Iso, electron2_CH_Iso, electron2_ph_Iso;
-  float electron2_minDR_jet, electron2_mT;
+  // int electron2_gen_mother_id;
+  // float electron2_gen_pt, electron2_gen_eta, electron2_gen_phi;
+  // int electron2_reco_match;
+  // int electron2_signal, electron2_veto, electron2_PFmatched;
+  // float electron2_pt, electron2_eta, electron2_phi;
+  // float electron2_relIso;
+  // float electron2_NH_Et, electron2_CH_pt, electron2_ph_Et;
+  // float electron2_NH_Iso, electron2_CH_Iso, electron2_ph_Iso;
+  // float electron2_minDR_jet, electron2_mT;
 
   int lep1, lep2;
 
@@ -153,16 +154,56 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   bool met_bin1, met_bin2, met_bin3, met_bin4;
   bool nb_bin1, nb_bin2, nb_bin3;
 
-  double fat_jet1_pt(-9999.), fat_jet2_pt(-9999.), fat_jet3_pt(-9999.), fat_jet4_pt(-9999.);
-  int fat_jet1_nConst(-1), fat_jet2_nConst(-1), fat_jet3_nConst(-1), fat_jet4_nConst(-1);
-  double fat_jet1_mJ(-9999.), fat_jet2_mJ(-9999.), fat_jet3_mJ(-9999.), fat_jet4_mJ(-9999.);
-  int num_fat_jets(-1), num_fat_jets_pt100(-1);
-  double MJ(-9999.), MJ_pt100(-9999.);
+  double fatpT10_jet1_pt(-9999.), fatpT10_jet2_pt(-9999.), fatpT10_jet3_pt(-9999.), fatpT10_jet4_pt(-9999.);
+  int fatpT10_jet1_nConst(-1), fatpT10_jet2_nConst(-1), fatpT10_jet3_nConst(-1), fatpT10_jet4_nConst(-1);
+  double fatpT10_jet1_mJ(-9999.), fatpT10_jet2_mJ(-9999.), fatpT10_jet3_mJ(-9999.), fatpT10_jet4_mJ(-9999.);
+  int num_fatpT10_jets(-1), num_fatpT10_jets_pt100(-1), num_fatpT10_jets_pt150(-1), num_fatpT10_jets_pt200(-1),  num_fatpT10_jets_pt300(-1);
+  double fatpT10_MJ(-9999.), fatpT10_MJ_pt100(-9999.), fatpT10_MJ_pt150(-9999.), fatpT10_MJ_pt200(-9999.), fatpT10_MJ_pt300(-9999.);
+
+  double fatpT15_jet1_pt(-9999.), fatpT15_jet2_pt(-9999.), fatpT15_jet3_pt(-9999.), fatpT15_jet4_pt(-9999.);
+  int fatpT15_jet1_nConst(-1), fatpT15_jet2_nConst(-1), fatpT15_jet3_nConst(-1), fatpT15_jet4_nConst(-1);
+  double fatpT15_jet1_mJ(-9999.), fatpT15_jet2_mJ(-9999.), fatpT15_jet3_mJ(-9999.), fatpT15_jet4_mJ(-9999.);
+  int num_fatpT15_jets(-1), num_fatpT15_jets_pt100(-1), num_fatpT15_jets_pt150(-1), num_fatpT15_jets_pt200(-1),  num_fatpT15_jets_pt300(-1);
+  double fatpT15_MJ(-9999.), fatpT15_MJ_pt100(-9999.), fatpT15_MJ_pt150(-9999.), fatpT15_MJ_pt200(-9999.), fatpT15_MJ_pt300(-9999.);
+
+  double fatpT20_jet1_pt(-9999.), fatpT20_jet2_pt(-9999.), fatpT20_jet3_pt(-9999.), fatpT20_jet4_pt(-9999.);
+  int fatpT20_jet1_nConst(-1), fatpT20_jet2_nConst(-1), fatpT20_jet3_nConst(-1), fatpT20_jet4_nConst(-1);
+  double fatpT20_jet1_mJ(-9999.), fatpT20_jet2_mJ(-9999.), fatpT20_jet3_mJ(-9999.), fatpT20_jet4_mJ(-9999.);
+  int num_fatpT20_jets(-1), num_fatpT20_jets_pt100(-1), num_fatpT20_jets_pt150(-1), num_fatpT20_jets_pt200(-1),  num_fatpT20_jets_pt300(-1);
+  double fatpT20_MJ(-9999.), fatpT20_MJ_pt100(-9999.), fatpT20_MJ_pt150(-9999.), fatpT20_MJ_pt200(-9999.), fatpT20_MJ_pt300(-9999.);
+
+  double fatpT25_jet1_pt(-9999.), fatpT25_jet2_pt(-9999.), fatpT25_jet3_pt(-9999.), fatpT25_jet4_pt(-9999.);
+  int fatpT25_jet1_nConst(-1), fatpT25_jet2_nConst(-1), fatpT25_jet3_nConst(-1), fatpT25_jet4_nConst(-1);
+  double fatpT25_jet1_mJ(-9999.), fatpT25_jet2_mJ(-9999.), fatpT25_jet3_mJ(-9999.), fatpT25_jet4_mJ(-9999.);
+  int num_fatpT25_jets(-1), num_fatpT25_jets_pt100(-1), num_fatpT25_jets_pt150(-1), num_fatpT25_jets_pt200(-1),  num_fatpT25_jets_pt300(-1);
+  double fatpT25_MJ(-9999.), fatpT25_MJ_pt100(-9999.), fatpT25_MJ_pt150(-9999.), fatpT25_MJ_pt200(-9999.), fatpT25_MJ_pt300(-9999.);
+
+  double fatpT30_jet1_pt(-9999.), fatpT30_jet2_pt(-9999.), fatpT30_jet3_pt(-9999.), fatpT30_jet4_pt(-9999.);
+  int fatpT30_jet1_nConst(-1), fatpT30_jet2_nConst(-1), fatpT30_jet3_nConst(-1), fatpT30_jet4_nConst(-1);
+  double fatpT30_jet1_mJ(-9999.), fatpT30_jet2_mJ(-9999.), fatpT30_jet3_mJ(-9999.), fatpT30_jet4_mJ(-9999.);
+  int num_fatpT30_jets(-1), num_fatpT30_jets_pt100(-1), num_fatpT30_jets_pt150(-1), num_fatpT30_jets_pt200(-1),  num_fatpT30_jets_pt300(-1);
+  double fatpT30_MJ(-9999.), fatpT30_MJ_pt100(-9999.), fatpT30_MJ_pt150(-9999.), fatpT30_MJ_pt200(-9999.), fatpT30_MJ_pt300(-9999.);
 
   reduced_tree.Branch("weightppb", &weightppb);
 
   reduced_tree.Branch("passesPVCut",&passesPVCut);
-  //  reduced_tree.Branch("passesMETCleaningCut",&passesMETCleaningCut);
+  reduced_tree.Branch("passes2012METCleaningCut",&passes2012METCleaningCut);
+  reduced_tree.Branch("passesCSA14METCleaningCut",&passesCSA14METCleaningCut);
+  reduced_tree.Branch("trackingfailurefilter_decision",&trackingfailurefilter_decision);
+  reduced_tree.Branch("goodVerticesfilter_decision",&goodVerticesfilter_decision);
+  reduced_tree.Branch("cschalofilter_decision",&cschalofilter_decision);
+  reduced_tree.Branch("trkPOGfilter_decision",&trkPOGfilter_decision);
+  reduced_tree.Branch("trkPOG_logErrorTooManyClustersfilter_decision",&trkPOG_logErrorTooManyClustersfilter_decision);
+  reduced_tree.Branch("EcalDeadCellTriggerPrimitivefilter_decision",&EcalDeadCellTriggerPrimitivefilter_decision);
+  reduced_tree.Branch("ecallaserfilter_decision",&ecallaserfilter_decision);
+  reduced_tree.Branch("trkPOG_manystripclus53Xfilter_decision",&trkPOG_manystripclus53Xfilter_decision);
+  reduced_tree.Branch("eebadscfilter_decision",&eebadscfilter_decision);
+  reduced_tree.Branch("METFiltersfilter_decision",&METFiltersfilter_decision);
+  reduced_tree.Branch("HBHENoisefilter_decision",&HBHENoisefilter_decision);
+  reduced_tree.Branch("trkPOG_toomanystripclus53Xfilter_decision",&trkPOG_toomanystripclus53Xfilter_decision);
+  reduced_tree.Branch("hcallaserfilter_decision",&hcallaserfilter_decision);
+  reduced_tree.Branch("passesBadJetFilter",&passesBadJetFilter);
+  reduced_tree.Branch("PBNRcode",&PBNRcode);
 
   //  reduced_tree.Branch("full_weight", &full_weight);
   // reduced_tree.Branch("lumi_weight", &lumi_weight);
@@ -261,6 +302,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("met_over_sqrt_ht30", &met_over_sqrt_ht30);
   reduced_tree.Branch("met_over_sqrt_ht40", &met_over_sqrt_ht40);
   reduced_tree.Branch("met_over_sqrt_ht50", &met_over_sqrt_ht50);
+  reduced_tree.Branch("met_over_sqrt_ht80", &met_over_sqrt_ht80);
 
   reduced_tree.Branch("num_jets_pt20", &num_jets_pt20); 
   reduced_tree.Branch("num_jets_pt30", &num_jets_pt30); 
@@ -283,43 +325,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_csvm_jets40", &num_csvm_jets40); 
   reduced_tree.Branch("num_csvl_jets40", &num_csvl_jets40); 
 
-  // reduced_tree.Branch("num_gen_partons", &num_gen_partons);
-  // reduced_tree.Branch("num_gen_partons_pt20", &num_gen_partons_pt20);
-  // reduced_tree.Branch("num_gen_partons_pt40", &num_gen_partons_pt40);
-  // reduced_tree.Branch("num_gen_partons_pt70", &num_gen_partons_pt70);
-  // reduced_tree.Branch("num_gen_partons_pt100", &num_gen_partons_pt100);
-  // reduced_tree.Branch("num_gen_partons_pt150", &num_gen_partons_pt150);
-
-  /* 
-     reduced_tree.Branch("num_ra2b_veto_electrons", &num_ra2b_veto_electrons);
-     reduced_tree.Branch("num_ra2b_veto_muons", &num_ra2b_veto_muons);
-     reduced_tree.Branch("num_ra2b_veto_taus", &num_ra2b_veto_taus);
-     reduced_tree.Branch("num_ra2b_veto_leptons", &num_ra2b_veto_leptons);
-
-     reduced_tree.Branch("num_ra2b_noiso_electrons", &num_ra2b_noiso_electrons);
-     reduced_tree.Branch("num_ra2b_noiso_muons", &num_ra2b_noiso_muons);
-     reduced_tree.Branch("num_ra2b_noiso_taus", &num_ra2b_noiso_taus);
-     reduced_tree.Branch("num_ra2b_noiso_leptons", &num_ra2b_noiso_leptons);
-
-     reduced_tree.Branch("num_ra2b_loose_electrons", &num_ra2b_loose_electrons);
-     reduced_tree.Branch("num_ra2b_loose_muons", &num_ra2b_loose_muons);
-     reduced_tree.Branch("num_ra2b_loose_taus", &num_ra2b_loose_taus);
-     reduced_tree.Branch("num_ra2b_loose_leptons", &num_ra2b_loose_leptons);
-
-     reduced_tree.Branch("num_ra2b_medium_electrons", &num_ra2b_medium_electrons);
-     reduced_tree.Branch("num_ra2b_medium_muons", &num_ra2b_medium_muons);
-     reduced_tree.Branch("num_ra2b_medium_taus", &num_ra2b_medium_taus);
-     reduced_tree.Branch("num_ra2b_medium_leptons", &num_ra2b_medium_leptons);
-
-     reduced_tree.Branch("num_ra2b_tight_electrons", &num_ra2b_tight_electrons);
-     reduced_tree.Branch("num_ra2b_tight_muons", &num_ra2b_tight_muons);
-     reduced_tree.Branch("num_ra2b_tight_taus", &num_ra2b_tight_taus);
-     reduced_tree.Branch("num_ra2b_tight_leptons", &num_ra2b_tight_leptons);
-  */
-
   reduced_tree.Branch("num_gen_muons", &num_gen_muons);
-  reduced_tree.Branch("num_iso_gen_muons", &num_iso_gen_muons);
-  reduced_tree.Branch("num_ignored_gen_muons", &num_ignored_gen_muons);
+  reduced_tree.Branch("num_gen_electrons", &num_gen_electrons);
+  reduced_tree.Branch("num_gen_taus", &num_gen_taus);
 
   reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
   reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
@@ -349,40 +357,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("muon_minDR_jet", &muon_minDR_jet);
   reduced_tree.Branch("muon_mT", &muon_mT);
 
-  reduced_tree.Branch("muon2_gen_mother_id", &muon2_gen_mother_id);
-  reduced_tree.Branch("muon2_gen_pt", &muon2_gen_pt);
-  reduced_tree.Branch("muon2_gen_eta", &muon2_gen_eta);
-  reduced_tree.Branch("muon2_gen_phi", &muon2_gen_phi);
-  reduced_tree.Branch("muon2_reco_match", &muon2_reco_match);
-
-  reduced_tree.Branch("muon2_signal", &muon2_signal);
-  reduced_tree.Branch("muon2_veto", &muon2_veto);
-  reduced_tree.Branch("muon2_PFmatched", &muon2_PFmatched);
-
-  reduced_tree.Branch("muon2_pt", &muon2_pt);
-  reduced_tree.Branch("muon2_eta", &muon2_eta);
-  reduced_tree.Branch("muon2_phi", &muon2_phi);
-
-  reduced_tree.Branch("muon2_relIso", &muon2_relIso);
-  reduced_tree.Branch("muon2_NH_Iso", &muon2_NH_Iso);
-  reduced_tree.Branch("muon2_CH_Iso", &muon2_CH_Iso);
-  reduced_tree.Branch("muon2_ph_Iso", &muon2_ph_Iso);
-  reduced_tree.Branch("muon2_PU_Iso", &muon2_PU_Iso);
-
-  reduced_tree.Branch("muon2_NH_Et", &muon2_NH_Et);
-  reduced_tree.Branch("muon2_CH_pt", &muon2_CH_pt);
-  reduced_tree.Branch("muon2_ph_Et", &muon2_ph_Et);
-  reduced_tree.Branch("muon2_PU_pt", &muon2_PU_pt);
-
-  reduced_tree.Branch("muon2_minDR_jet", &muon2_minDR_jet);
-  reduced_tree.Branch("muon2_mT", &muon2_mT);
 
   reduced_tree.Branch("num_reco_veto_muons", &num_reco_veto_muons);
   reduced_tree.Branch("num_reco_muons", &num_reco_muons);
-
-  reduced_tree.Branch("num_gen_electrons", &num_gen_electrons);
-  reduced_tree.Branch("num_iso_gen_electrons", &num_iso_gen_electrons);
-  reduced_tree.Branch("num_ignored_gen_electrons", &num_ignored_gen_electrons);
 
   reduced_tree.Branch("num_reco_veto_electrons", &num_reco_veto_electrons);
   reduced_tree.Branch("num_reco_electrons", &num_reco_electrons);
@@ -412,36 +389,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   reduced_tree.Branch("electron_minDR_jet", &electron_minDR_jet);
   reduced_tree.Branch("electron_mT", &electron_mT);
-
-  reduced_tree.Branch("electron2_gen_mother_id", &electron2_gen_mother_id);
-  reduced_tree.Branch("electron2_gen_pt", &electron2_gen_pt);
-  reduced_tree.Branch("electron2_gen_eta", &electron2_gen_eta);
-  reduced_tree.Branch("electron2_gen_phi", &electron2_gen_phi);
-  reduced_tree.Branch("electron2_reco_match", &electron2_reco_match);
-
-  reduced_tree.Branch("electron2_signal", &electron2_signal);
-  reduced_tree.Branch("electron2_veto", &electron2_veto);
-  reduced_tree.Branch("electron2_PFmatched", &electron2_PFmatched);
-
-  reduced_tree.Branch("electron2_pt", &electron2_pt);
-  reduced_tree.Branch("electron2_eta", &electron2_eta);
-  reduced_tree.Branch("electron2_phi", &electron2_phi);
-
-  reduced_tree.Branch("electron2_relIso", &electron2_relIso);
-  reduced_tree.Branch("electron2_NH_Iso", &electron2_NH_Iso);
-  reduced_tree.Branch("electron2_CH_Iso", &electron2_CH_Iso);
-  reduced_tree.Branch("electron2_ph_Iso", &electron2_ph_Iso);
-
-  reduced_tree.Branch("electron2_NH_Et", &electron2_NH_Et);
-  reduced_tree.Branch("electron2_CH_pt", &electron2_CH_pt);
-  reduced_tree.Branch("electron2_ph_Et", &electron2_ph_Et);
-
-  reduced_tree.Branch("electron2_minDR_jet", &electron2_minDR_jet);
-  reduced_tree.Branch("electron2_mT", &electron2_mT);
-
-  reduced_tree.Branch("num_gen_leptons", &num_gen_leptons);
-  reduced_tree.Branch("num_iso_gen_leptons", &num_iso_gen_leptons);
-  // reduced_tree.Branch("num_gen_nus", &num_gen_nus);
 
   reduced_tree.Branch("num_lost_electrons", &num_lost_electrons);
   reduced_tree.Branch("num_lost_muons", &num_lost_muons);
@@ -476,22 +423,120 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("nb_bin2", &nb_bin2);
   reduced_tree.Branch("nb_bin3", &nb_bin3);
 
-  reduced_tree.Branch("fat_jet1_pt", &fat_jet1_pt);
-  reduced_tree.Branch("fat_jet2_pt", &fat_jet2_pt);
-  reduced_tree.Branch("fat_jet3_pt", &fat_jet3_pt);
-  reduced_tree.Branch("fat_jet4_pt", &fat_jet4_pt);
-  reduced_tree.Branch("fat_jet1_mJ", &fat_jet1_mJ);
-  reduced_tree.Branch("fat_jet2_mJ", &fat_jet2_mJ);
-  reduced_tree.Branch("fat_jet3_mJ", &fat_jet3_mJ);
-  reduced_tree.Branch("fat_jet4_mJ", &fat_jet4_mJ);
-  reduced_tree.Branch("fat_jet1_nConst", &fat_jet1_nConst);
-  reduced_tree.Branch("fat_jet2_nConst", &fat_jet2_nConst);
-  reduced_tree.Branch("fat_jet3_nConst", &fat_jet3_nConst);
-  reduced_tree.Branch("fat_jet4_nConst", &fat_jet4_nConst);
-  reduced_tree.Branch("num_fat_jets", &num_fat_jets);
-  reduced_tree.Branch("num_fat_jets_pt100", &num_fat_jets_pt100);
-  reduced_tree.Branch("MJ", &MJ);
-  reduced_tree.Branch("MJ_pt100", &MJ_pt100);
+  reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
+  reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
+  reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
+  reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
+  reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
+  reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
+  reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
+  reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
+  reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
+  reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
+  reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
+  reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
+  reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
+  reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
+  reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
+  reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
+  reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
+  reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
+  reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
+  reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
+  reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
+  reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
+
+  reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
+  reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
+  reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
+  reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
+  reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
+  reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
+  reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
+  reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
+  reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
+  reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
+  reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
+  reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
+  reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
+  reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
+  reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
+  reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
+  reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
+  reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
+  reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
+  reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
+  reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
+  reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
+
+  reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
+  reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
+  reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
+  reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
+  reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
+  reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
+  reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
+  reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
+  reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
+  reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
+  reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
+  reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
+  reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
+  reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
+  reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
+  reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
+  reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
+  reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
+  reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
+  reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
+  reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
+  reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
+
+  reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
+  reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
+  reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
+  reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
+  reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
+  reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
+  reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
+  reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
+  reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
+  reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
+  reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
+  reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
+  reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
+  reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
+  reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
+  reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
+  reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
+  reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
+  reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
+  reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
+  reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
+  reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
+
+  reduced_tree.Branch("fatpT30_jet1_pt", &fatpT30_jet1_pt);
+  reduced_tree.Branch("fatpT30_jet2_pt", &fatpT30_jet2_pt);
+  reduced_tree.Branch("fatpT30_jet3_pt", &fatpT30_jet3_pt);
+  reduced_tree.Branch("fatpT30_jet4_pt", &fatpT30_jet4_pt);
+  reduced_tree.Branch("fatpT30_jet1_mJ", &fatpT30_jet1_mJ);
+  reduced_tree.Branch("fatpT30_jet2_mJ", &fatpT30_jet2_mJ);
+  reduced_tree.Branch("fatpT30_jet3_mJ", &fatpT30_jet3_mJ);
+  reduced_tree.Branch("fatpT30_jet4_mJ", &fatpT30_jet4_mJ);
+  reduced_tree.Branch("fatpT30_jet1_nConst", &fatpT30_jet1_nConst);
+  reduced_tree.Branch("fatpT30_jet2_nConst", &fatpT30_jet2_nConst);
+  reduced_tree.Branch("fatpT30_jet3_nConst", &fatpT30_jet3_nConst);
+  reduced_tree.Branch("fatpT30_jet4_nConst", &fatpT30_jet4_nConst);
+  reduced_tree.Branch("num_fatpT30_jets", &num_fatpT30_jets);
+  reduced_tree.Branch("num_fatpT30_jets_pt100", &num_fatpT30_jets_pt100);
+  reduced_tree.Branch("num_fatpT30_jets_pt150", &num_fatpT30_jets_pt150);
+  reduced_tree.Branch("num_fatpT30_jets_pt200", &num_fatpT30_jets_pt200);
+  reduced_tree.Branch("num_fatpT30_jets_pt300", &num_fatpT30_jets_pt300);
+  reduced_tree.Branch("fatpT30_MJ", &fatpT30_MJ);
+  reduced_tree.Branch("fatpT30_MJ_pt100", &fatpT30_MJ_pt100);
+  reduced_tree.Branch("fatpT30_MJ_pt150", &fatpT30_MJ_pt150);
+  reduced_tree.Branch("fatpT30_MJ_pt200", &fatpT30_MJ_pt200);
+  reduced_tree.Branch("fatpT30_MJ_pt300", &fatpT30_MJ_pt300);
 
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
@@ -511,8 +556,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     if(!returnVal.second) continue;
 
     // just xsec/nGen now
-    
-    // passesMETCleaningCut=PassesMETCleaningCut();
+    passes2012METCleaningCut=false;
+    passesCSA14METCleaningCut=false;
+    if (cfAVersion<=71) passes2012METCleaningCut=Passes2012METCleaningCut();
+    else passesCSA14METCleaningCut=PassesCSA14METCleaningCut();
+    passesBadJetFilter=PassesBadJetFilter();
+    PBNRcode=GetPBNR();
+
     pass_HLT_PFNoPUHT350_PFMET100=PassesSpecificTrigger("HLT_PFNoPUHT350_PFMET100_v");
     pass_HLT_PFNoPUHT650=PassesSpecificTrigger("HLT_PFNoPUHT650_v");
     pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80=PassesSpecificTrigger("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v");
@@ -630,12 +680,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     else met_over_m_eff50=-1.;
     if (ht20>0) met_over_sqrt_ht20=met/TMath::Sqrt(ht20);
     else met_over_sqrt_ht20=-1.;
-     if (ht30>0) met_over_sqrt_ht30=met/TMath::Sqrt(ht30);
+    if (ht30>0) met_over_sqrt_ht30=met/TMath::Sqrt(ht30);
     else met_over_sqrt_ht30=-1.;
     if (ht40>0) met_over_sqrt_ht40=met/TMath::Sqrt(ht40);
     else met_over_sqrt_ht40=-1.;
     if (ht50>0) met_over_sqrt_ht50=met/TMath::Sqrt(ht50);
     else met_over_sqrt_ht50=-1.;
+    if (ht80>0) met_over_sqrt_ht80=met/TMath::Sqrt(ht80);
+    else met_over_sqrt_ht80=-1.;
 
     /*
       num_ra2b_veto_electrons=GetNumRA2bElectrons(0);
@@ -670,27 +722,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     //   full_weight=pu_weight*lumi_weight*top_pt_weight_official;
 
     if (!genMuonsUpToDate) SetupGenMuons();
-    num_gen_muons=genMuonCache.size();
-    num_iso_gen_muons=0;
+    if (!genElectronsUpToDate) SetupGenElectrons();
+    num_gen_muons=0;
     num_lost_muons=0;
-    for (uint imu(0); imu<num_gen_muons; imu++) {
-      if (genMuonCache[imu].IsIso()) num_iso_gen_muons++;
+    for (uint imu(0); imu<genMuonCache.size(); imu++) {
+      if (genMuonCache[imu].IsIso()) num_gen_muons++;
       if (!genMuonCache[imu].IsVeto()) num_lost_muons++;
     }
-    num_ignored_gen_muons = GetNumIgnoredGenMuons();
-   
-    if (!genElectronsUpToDate) SetupGenElectrons();
-    num_gen_electrons=genElectronCache.size();
-    num_iso_gen_electrons=0;
+    num_gen_electrons=0;
     num_lost_electrons=0;
-    for (uint iel(0); iel<num_gen_electrons; iel++) {
-      if (genElectronCache[iel].IsIso()) num_iso_gen_electrons++;
+    for (uint iel(0); iel<genElectronCache.size(); iel++) {
+      if (genElectronCache[iel].IsIso()) num_gen_electrons++;
       if (!genElectronCache[iel].IsVeto()) num_lost_electrons++;
     }
-    num_ignored_gen_electrons = GetNumIgnoredGenElectrons();
     
-    num_gen_leptons=num_gen_electrons+num_gen_muons;
-    num_iso_gen_leptons=num_iso_gen_electrons+num_iso_gen_muons;
 
     vector<int> reco_muons, reco_veto_muons;
     if (cmEnergy>8) {
@@ -698,29 +743,28 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       reco_veto_muons = GetRecoMuons(true);
     }
     else {
-     reco_muons = GetRA2bMuons(false);
-     reco_veto_muons = GetRA2bMuons(true);
-     //    cout << "JERR3" << endl;
+      reco_muons = GetRA2bMuons(false);
+      reco_veto_muons = GetRA2bMuons(true);
+      //    cout << "JERR3" << endl;
     }
     num_reco_muons = reco_muons.size();
     num_reco_veto_muons = reco_veto_muons.size();
     
     vector<int> reco_electrons, reco_veto_electrons;
-     if (cmEnergy>8) {
-       reco_electrons = GetRecoElectrons(false);
-       reco_veto_electrons = GetRecoElectrons(true);
-     }
-     else {
-       reco_electrons = GetRA2bElectrons(false);
-       reco_veto_electrons = GetRA2bElectrons(true);
-       //        cout << "JERR4" << endl;
-     }
+    if (cmEnergy>8) {
+      reco_electrons = GetRecoElectrons(false);
+      reco_veto_electrons = GetRecoElectrons(true);
+    }
+    else {
+      reco_electrons = GetRA2bElectrons(false);
+      reco_veto_electrons = GetRA2bElectrons(true);
+      //        cout << "JERR4" << endl;
+    }
 
     num_reco_electrons = reco_electrons.size();
     num_reco_veto_electrons = reco_veto_electrons.size();
     
-    //  num_lost_electrons=num_gen_electrons-num_reco_veto_electrons;
-    //  num_lost_muons=num_gen_muons-num_reco_veto_muons;
+   
     num_lost_leptons=num_lost_electrons+num_lost_muons;
 
     muon_gen_mother_id=-999;
@@ -745,29 +789,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     muon_PU_pt=-1.;
     muon_minDR_jet=-1;
     muon_mT=-1;
-    muon2_gen_mother_id=-999;
-    muon2_gen_pt=-999.;
-    muon2_gen_eta=-999.;
-    muon2_gen_phi=-999.;
-    muon2_reco_match=-1;
-    muon2_signal=-1;
-    muon2_veto=-1;
-    muon2_PFmatched=-1;
-    muon2_pt=-1.;
-    muon2_eta=-999.;
-    muon2_phi=-999.;
-    muon2_relIso=-1.;
-    muon2_NH_Iso=-1.;
-    muon2_CH_Iso=-1.;
-    muon2_ph_Iso=-1.;
-    muon2_PU_Iso=-1.;  
-    muon2_NH_Et=-1.;
-    muon2_CH_pt=-1.;
-    muon2_ph_Et=-1.;
-    muon2_PU_pt=-1.;
-    muon2_minDR_jet=-1;    
-    muon2_mT=-1;
-  //  cout << "JERRmu" << endl;
+
 
     if (num_gen_muons>=1) {
       muon_gen_mother_id=genMuonCache[0].GetMotherId();
@@ -811,48 +833,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	//	cout << "muon_minDR_jet: " << muon_minDR_jet << endl;
       }
     }
-    if (num_gen_muons>=2) {
-      muon2_gen_mother_id=genMuonCache[1].GetMotherId();
-      muon2_gen_pt=genMuonCache[1].GetLorentzVector().Pt();
-      muon2_gen_eta=genMuonCache[1].GetLorentzVector().Eta();
-      muon2_gen_phi=genMuonCache[1].GetLorentzVector().Phi();
-      if(genMuonCache[1].GetMusMatch()>=0) {
-	muon2_reco_match = genMuonCache[1].GetMusMatch();
-	if (cmEnergy>=13) {
-	  muon2_signal=isRecoMuon(muon2_reco_match,1);
-	  muon2_veto=isRecoMuon(muon2_reco_match,0);
-	  muon2_PFmatched=mus_isPF->at(muon2_reco_match);
-	  muon2_pt=mus_pt->at(muon2_reco_match);
-	  muon2_eta=mus_eta->at(muon2_reco_match);
-	  muon2_phi=mus_phi->at(muon2_reco_match);
-	  muon2_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon2_reco_match);
-	  muon2_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon2_reco_match);
-	  muon2_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon2_reco_match);
-	  muon2_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon2_reco_match);  
-	  muon2_relIso=GetMuonRelIso(muon2_reco_match); 
-	}
-	else {
-	  muon2_signal=isRA2bMuon(muon2_reco_match,1);
-	  muon2_veto=isRA2bMuon(muon2_reco_match,0);
-	  muon2_PFmatched=true;
-	  muon2_pt=pf_mus_pt->at(muon2_reco_match);
-	  muon2_eta=pf_mus_eta->at(muon2_reco_match);
-	  muon2_phi=pf_mus_phi->at(muon2_reco_match);
-	  muon2_NH_Et=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon2_reco_match);
-	  muon2_CH_pt=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon2_reco_match);
-	  muon2_ph_Et=pf_mus_pfIsolationR04_sumPhotonEt->at(muon2_reco_match);
-	  muon2_PU_pt=pf_mus_pfIsolationR04_sumPUPt->at(muon2_reco_match);
-	  muon2_relIso=GetRA2bMuonRelIso(muon2_reco_match);
-	}
-	muon2_NH_Iso=muon2_NH_Et/muon2_pt;
-	muon2_CH_Iso=muon2_CH_pt/muon2_pt;
-	muon2_ph_Iso=muon2_ph_Et/muon2_pt;
-	muon2_PU_Iso=muon2_PU_pt/muon2_pt;
-	muon2_minDR_jet=GetMinDRMuonJet(muon2_reco_match); // compatible with both old and new samples
-	muon2_mT=GetMTW(muon2_pt,met,muon2_phi,met_phi);
-	//	cout << "muon_minDR_jet: " << muon_minDR_jet << endl;
-      }
-    }
+
 
     electron_gen_mother_id=-999;
     electron_gen_pt=-999.;
@@ -874,27 +855,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     electron_ph_Et=-1.;
     electron_minDR_jet=-1;
     electron_mT=-1;
-    electron2_gen_mother_id=-999;
-    electron2_gen_pt=-999.;
-    electron2_gen_eta=-999.;
-    electron2_gen_phi=-999.;
-    electron2_reco_match=-1;
-    electron2_signal=-1;
-    electron2_veto=-1;
-    electron2_PFmatched=-1;
-    electron2_pt=-1.;
-    electron2_eta=-999.;
-    electron2_phi=-999.;
-    electron2_relIso=-1.;
-    electron2_NH_Iso=-1.;
-    electron2_CH_Iso=-1.;
-    electron2_ph_Iso=-1.;
-    electron2_NH_Et=-1.;
-    electron2_CH_pt=-1.;
-    electron2_ph_Et=-1.;
-    electron2_minDR_jet=-1;    
-    electron2_mT=-1;
-   //  cout << "JERRel" << endl;
+  
 
     if (num_gen_electrons>=1) {
       electron_gen_mother_id=genElectronCache[0].GetMotherId();
@@ -928,51 +889,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
       }
     }
-    if (num_gen_electrons>=2) {
-      electron2_gen_mother_id=genElectronCache[1].GetMotherId();
-      electron2_gen_pt=genElectronCache[1].GetLorentzVector().Pt();
-      electron2_gen_eta=genElectronCache[1].GetLorentzVector().Eta();
-      electron2_gen_phi=genElectronCache[1].GetLorentzVector().Phi();
-      if(genElectronCache[1].GetElsMatch()>=0) {
-	electron2_reco_match = genElectronCache[1].GetElsMatch();
-	electron2_signal=isRecoElectron(electron2_reco_match,1);
-	electron2_veto=isRecoElectron(electron2_reco_match,0);
-	electron2_PFmatched=hasPFMatch(electron2_reco_match, particleId::electron);
-	electron2_pt=els_pt->at(electron2_reco_match);
-	electron2_eta=els_eta->at(electron2_reco_match);
-	electron2_phi=els_phi->at(electron2_reco_match);
-	if (cmEnergy<13) { 
-	  electron2_relIso=GetElectronRelIso(electron2_reco_match);
-	  electron2_NH_Et=els_PFneutralHadronIsoR03->at(electron2_reco_match);
-	  electron2_CH_pt=els_PFchargedHadronIsoR03->at(electron2_reco_match);
-	  electron2_ph_Et=els_PFphotonIsoR03->at(electron2_reco_match);
-	}
-	else {
-	  electron2_relIso=GetCSAElectronIsolation(electron2_reco_match);
-	  electron2_NH_Et=els_pfIsolationR03_sumNeutralHadronEt->at(electron2_reco_match);
-	  electron2_CH_pt=els_pfIsolationR03_sumChargedHadronPt->at(electron2_reco_match);
-	  electron2_ph_Et=els_pfIsolationR03_sumPhotonEt->at(electron2_reco_match);
-	}
-	electron2_NH_Iso=electron2_NH_Et/electron2_pt;
-	electron2_CH_Iso=electron2_CH_pt/electron2_pt;
-	electron2_ph_Iso=electron2_ph_Et/electron2_pt;
-	electron2_minDR_jet=GetMinDRElectronJet(electron2_reco_match); // compatible with both old and new samples
- 	electron2_mT=GetMTW(electron2_pt,met,electron2_phi,met_phi);
-     }
-    }
+  
 
-    if (num_gen_muons>=1||num_gen_electrons>=1) {
-      if(muon_gen_pt>electron_gen_pt) { // muon is leading
-	lep1=1;
-	if (electron_gen_pt>0) lep2=3;
-	if (muon2_gen_pt>electron_gen_pt) lep2=2;
-      }
-      else { // electron is leading
-	lep1=3;
-	if (muon_gen_pt>0) lep2=1;
-	if (electron2_gen_pt>muon_gen_pt) lep2=4;
-      }
-    }
+
 
     // cout << "minDeltaPhi..." << endl;
     min_delta_phi_met=GetMinDeltaPhiMET(3);
@@ -980,9 +899,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     min_delta_phi_met_N=getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true);
     if (min_delta_phi_met_N>10e7&&num_jets_pt50>2) cout << "Funky event " << event << endl;
     min_delta_phi_met_N_loose_jets=getMinDeltaPhiMETN(3,20,5.,true,20,5.,false,true);
-   /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
-    deltaPhiN_2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true,true);
-    deltaPhiN_3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true,true);
+    /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
+	  deltaPhiN_2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true,true);
+	  deltaPhiN_3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true,true);
     */
     //  cout << "Done!" << endl;
 
@@ -1011,25 +930,120 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     //    cout << "JERR" << endl;
     if (cfAVersion==75) {
-    fat_jet1_pt=GetFatJetPt(0);    
-    fat_jet2_pt=GetFatJetPt(1);
-    fat_jet3_pt=GetFatJetPt(2);
-    fat_jet4_pt=GetFatJetPt(3);
-    // cout << "JERR1" << endl;
-    fat_jet1_nConst=GetFatJetnConst(0);
-    fat_jet2_nConst=GetFatJetnConst(1);
-    fat_jet3_nConst=GetFatJetnConst(2);
-    fat_jet4_nConst=GetFatJetnConst(3);
-    fat_jet1_mJ=GetFatJetmJ(0);
-    fat_jet2_mJ=GetFatJetmJ(1);
-    fat_jet3_mJ=GetFatJetmJ(2);
-    fat_jet4_mJ=GetFatJetmJ(3);
-    //  cout << "JERR2" << endl;
-    num_fat_jets=GetNFatJets(0.);
-    num_fat_jets_pt100=GetNFatJets(100.);
-    //  cout << "JERR3" << endl;
-    MJ=GetMJ(0.);
-    MJ_pt100=GetMJ(100.);
+      fatpT10_jet1_pt=GetFatJetPt(0,10);    
+      fatpT10_jet2_pt=GetFatJetPt(1,10);
+      fatpT10_jet3_pt=GetFatJetPt(2,10);
+      fatpT10_jet4_pt=GetFatJetPt(3,10);
+      fatpT10_jet1_nConst=GetFatJetnConst(0,10);
+      fatpT10_jet2_nConst=GetFatJetnConst(1,10);
+      fatpT10_jet3_nConst=GetFatJetnConst(2,10);
+      fatpT10_jet4_nConst=GetFatJetnConst(3,10);
+      fatpT10_jet1_mJ=GetFatJetmJ(0,10);
+      fatpT10_jet2_mJ=GetFatJetmJ(1,10);
+      fatpT10_jet3_mJ=GetFatJetmJ(2,10);
+      fatpT10_jet4_mJ=GetFatJetmJ(3,10);
+      num_fatpT10_jets=GetNFatJets(0.,10);
+      num_fatpT10_jets_pt100=GetNFatJets(100.,10);
+      num_fatpT10_jets_pt150=GetNFatJets(150.,10);
+      num_fatpT10_jets_pt200=GetNFatJets(200.,10);
+      num_fatpT10_jets_pt300=GetNFatJets(300.,10);
+      fatpT10_MJ=GetMJ(50.,10);
+      fatpT10_MJ_pt100=GetMJ(100.,10);
+      fatpT10_MJ_pt150=GetMJ(150.,10);
+      fatpT10_MJ_pt200=GetMJ(200.,10);
+      fatpT10_MJ_pt300=GetMJ(300.,10);
+
+      fatpT15_jet1_pt=GetFatJetPt(0,15);    
+      fatpT15_jet2_pt=GetFatJetPt(1,15);
+      fatpT15_jet3_pt=GetFatJetPt(2,15);
+      fatpT15_jet4_pt=GetFatJetPt(3,15);
+      fatpT15_jet1_nConst=GetFatJetnConst(0,15);
+      fatpT15_jet2_nConst=GetFatJetnConst(1,15);
+      fatpT15_jet3_nConst=GetFatJetnConst(2,15);
+      fatpT15_jet4_nConst=GetFatJetnConst(3,15);
+      fatpT15_jet1_mJ=GetFatJetmJ(0,15);
+      fatpT15_jet2_mJ=GetFatJetmJ(1,15);
+      fatpT15_jet3_mJ=GetFatJetmJ(2,15);
+      fatpT15_jet4_mJ=GetFatJetmJ(3,15);
+      num_fatpT15_jets=GetNFatJets(0.,15);
+      num_fatpT15_jets_pt100=GetNFatJets(100.,15);
+      num_fatpT15_jets_pt150=GetNFatJets(150.,15);
+      num_fatpT15_jets_pt200=GetNFatJets(200.,15);
+      num_fatpT15_jets_pt300=GetNFatJets(300.,15);
+      fatpT15_MJ=GetMJ(50.,15);
+      fatpT15_MJ_pt100=GetMJ(100.,15);
+      fatpT15_MJ_pt150=GetMJ(150.,15);
+      fatpT15_MJ_pt200=GetMJ(200.,15);
+      fatpT15_MJ_pt300=GetMJ(300.,15);
+
+      fatpT20_jet1_pt=GetFatJetPt(0,20);    
+      fatpT20_jet2_pt=GetFatJetPt(1,20);
+      fatpT20_jet3_pt=GetFatJetPt(2,20);
+      fatpT20_jet4_pt=GetFatJetPt(3,20);
+      fatpT20_jet1_nConst=GetFatJetnConst(0,20);
+      fatpT20_jet2_nConst=GetFatJetnConst(1,20);
+      fatpT20_jet3_nConst=GetFatJetnConst(2,20);
+      fatpT20_jet4_nConst=GetFatJetnConst(3,20);
+      fatpT20_jet1_mJ=GetFatJetmJ(0,20);
+      fatpT20_jet2_mJ=GetFatJetmJ(1,20);
+      fatpT20_jet3_mJ=GetFatJetmJ(2,20);
+      fatpT20_jet4_mJ=GetFatJetmJ(3,20);
+      num_fatpT20_jets=GetNFatJets(0.,20);
+      num_fatpT20_jets_pt100=GetNFatJets(100.,20);
+      num_fatpT20_jets_pt150=GetNFatJets(150.,20);
+      num_fatpT20_jets_pt200=GetNFatJets(200.,20);
+      num_fatpT20_jets_pt300=GetNFatJets(300.,20);
+      fatpT20_MJ=GetMJ(50.,20);
+      fatpT20_MJ_pt100=GetMJ(100.,20);
+      fatpT20_MJ_pt150=GetMJ(150.,20);
+      fatpT20_MJ_pt200=GetMJ(200.,20);
+      fatpT20_MJ_pt300=GetMJ(300.,20);
+
+      fatpT25_jet1_pt=GetFatJetPt(0,25);    
+      fatpT25_jet2_pt=GetFatJetPt(1,25);
+      fatpT25_jet3_pt=GetFatJetPt(2,25);
+      fatpT25_jet4_pt=GetFatJetPt(3,25);
+      fatpT25_jet1_nConst=GetFatJetnConst(0,25);
+      fatpT25_jet2_nConst=GetFatJetnConst(1,25);
+      fatpT25_jet3_nConst=GetFatJetnConst(2,25);
+      fatpT25_jet4_nConst=GetFatJetnConst(3,25);
+      fatpT25_jet1_mJ=GetFatJetmJ(0,25);
+      fatpT25_jet2_mJ=GetFatJetmJ(1,25);
+      fatpT25_jet3_mJ=GetFatJetmJ(2,25);
+      fatpT25_jet4_mJ=GetFatJetmJ(3,25);
+      num_fatpT25_jets=GetNFatJets(0.,25);
+      num_fatpT25_jets_pt100=GetNFatJets(100.,25);
+      num_fatpT25_jets_pt150=GetNFatJets(150.,25);
+      num_fatpT25_jets_pt200=GetNFatJets(200.,25);
+      num_fatpT25_jets_pt300=GetNFatJets(300.,25);
+      fatpT25_MJ=GetMJ(50.,25);
+      fatpT25_MJ_pt100=GetMJ(100.,25);
+      fatpT25_MJ_pt150=GetMJ(150.,25);
+      fatpT25_MJ_pt200=GetMJ(200.,25);
+      fatpT25_MJ_pt300=GetMJ(300.,25);
+
+      fatpT30_jet1_pt=GetFatJetPt(0,30);    
+      fatpT30_jet2_pt=GetFatJetPt(1,30);
+      fatpT30_jet3_pt=GetFatJetPt(2,30);
+      fatpT30_jet4_pt=GetFatJetPt(3,30);
+      fatpT30_jet1_nConst=GetFatJetnConst(0,30);
+      fatpT30_jet2_nConst=GetFatJetnConst(1,30);
+      fatpT30_jet3_nConst=GetFatJetnConst(2,30);
+      fatpT30_jet4_nConst=GetFatJetnConst(3,30);
+      fatpT30_jet1_mJ=GetFatJetmJ(0,30);
+      fatpT30_jet2_mJ=GetFatJetmJ(1,30);
+      fatpT30_jet3_mJ=GetFatJetmJ(2,30);
+      fatpT30_jet4_mJ=GetFatJetmJ(3,30);
+      num_fatpT30_jets=GetNFatJets(0.,30);
+      num_fatpT30_jets_pt100=GetNFatJets(100.,30);
+      num_fatpT30_jets_pt150=GetNFatJets(150.,30);
+      num_fatpT30_jets_pt200=GetNFatJets(200.,30);
+      num_fatpT30_jets_pt300=GetNFatJets(300.,30);
+      fatpT30_MJ=GetMJ(50.,30);
+      fatpT30_MJ_pt100=GetMJ(100.,30);
+      fatpT30_MJ_pt150=GetMJ(150.,30);
+      fatpT30_MJ_pt200=GetMJ(200.,30);
+      fatpT30_MJ_pt300=GetMJ(300.,30);
     }
     reduced_tree.Fill(); 
     //  if (i==20) break;

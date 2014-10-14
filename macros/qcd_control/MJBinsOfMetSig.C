@@ -20,7 +20,7 @@
 using namespace std;
 
 //void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
-void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "reduced_trees/QCD_Pt*v75*.root")
+void MJBinsOfMetSig(const TString var = "MJ_pt100", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "reduced_trees/QCD_Pt*.root")
 { 
   const TCut btag(btag_cut);
   //const TCut btag = "nbjetsSSVHPT>=2";
@@ -51,6 +51,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   else if (var.Contains("min_delta_phi_met_N")) max=20;
   else if (var.Contains("minDeltaPhiK")) max=20;
   else if (var=="deltaPhiMPTcaloMET")    max=TMath::Pi();
+  else if(var.Contains("MJ")) max=1500.;
   else max = 0.6; 
 
   //updated to use reducedTrees
@@ -63,7 +64,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   //  gROOT->SetStyle("CMS");
   gStyle->SetOptStat(0);
 
-  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50"; //no mindp, no MET
+  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50&&met_over_sqrt_ht30>0&&met>175";
   TString dp_cut(var);
   if (var.Contains("min_delta_phi_met_N")) dp_cut+=">4.";
   else if (var.Contains("min_delta_phi_met")) dp_cut+=">0.3";
@@ -71,10 +72,10 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   TCut minDPcut(dp_cut);
   //TCut minDPcut = "minDeltaPhi > 0.2"; cout<<"warning -- using special minDeltaPhi cut! "<<minDPcut.GetTitle()<<endl;
   if (!var.Contains("min_delta_phi_met")) baseline = baseline&&minDPcut;
-  TCut LSB = "met<75";
-  TCut MSB = "met>=75 && met<150";
-  TCut SB = "met>=150 && met <225";
-  TCut SIG = "met>225";
+  TCut LSB = "met_over_sqrt_ht30<6";
+  TCut MSB = "met_over_sqrt_ht30>=6 && met_over_sqrt_ht30<10";
+  TCut SB = "met_over_sqrt_ht30>=10 && met_over_sqrt_ht30 <14";
+  TCut SIG = "met_over_sqrt_ht30>16";
 
   TCut cut1=baseline && LSB && btag;
   TCut cut2=baseline && MSB && btag;
@@ -190,8 +191,8 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
     Hmed->SetXTitle(title);
     Hlow->SetXTitle(title);
   }
-  else if (var.Contains("min_delta_phi_met_N")) {
-    Hhigh->SetXTitle("#Delta #hat{#phi}_{N}^{min}");
+  else if (var.Contains("MJ")) {
+    Hhigh->SetXTitle("MJ [GeV]");
   }
   else {
     Hhigh->SetXTitle(var);
@@ -232,19 +233,19 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   if(logy) leg->SetTextSize(0.03);
   char label[100];
   if (drawLSB)  {
-    sprintf(label,"E_{T}^{miss} < 75 GeV (#mu=%3.2f)",Hlow->GetMean());
+    sprintf(label,"E_{T}^{miss}/#sqrt{H_{T}} < 6 GeV^{1/2} (#mu=%3.2f)",Hlow->GetMean());
     leg->AddEntry(Hlow,label);
   }
   if (drawMSB)  {
-    sprintf(label,"75 < E_{T}^{miss} < 150 GeV (#mu=%3.2f)",Hmed->GetMean());
+    sprintf(label,"6 < E_{T}^{miss}/#sqrt{H_{T}} < 10 GeV^{1/2} (#mu=%3.2f)",Hmed->GetMean());
     leg->AddEntry(Hmed,label);
   } 
   if (drawSB)   {
-    sprintf(label,"150 < E_{T}^{miss} < 225 Ge (#mu=%3.2f)",Hmh->GetMean());
+    sprintf(label,"10 < E_{T}^{miss}/#sqrt{H_{T}} < 14 GeV^{1/2} GeV^{1/2} (#mu=%3.2f)",Hmh->GetMean());
     leg->AddEntry(Hmh,label);
   }
   if (drawSIG)  {
-    sprintf(label,"E_{T}^{miss} > 225 GeV (#mu=%3.2f)",Hhigh->GetMean());
+    sprintf(label,"E_{T}^{miss}/#sqrt{H_{T}} > 14 GeV^{1/2} (#mu=%3.2f)",Hhigh->GetMean());
    leg->AddEntry(Hhigh,label);
   }
   leg->Draw();

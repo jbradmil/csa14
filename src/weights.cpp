@@ -154,11 +154,13 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=0.0856418;
   crossSectionTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=0.0141903;
   crossSectionTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=0.325388;
-  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=818.8;
-  crossSectionTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=1817.0;
-  crossSectionTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=471.6;
-  crossSectionTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=55.61;
-  crossSectionTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=18.81;
+  crossSectionTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=0.107045;
+  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25"]=818.8;
+  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=818.8;
+  crossSectionTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=1817.0;
+  crossSectionTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=471.6;
+  crossSectionTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=55.61;
+  crossSectionTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=18.81;
   crossSectionTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod"]=80710000000;
   crossSectionTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod"]=7528000000;
   crossSectionTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod"]=2327000000;
@@ -198,6 +200,7 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["DYJetsToLL_M-50_HT-200to400_Tune4C_13TeV"]=52.24;
   crossSectionTable["DYJetsToLL_M-50_HT-400to600_Tune4C_13TeV"]=6.546;
   crossSectionTable["DYJetsToLL_M-50_HT-600toInf_Tune4C_13TeV"]=2.179;
+  crossSectionTable["Neutrino_Pt-2to20_gun_13TeV-Spring14miniaod"]=78260000000;
 }
 
 void WeightCalculator::SetTotalEvents(){
@@ -302,11 +305,13 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=100322;
   totalEventsTable["SMS-T1bbbb_2J_mGl-1500_mLSP-100"]=105964;
   totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=97584;
-  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=25092696/*8667327*/;
-  totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4087868/*3181078*/;
-  totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4933933/*3133549*/;
-  totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4642823/*2507939*/;
-  totalEventsTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola-Spring14miniaod"]=4634811/*2399709*/;
+  totalEventsTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=107131;
+  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25"]=25092696;
+  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=17184825;
+  totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4087868/*3181078*/;
+  totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4933933/*3133549*/;
+  totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4642823/*2507939*/;
+  totalEventsTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4634811/*2399709*/;
   totalEventsTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod"]=4791146;
   totalEventsTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod"]=4510630;
   totalEventsTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod"]=4655329;
@@ -342,4 +347,6 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["DYJetsToLL_M-50_HT-200to400_Tune4C_13TeV"]=4665825;
   totalEventsTable["DYJetsToLL_M-50_HT-400to600_Tune4C_13TeV"]=4944926;
   totalEventsTable["DYJetsToLL_M-50_HT-600toInf_Tune4C_13TeV"]=4510506;
+  totalEventsTable["Neutrino_Pt-2to20_gun_13TeV-Spring14miniaod"]=39058619;
+
 }

@@ -20,18 +20,13 @@
 using namespace std;
 
 //void drawBinsOfMet(const TString var = "minDeltaPhiN", const TString treestring = "/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root")
-void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "reduced_trees/QCD_Pt*v75*.root")
+void mdpBinsOfMetSig(const TString var = "min_delta_phi_met", const TString btag_cut="num_csvm_jets>=1", TString plotTitle="", bool logy = false, const TString treestring = "save/QCD_Pt*v75*.root")
 { 
-  const TCut btag(btag_cut);
-  //const TCut btag = "nbjetsSSVHPT>=2";
-  //const TCut btag = "nbjetsSSVHPT==0";
-  //const TCut btag = "nbjetsSSV0>=1";
 
-  //const TString var ="minDeltaPhiN";
-  //const TString var ="minDeltaPhi";
-  //  const TString var ="bestTopMass";
-  //  const TString var ="MET/(MET+HT)";
-  //  const TString var ="deltaPhiMPTcaloMET";
+  TH1::StatOverflows(true);
+  TH1::SetDefaultSumw2(); //trick to turn on Sumw2 for all histos
+
+  const TCut btag(btag_cut);
 
   const bool drawLSB = true;
   const bool drawMSB = true;
@@ -46,35 +41,24 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   const  int nbins=10;
   float min=0;
   float max=0;
-  if (var=="bestTopMass") max=800;
-  else if (var=="min_delta_phi_met"||var=="min_delta_phi_met_loose_jets") max=TMath::Pi();
-  else if (var.Contains("min_delta_phi_met_N")) max=20;
-  else if (var.Contains("minDeltaPhiK")) max=20;
-  else if (var=="deltaPhiMPTcaloMET")    max=TMath::Pi();
-  else max = 0.6; 
+  if (var.Contains("min_delta_phi_met")) max=3.2;
+  else max = 100.; 
 
   //updated to use reducedTrees
 
   bool addOverflow = true;
-  if (var.Contains("min_delta_phi_met")) addOverflow=false;
-  else  if (var=="bestTopMass") addOverflow=false;
-  else  if (var=="deltaPhiMPTcaloMET") addOverflow=false;
 
   //  gROOT->SetStyle("CMS");
   gStyle->SetOptStat(0);
 
-  TCut baseline ="ht40>=400&&jet1_pt>70&&jet2_pt>70&&jet3_pt>50"; //no mindp, no MET
-  TString dp_cut(var);
-  if (var.Contains("min_delta_phi_met_N")) dp_cut+=">4.";
-  else if (var.Contains("min_delta_phi_met")) dp_cut+=">0.3";
+  TCut baseline ="ht50>=500&&jet1_pt>50&&jet2_pt>50&&jet3_pt>50"; //no mindp, no MET
+  TCut lep_veto("num_reco_veto_muons==0&&num_reco_veto_electrons==0");
+  baseline = baseline+lep_veto;
 
-  TCut minDPcut(dp_cut);
-  //TCut minDPcut = "minDeltaPhi > 0.2"; cout<<"warning -- using special minDeltaPhi cut! "<<minDPcut.GetTitle()<<endl;
-  if (!var.Contains("min_delta_phi_met")) baseline = baseline&&minDPcut;
-  TCut LSB = "met<75";
-  TCut MSB = "met>=75 && met<150";
-  TCut SB = "met>=150 && met <225";
-  TCut SIG = "met>225";
+  TCut LSB = "met_over_sqrt_ht50<2";
+  TCut MSB = "met_over_sqrt_ht50>=2 && met_over_sqrt_ht50<4.";
+  TCut SB = "met_over_sqrt_ht50>=4. && met_over_sqrt_ht50 < 6";
+  TCut SIG = "met_over_sqrt_ht50>6";
 
   TCut cut1=baseline && LSB && btag;
   TCut cut2=baseline && MSB && btag;
@@ -86,22 +70,10 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   TString selection3 = TString("weightppb*(")+cut3.GetTitle()+")";
   TString selection4 = TString("weightppb*(")+cut4.GetTitle()+")";
 
-//   TChain madgraph("reducedTree");
-//   madgraph.Add("/cu2/joshmt/V00-03-01_6/reducedTree.Baseline0_PF_JERbias6_pfMEThigh_PFLepRA20e0mu_minDP_MuonCleaning.QCD.root");
-
   TChain * pypu = new TChain("reduced_tree");
-  //pypu->Add("/cu2/ra2b/reducedTrees/V00-02-05_v2/reducedTree.SSVHPT.PythiaPUQCD.root");
-  //pypu->Add("/cu2/ra2b/reducedTrees/V00-02-25_fullpf2pat/reducedTree.SSVHPT_PF2PATjets_JES0_JER0_PFMET_METunc0_PUunc0_BTagEff0_HLTEff0.PythiaPUQCD.root");
   pypu->Add(treestring);// treestring is passed as an argument
   
   
-//   TChain py("reducedTree");
-//   py.Add("/cu2/joshmt/V00-03-01_6/reducedTree.Baseline0_PF_JERbias6_pfMEThigh_PFLepRA20e0mu_minDP_MuonCleaning.PythiaQCD.root");
-
-  TH1::SetDefaultSumw2(); //trick to turn on Sumw2 for all histos
-
-  //constint nbins=6;
-  //  const double varbins[]={0.,160.,180.,260.,400.,800.,2000};
 
   int height= doRatio ? 800 : 600;
   TCanvas * thecanvas= new TCanvas("thecanvas","the canvas",700,height);
@@ -118,13 +90,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   TH1D * Hmh    = new TH1D("Hmh","",nbins,min,max);
   TH1D * Hhigh  = new TH1D("Hhigh","",nbins,min,max);
   TH1D * Hratio = new TH1D("Hratio","",nbins,min,max);
-  /*
-  TH1D Hlow("Hlow","",nbins,varbins);
-  TH1D Hmed("Hmed","",nbins,varbins);
-  TH1D Hmh("Hmh","",nbins,varbins);
-  TH1D Hhigh("Hhigh","",nbins,varbins);
-  */
-  
+ 
   Hlow->SetLineColor(46);
   Hmed->SetLineColor(38);
   Hmh->SetLineColor(8);
@@ -158,17 +124,51 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
     Hhigh->SetMinimum(1E-2);
   }
 
-  cout << "drawLSB" << endl;
+  cout << "drawLSB: " << selection1.Data() << endl;
   if (drawLSB) pypu->Draw(var+">>Hlow", selection1);
-  cout << "drawMSB" << endl;
+  cout << "drawMSB: " << selection2.Data() << endl;
   if (drawMSB) pypu->Draw(var+">>Hmed", selection2);
-  cout << "drawSB" << endl;
+  cout << "drawSB: " << selection3.Data() << endl;
   if (drawSB)  pypu->Draw(var+">>Hmh",  selection3);
-  cout << "drawSIG" << endl;
+  cout << "drawSIG: " << selection4.Data() << endl;
   if (drawSIG) pypu->Draw(var+">>Hhigh",selection4);
   gPad->SetRightMargin(0.1);
   gPad->SetLogy(logy);
   gPad->Modified();
+
+  TLegend * leg = 0;
+  if(logy) leg = new TLegend(0.30,0.65,0.72,0.85);
+  else {leg = new TLegend(0.30,0.55,0.72,0.85);}
+  leg->SetFillColor(0);
+  leg->SetBorderSize(0);
+  leg->SetLineStyle(0);
+  leg->SetFillStyle(0);
+  leg->SetTextFont(132);
+  leg->SetTextSize(.04);
+  if(logy) leg->SetTextSize(0.03);
+  char label[100];
+  if (drawLSB)  {
+    sprintf(label,"E_{T}^{miss}/#sqrt{H_{T}} < 2 GeV^{1/2} (#mu=%3.2f)",Hlow->GetMean());
+    leg->AddEntry(Hlow,label);
+  }
+  if (drawMSB)  {
+    sprintf(label,"2 < E_{T}^{miss}/#sqrt{H_{T}} < 4 GeV^{1/2} (#mu=%3.2f)",Hmed->GetMean());
+    leg->AddEntry(Hmed,label);
+  } 
+  if (drawSB)   {
+    sprintf(label,"4 < E_{T}^{miss}/#sqrt{H_{T}} < 6 GeV^{1/2} (#mu=%3.2f)",Hmh->GetMean());
+    leg->AddEntry(Hmh,label);
+  }
+  if (drawSIG)  {
+    sprintf(label,"E_{T}^{miss}/#sqrt{H_{T}} > 6 GeV^{1/2} (#mu=%3.2f)",Hhigh->GetMean());
+    leg->AddEntry(Hhigh,label);
+  }
+
+
+  if (Hlow->Integral()>0) Hlow->Scale( 1.0 / Hlow->Integral());
+  if (Hmed->Integral()>0) Hmed->Scale( 1.0 / Hmed->Integral());
+  if (Hmh->Integral()>0) Hmh->Scale( 1.0 / Hmh->Integral());
+  if (Hhigh->Integral()>0) Hhigh->Scale( 1.0 / Hhigh->Integral());
 
   if (addOverflow) {
     Hlow->SetBinContent(nbins, Hlow->GetBinContent(nbins)+Hlow->GetBinContent(nbins+1));
@@ -177,21 +177,10 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
     Hhigh->SetBinContent(nbins, Hhigh->GetBinContent(nbins)+Hhigh->GetBinContent(nbins+1));
   }
   
-  if (Hlow->Integral()>0) Hlow->Scale( 1.0 / Hlow->Integral());
-  if (Hmed->Integral()>0) Hmed->Scale( 1.0 / Hmed->Integral());
-  if (Hmh->Integral()>0) Hmh->Scale( 1.0 / Hmh->Integral());
-  if (Hhigh->Integral()>0) Hhigh->Scale( 1.0 / Hhigh->Integral());
   
-  if (var=="min_delta_phi_met"||var=="min_delta_phi_met_loose_jets")  Hhigh->SetXTitle("#Delta #phi_{min} [rad.]");
-  else if (var=="bestTopMass")  {
-    TString title="best 3-jet mass (GeV)";
-    Hhigh->SetXTitle(title);
-    Hmh->SetXTitle(title);
-    Hmed->SetXTitle(title);
-    Hlow->SetXTitle(title);
-  }
-  else if (var.Contains("min_delta_phi_met_N")) {
-    Hhigh->SetXTitle("#Delta #hat{#phi}_{N}^{min}");
+  if (var=="min_delta_phi_met"||var=="min_delta_phi_met_loose_jets")  Hhigh->SetXTitle("#Delta#phi_{min}");
+  else if (var.Contains("MJ_pt")) {
+    Hhigh->SetXTitle("M_{J} [GeV]");
   }
   else {
     Hhigh->SetXTitle(var);
@@ -215,38 +204,8 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
   if (drawMSB)  {Hmed->Draw(drawopt); drawopt="hist e SAME";  if (customMax>0) Hmed->SetMaximum(customMax);}
   if (drawLSB)  {Hlow->Draw(drawopt); drawopt="hist e SAME";  if (customMax>0) Hlow->SetMaximum(customMax);}
 
-//   if (var=="minDeltaPhi") {
-//     Hhigh->SetMinimum(0);
-//     Hhigh->GetXaxis()->SetRangeUser(0,2);
-//   }
 
-  TLegend * leg = 0;
-  if(logy) leg = new TLegend(0.38,0.65,0.8,0.85);
-  else {leg = new TLegend(0.38,0.55,0.8,0.85);}
-  leg->SetFillColor(0);
-  leg->SetBorderSize(0);
-  leg->SetLineStyle(0);
-  leg->SetFillStyle(0);
-  leg->SetTextFont(132);
-  leg->SetTextSize(.04);
-  if(logy) leg->SetTextSize(0.03);
-  char label[100];
-  if (drawLSB)  {
-    sprintf(label,"E_{T}^{miss} < 75 GeV (#mu=%3.2f)",Hlow->GetMean());
-    leg->AddEntry(Hlow,label);
-  }
-  if (drawMSB)  {
-    sprintf(label,"75 < E_{T}^{miss} < 150 GeV (#mu=%3.2f)",Hmed->GetMean());
-    leg->AddEntry(Hmed,label);
-  } 
-  if (drawSB)   {
-    sprintf(label,"150 < E_{T}^{miss} < 225 Ge (#mu=%3.2f)",Hmh->GetMean());
-    leg->AddEntry(Hmh,label);
-  }
-  if (drawSIG)  {
-    sprintf(label,"E_{T}^{miss} > 225 GeV (#mu=%3.2f)",Hhigh->GetMean());
-   leg->AddEntry(Hhigh,label);
-  }
+
   leg->Draw();
 
   // TLatex* text1=0;
@@ -273,23 +232,23 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
     cout<<"KS test results = "<<Hmh->KolmogorovTest(Hlow)<<endl;
   }
 
-//   double chi2=0;
-//   for (int i=1; i<=nbins; i++) {
-//     double denom=Hlow->GetBinError(i)*Hlow->GetBinError(i) + Hmh->GetBinError(i)*Hmh->GetBinError(i);
-//     double c2= denom>0 ? pow( Hlow->GetBinContent(i) - Hmh->GetBinContent(i) ,2) / denom : 0;
-//     chi2+=c2;
-//   }
+  //   double chi2=0;
+  //   for (int i=1; i<=nbins; i++) {
+  //     double denom=Hlow->GetBinError(i)*Hlow->GetBinError(i) + Hmh->GetBinError(i)*Hmh->GetBinError(i);
+  //     double c2= denom>0 ? pow( Hlow->GetBinContent(i) - Hmh->GetBinContent(i) ,2) / denom : 0;
+  //     chi2+=c2;
+  //   }
 
-//   cout<<"Hand chi^2 = "<<chi2<<endl;
-//   Hlow->Chi2Test(Hmh,"WW p");
+  //   cout<<"Hand chi^2 = "<<chi2<<endl;
+  //   Hlow->Chi2Test(Hmh,"WW p");
 
   if (plotTitle=="") {
-    if(logy) {thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+"_logy.png");thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+"_logy.pdf");}
-    else {thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+".png"); thecanvas->Print("macros/qcd_control/plots/METcorrelation_"+var+".pdf"); }
+    if(logy) {thecanvas->Print("macros/MJ/plots/MetSigcorrelation_"+var+"_logy.pdf");}
+    else {thecanvas->Print("macros/MJ/plots/MetSigcorrelation_"+var+".pdf"); }
   }  
   else {
-    if(logy) {thecanvas->Print("macros/qcd_control/plots/"+plotTitle+"_logy.png");thecanvas->Print("macros/qcd_control/plots/"+plotTitle+"_logy.pdf");}
-    else {thecanvas->Print("macros/qcd_control/plots/"+plotTitle+".png"); thecanvas->Print("macros/qcd_control/plots/"+plotTitle+".pdf"); }
+    if(logy) {thecanvas->Print("macros/MJ/plots/"+plotTitle+"_logy.pdf");}
+    else {thecanvas->Print("macros/MJ/plots/"+plotTitle+".pdf"); }
   }
 
   delete pypu;
@@ -310,7 +269,7 @@ void mdpBinsOfMet(const TString var = "min_delta_phi_met_N", const TString btag_
 //   plotSlices("nbjets==1");
 
 //   cplots.cd(2);
-//   plotSlices("nbjets>=1");
+//   plotSlices("nbjets>=1");#Delta #hat{#phi
 
 //   cplots.cd(3);
 //   plotSlices("nbjets>=2");

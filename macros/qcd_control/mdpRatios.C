@@ -24,110 +24,112 @@
 
 using namespace std;
 
-TString qcd_files[17] = {"reduced_trees/low-pt-qcd/QCD_Pt-5to10_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2125_v73.root",
-			 "reduced_trees/low-pt-qcd/QCD_Pt-10to15_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2103_v73.root",
-			 "reduced_trees/low-pt-qcd/QCD_Pt-15to30_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2104_v73.root",
-			 "reduced_trees/low-pt-qcd/QCD_Pt-30to50_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2126_v73.root",
-			 "reduced_trees/low-pt-qcd/QCD_Pt-50to80_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2127_v73.root",
-			 "reduced_trees/QCD_Pt-80to120_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2128_v73.root",
-			 "reduced_trees/QCD_Pt-120to170_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2109_v73.root",
-			 "reduced_trees/QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2118_v73.root",
-			 "reduced_trees/QCD_Pt-170to300_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2098_v73.root",
-			 "reduced_trees/QCD_Pt-300to470_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2135_v73.root",
-			 "reduced_trees/QCD_Pt-470to600_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2137_v73.root",
-			 "reduced_trees/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2138_v73.root",
-			 "reduced_trees/QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2130_v73.root",
-			 "reduced_trees/QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2101_v73.root",
-			 "reduced_trees/QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2100_v73.root",
-			 "reduced_trees/QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2099_v73.root",			
-			 "reduced_trees/QCD_Pt-3200_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2136_v73.root"};
+const unsigned int nSamples(14);
 
-Double_t weights[17] = {  80710000000./4791146.,
-			  7528000000./4510630.,
-			  2327000000./4655329.,
-			  161500000./4848856.,
-			  22110000./4726495.,
-			  3000114./4794295.,
-			  493200./3562052.,
-			  120300./2793204.,
-			  7475./2700637.,
-			  587.1/2907137.,
-			  167/2853619.,
-			  28.25/2875729.,
-			  8.195/2834231.,
-			  0.7346/2931414.,
-			  0.102/2953210.,
-			  0.0064/2939491.,
-			  0.000163/2953151.};
+TString qcd_files[nSamples] = 
+  {
+    "reduced_trees/QCD_Pt-30to50_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2126_v75.list.root",
+    "reduced_trees/QCD_Pt-50to80_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2127_v75.list.root",
+    "reduced_trees/QCD_Pt-80to120_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2128_v75.list.root",
+    "reduced_trees/QCD_Pt-120to170_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2109_v75.list.root",
+    "reduced_trees/QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2118_v75.list.root",
+    "reduced_trees/QCD_Pt-170to300_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2098_v75.list.root",
+    "reduced_trees/QCD_Pt-300to470_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2135_v75.list.root",
+    "reduced_trees/QCD_Pt-470to600_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2137_v75.list.root",
+    "reduced_trees/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2138_v75.list.root",
+    "reduced_trees/QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2130_v75.list.root",
+    "reduced_trees/QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Spring14miniaod-castor_PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2101_v75.list.root",
+    "reduced_trees/QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2100_v75.list.root",
+    "reduced_trees/QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2099_v75.list.root",			
+    "reduced_trees/QCD_Pt-3200_Tune4C_13TeV_pythia8_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2136_v75.list.root"
+  };
 
-  TGraphAsymmErrors* GetCombinedEfficiency(const TString cut = "min_delta_phi_met_N>4.", const TString preselection="")
+Double_t weights[nSamples] = 
   { 
-  
-    TH1::SetDefaultSumw2();
+    161500000./4848856.,
+    22110000./4726495.,
+    3000114./4794295.,
+    493200./3562052.,
+    120300./2793204.,
+    7475./2700637.,
+    587.1/2907137.,
+    167/2853619.,
+    28.25/2875729.,
+    8.195/2834231.,
+    0.7346/2931414.,
+    0.102/2953210.,
+    0.0064/2939491.,
+    0.000163/2953151.
+  };
 
-    const int nbins=16;
-    const double varbins[nbins+1]={0,20,40,60,80,100,125,150,175,200,250,300,400,500,600,800,1000};
+TGraphAsymmErrors* GetCombinedEfficiency(const TString cut = "min_delta_phi_met_N>4.", const TString preselection="")
+{ 
+  
+  TH1::SetDefaultSumw2();
+
+  const int nbins=16;
+  const double varbins[nbins+1]={0,20,40,60,80,100,125,150,175,200,250,300,400,500,600,800,1000};
 
 
     
-    TCut all(preselection);
-    TCut ccut(cut);
-    TCut pass(all+ccut);
+  TCut all(preselection);
+  TCut ccut(cut);
+  TCut pass(all+ccut);
 
 
-    TFile *fout = new TFile("macros/qcd_control/output.root", "recreate");
-    fout->cd();
+  TFile *fout = new TFile("macros/qcd_control/output.root", "recreate");
+  fout->cd();
 
-    cout << "Denom. cuts: " << (string)all << endl;
-    cout << "Num. cuts: " << (string)pass << endl;
+  cout << "Denom. cuts: " << (string)all << endl;
+  cout << "Num. cuts: " << (string)pass << endl;
 
-    TList* pList=new TList();
-    vector<TH1D> v_all, v_pass;
+  TList* pList=new TList();
+  vector<TH1D> v_all, v_pass;
 
-    for (unsigned int sample(0); sample<17; sample++) {
+  for (unsigned int sample(0); sample<nSamples; sample++) {
       
-      TChain * ch = new TChain();
-      ch->Add(qcd_files[sample]+"/reduced_tree");
+    TChain * ch = new TChain();
+    ch->Add(qcd_files[sample]+"/reduced_tree");
 
 
-      TH1D* hMETall = new TH1D(Form("hMETall_%d",sample),"hMETall",nbins,varbins);
-      TH1D* hMETpass = new TH1D(Form("hMETpass_%d",sample),"hMETpass",nbins,varbins);
+    TH1D* hMETall = new TH1D(Form("hMETall_%d",sample),"hMETall",nbins,varbins);
+    TH1D* hMETpass = new TH1D(Form("hMETpass_%d",sample),"hMETpass",nbins,varbins);
 
-      ch->Project(hMETall->GetName(),"met",all);
-      ch->Project(hMETpass->GetName(),"met",pass);
+    ch->Project(hMETall->GetName(),"met",all);
+    ch->Project(hMETpass->GetName(),"met",pass);
 
-      Double_t e_overflow(0.), i_overflow(0.);
-      i_overflow=hMETall->IntegralAndError(nbins,nbins+1,e_overflow);
-      hMETall->SetBinContent(nbins, i_overflow);
-      hMETall->SetBinError(nbins, e_overflow);
-      i_overflow=hMETpass->IntegralAndError(nbins,nbins+1,e_overflow);
-      hMETpass->SetBinContent(nbins, i_overflow);
-      hMETpass->SetBinError(nbins, e_overflow);
+    Double_t e_overflow(0.), i_overflow(0.);
+    i_overflow=hMETall->IntegralAndError(nbins,nbins+1,e_overflow);
+    hMETall->SetBinContent(nbins, i_overflow);
+    hMETall->SetBinError(nbins, e_overflow);
+    i_overflow=hMETpass->IntegralAndError(nbins,nbins+1,e_overflow);
+    hMETpass->SetBinContent(nbins, i_overflow);
+    hMETpass->SetBinError(nbins, e_overflow);
 
-      printf("Sample %d: hMETpass/hMETall=%.1f/%.1f\n",sample, hMETpass->Integral(),hMETall->Integral());
+    printf("Sample %d: hMETpass/hMETall=%.1f/%.1f\n",sample, hMETpass->Integral(),hMETall->Integral());
 
       
-      delete ch;
+    delete ch;
 
-      v_all.push_back(*hMETall);
-      v_pass.push_back(*hMETpass);
+    v_all.push_back(*hMETall);
+    v_pass.push_back(*hMETpass);
 
-      delete hMETall;
-      delete hMETpass;
+    delete hMETall;
+    delete hMETpass;
 
-    }
-
-    for (unsigned int sample(0); sample<17; sample++) {
-      cout << "Found hist " << v_all[sample].GetName() << endl;
-      v_all[sample].Write();
-      v_pass[sample].Write();
-      TEfficiency* pEff = new TEfficiency(v_pass[sample],v_all[sample]);
-      pList->Add(pEff);
-    }
-
-    TGraphAsymmErrors* gr = TEfficiency::Combine(pList,"v",17,weights);
-    return gr;
   }
+
+  for (unsigned int sample(0); sample<nSamples; sample++) {
+    cout << "Found hist " << v_all[sample].GetName() << endl;
+    v_all[sample].Write();
+    v_pass[sample].Write();
+    TEfficiency* pEff = new TEfficiency(v_pass[sample],v_all[sample]);
+    pList->Add(pEff);
+  }
+
+  TGraphAsymmErrors* gr = TEfficiency::Combine(pList,"v,mode",nSamples,weights);
+  return gr;
+}
   
 void mdpRatios() {
 

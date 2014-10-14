@@ -72,6 +72,14 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   trackertoomanyclustersfilter_decision(0),
   trackertoomanytripletsfilter_decision(0),
   trackertoomanyseedsfilter_decision(0),
+  goodVerticesfilter_decision(0),		     
+  trkPOGfilter_decision(0),			     
+  trkPOG_logErrorTooManyClustersfilter_decision(0),
+  EcalDeadCellTriggerPrimitivefilter_decision(0),  
+  trkPOG_manystripclus53Xfilter_decision(0),	     
+  METFiltersfilter_decision(0),		         
+  HBHENoisefilter_decision(0),		         
+  trkPOG_toomanystripclus53Xfilter_decision(0),    
   passprescalePFHT350filter_decision(0),
   passprescaleHT250filter_decision(0),
   passprescaleHT300filter_decision(0),
@@ -192,6 +200,14 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_trackertoomanyclustersfilter_decision(),
   b_trackertoomanytripletsfilter_decision(),
   b_trackertoomanyseedsfilter_decision(),
+  b_goodVerticesfilter_decision(),		     
+  b_trkPOGfilter_decision(),			     
+  b_trkPOG_logErrorTooManyClustersfilter_decision(),
+  b_EcalDeadCellTriggerPrimitivefilter_decision(), 
+  b_trkPOG_manystripclus53Xfilter_decision(),	     
+  b_METFiltersfilter_decision(),		         
+  b_HBHENoisefilter_decision(),		         
+  b_trkPOG_toomanystripclus53Xfilter_decision(),   
   b_passprescalePFHT350filter_decision(),
   b_passprescaleHT250filter_decision(),
   b_passprescaleHT300filter_decision(),
@@ -3183,6 +3199,14 @@ void cfA::InitializeA(){
   trackertoomanyclustersfilter_decision=0;
   trackertoomanytripletsfilter_decision=0;
   trackertoomanyseedsfilter_decision=0;
+  goodVerticesfilter_decision=0;		     
+  trkPOGfilter_decision=0;			     
+  trkPOG_logErrorTooManyClustersfilter_decision=0;
+  EcalDeadCellTriggerPrimitivefilter_decision=0;  
+  trkPOG_manystripclus53Xfilter_decision=0;	     
+  METFiltersfilter_decision=0;		         
+  HBHENoisefilter_decision=0;		         
+  trkPOG_toomanystripclus53Xfilter_decision=0;    
   passprescalePFHT350filter_decision=0;
   passprescaleHT250filter_decision=0;
   passprescaleHT300filter_decision=0;
@@ -3295,18 +3319,28 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_trk_nTOBTEC);
     chainA.SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
     chainA.SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
-    chainA.SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
     chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
     chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
+    chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+    chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
+    chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
+    if (cfAVersion>=73) {
+      chainA.SetBranchAddress("goodVerticesfilter_decision", &goodVerticesfilter_decision, &b_goodVerticesfilter_decision);
+      chainA.SetBranchAddress("trkPOGfilter_decision", &trkPOGfilter_decision, &b_trkPOGfilter_decision);
+      chainA.SetBranchAddress("trkPOG_logErrorTooManyClustersfilter_decision", &trkPOG_logErrorTooManyClustersfilter_decision, &b_trkPOG_logErrorTooManyClustersfilter_decision);
+      chainA.SetBranchAddress("EcalDeadCellTriggerPrimitivefilter_decision", &EcalDeadCellTriggerPrimitivefilter_decision, &b_EcalDeadCellTriggerPrimitivefilter_decision);
+      chainA.SetBranchAddress("trkPOG_manystripclus53Xfilter_decision", &trkPOG_manystripclus53Xfilter_decision, &b_trkPOG_manystripclus53Xfilter_decision);
+      chainA.SetBranchAddress("METFiltersfilter_decision", &METFiltersfilter_decision, &b_METFiltersfilter_decision);
+      chainA.SetBranchAddress("HBHENoisefilter_decision", &HBHENoisefilter_decision, &b_HBHENoisefilter_decision);
+      chainA.SetBranchAddress("trkPOG_toomanystripclus53Xfilter_decision", &trkPOG_toomanystripclus53Xfilter_decision, &b_trkPOG_toomanystripclus53Xfilter_decision);
+    }
+    chainA.SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
     chainA.SetBranchAddress("ecalTPfilter_decision", &ecalTPfilter_decision, &b_ecalTPfilter_decision);
     chainA.SetBranchAddress("ecalBEfilter_decision", &ecalBEfilter_decision, &b_ecalBEfilter_decision);
     chainA.SetBranchAddress("scrapingVeto_decision", &scrapingVeto_decision, &b_scrapingVeto_decision);
     chainA.SetBranchAddress("greedymuonfilter_decision", &greedymuonfilter_decision, &b_greedymuonfilter_decision);
     chainA.SetBranchAddress("inconsistentPFmuonfilter_decision", &inconsistentPFmuonfilter_decision, &b_inconsistentPFmuonfilter_decision);
-    chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
-    chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
     chainA.SetBranchAddress("eenoisefilter_decision", &eenoisefilter_decision, &b_eenoisefilter_decision);
-    chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
     chainA.SetBranchAddress("trackercoherentnoisefilter1_decision", &trackercoherentnoisefilter1_decision, &b_trackercoherentnoisefilter1_decision);
     chainA.SetBranchAddress("trackercoherentnoisefilter2_decision", &trackercoherentnoisefilter2_decision, &b_trackercoherentnoisefilter2_decision);
     chainA.SetBranchAddress("trackertoomanyclustersfilter_decision", &trackertoomanyclustersfilter_decision, &b_trackertoomanyclustersfilter_decision);
@@ -5142,7 +5176,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_mass", &mc_doc_mass, &b_mc_doc_mass);
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
-  if (cmEnergy>=13) {
+  if (cmEnergy>=13&&sampleName.find("lite")==std::string::npos) {
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
@@ -6029,18 +6063,20 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("pf_photons_nhIso", &pf_photons_nhIso, &b_pf_photons_nhIso);
     chainB.SetBranchAddress("pf_photons_phIso", &pf_photons_phIso, &b_pf_photons_phIso);
   }
-  chainB.SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
-  chainB.SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
-  if (cmEnergy<=8) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
-  chainB.SetBranchAddress("pfcand_pt", &pfcand_pt, &b_pfcand_pt);
-  chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
-  chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);
-  chainB.SetBranchAddress("pfcand_py", &pfcand_py, &b_pfcand_py);
-  chainB.SetBranchAddress("pfcand_eta", &pfcand_eta, &b_pfcand_eta);
-  chainB.SetBranchAddress("pfcand_phi", &pfcand_phi, &b_pfcand_phi);
-  chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
-  chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
-  chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
+  if (sampleName.find("lite")==std::string::npos) {
+    chainB.SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
+    chainB.SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
+    if (cmEnergy<=8) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
+    chainB.SetBranchAddress("pfcand_pt", &pfcand_pt, &b_pfcand_pt);
+    chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
+    chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);
+    chainB.SetBranchAddress("pfcand_py", &pfcand_py, &b_pfcand_py);
+    chainB.SetBranchAddress("pfcand_eta", &pfcand_eta, &b_pfcand_eta);
+    chainB.SetBranchAddress("pfcand_phi", &pfcand_phi, &b_pfcand_phi);
+    chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
+    chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
+    chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
+  }
   if (cmEnergy<=8) {
     chainB.SetBranchAddress("Npfmets", &Npfmets, &b_Npfmets);
     chainB.SetBranchAddress("pfmets_et", &pfmets_et, &b_pfmets_et);

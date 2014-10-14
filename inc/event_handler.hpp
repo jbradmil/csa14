@@ -59,9 +59,21 @@ protected:
   mutable bool betaUpToDate;
   static const double CSVTCut, CSVMCut, CSVLCut;
   double scaleFactor;
+  
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_px;
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_py;
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_pz;
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_energy;
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_phi;
+  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_eta;
+  // mutable std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5_index;
+  // mutable std::vector<int>     *fastjets_AK4_R1p2_R0p5_nconstituents;
   mutable std::vector<double> beta;
 
+
+
   int GetcfAVersion() const;
+  // void SetFastJetCollection(const uint=30) const;
   void GetSortedBJets() const;
   double GetHighestJetPt(const unsigned int=1) const;
   double GetHighestJetCSV(const unsigned int=1) const;
@@ -75,6 +87,11 @@ protected:
   void GetBeta(const std::string which="beta") const;
 
   bool PassesSpecificTrigger(const std::string) const;
+  bool Passes2012METCleaningCut() const;
+  bool PassesCSA14METCleaningCut() const;
+  bool isProblemJet(const unsigned int) const;
+  bool PassesBadJetFilter() const;
+  int GetPBNR() const;
 
   bool isInMuonCollection(const double, const double) const;
   bool isInElectronCollection(const double, const double) const;
@@ -89,14 +106,10 @@ protected:
   double GetLateOutOfTimePU() const;
 
   bool PassesPVCut() const;
-  bool PassesMETCleaningCut() const;
 
-  int GetPBNR() const;
-  bool PassesBadJetFilter() const;
   bool isGoodJet(const unsigned int, const bool=true, const double=50.0,
                  const double=2.4/*, const bool=true*/) const;
   bool isCleanJet(const unsigned int, const int) const;
-  bool isProblemJet(const unsigned int) const;
   bool jetPassLooseID(const unsigned int) const;
   bool jetHasEMu(const int) const;
 
@@ -197,11 +210,11 @@ protected:
  
   bool IsMC();
 
-  double GetFatJetPt(const unsigned int) const;
-  int GetFatJetnConst(const unsigned int) const;
-  double GetFatJetmJ(const unsigned int) const;
-  int GetNFatJets(const double=0.) const;
-  double GetMJ(const double=0.) const;
+  double GetFatJetPt(const unsigned int, const unsigned int=30) const;
+  int GetFatJetnConst(const unsigned int, const unsigned int=30) const;
+  double GetFatJetmJ(const unsigned int, const unsigned int=30) const;
+  int GetNFatJets(const double=0., const unsigned int=30) const;
+  double GetMJ(const double=0., const unsigned int=30) const;
 
   double GetHT(const double=50.) const;
   double GetSumP(const double=50.) const;

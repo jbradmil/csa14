@@ -43,7 +43,7 @@ const double EventHandler::CSVLCut(0.244);
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
   cfA(fileName, isList),
   sortedBJetCache(0),
- bJetsUpToDate(false),
+  bJetsUpToDate(false),
   genMuonCache(0),
   genMuonsUpToDate(false),
   genElectronCache(0),
@@ -58,6 +58,14 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   recoTausUpToDate(false), 
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
+  // fastjets_AK4_R1p2_R0p5_px(fastjets_AK4_R1p2_R0p5pT30_px),
+  // fastjets_AK4_R1p2_R0p5_py(fastjets_AK4_R1p2_R0p5pT30_py),
+  // fastjets_AK4_R1p2_R0p5_pz(fastjets_AK4_R1p2_R0p5pT30_pz),
+  // fastjets_AK4_R1p2_R0p5_energy(fastjets_AK4_R1p2_R0p5pT30_energy),
+  // fastjets_AK4_R1p2_R0p5_phi(fastjets_AK4_R1p2_R0p5pT30_phi),
+  // fastjets_AK4_R1p2_R0p5_eta(fastjets_AK4_R1p2_R0p5pT30_eta),
+  // fastjets_AK4_R1p2_R0p5_index(fastjets_AK4_R1p2_R0p5pT30_index),
+  // fastjets_AK4_R1p2_R0p5_nconstituents(fastjets_AK4_R1p2_R0p5pT30_nconstituents),
   beta(0){
   if (fastMode){
     if(cmEnergy<=8) { // turn off unnecessary branches
@@ -78,7 +86,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("Njets_AK5PFclean",0);
       chainB.SetBranchStatus("jets_AK5PFclean_*",0);
     }
-    else {
+    else /*if(sampleName.find("lite")==std::string::npos)*/{
       chainB.SetBranchStatus("pfcand*",0);
       chainB.SetBranchStatus("mc_final*",0);
     }
@@ -381,6 +389,76 @@ void EventHandler::SetScaleFactor(const double scaleFactorIn){
   scaleFactor=scaleFactorIn;
 }
 
+// void EventHandler::SetFastJetCollection(const unsigned int pt_cut) const{
+//   // pt cut is on the skinny jets we recluster;
+//    fastjets_AK4_R1p2_R0p5_px->clear();
+//    fastjets_AK4_R1p2_R0p5_py->clear();
+//    fastjets_AK4_R1p2_R0p5_pz->clear();
+//    fastjets_AK4_R1p2_R0p5_energy->clear();
+//    fastjets_AK4_R1p2_R0p5_phi->clear();
+//    fastjets_AK4_R1p2_R0p5_eta->clear();
+//    fastjets_AK4_R1p2_R0p5_index->clear();
+//    fastjets_AK4_R1p2_R0p5_nconstituents->clear();
+//   switch (pt_cut) {
+//   case 10:
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT10_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT10_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT10_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT10_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT10_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT10_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT10_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT10_nconstituents;
+//   case 15:
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT15_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT15_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT15_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT15_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT15_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT15_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT15_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT15_nconstituents;
+//   case 20:
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT20_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT20_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT20_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT20_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT20_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT20_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT20_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT20_nconstituents;
+//   case 25:
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT25_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT25_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT25_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT25_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT25_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT25_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT25_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT25_nconstituents;
+//   case 30: 
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT30_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT30_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT30_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT30_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT30_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT30_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT30_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT30_nconstituents;
+//     break;
+//   default: // 30 GeV
+//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT30_px;
+//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT30_py;
+//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT30_pz;
+//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT30_energy;
+//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT30_phi;
+//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT30_eta;
+//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT30_index;
+//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT30_nconstituents;
+//   }
+
+// }
+
 bool EventHandler::PassesPVCut() const{
   if(beamSpot_x->size()<1 || pv_x->size()<1) return false;
   const double pv_rho(sqrt(pv_x->at(0)*pv_x->at(0) + pv_y->at(0)*pv_y->at(0)));
@@ -389,7 +467,7 @@ bool EventHandler::PassesPVCut() const{
   return isGoodVertex(0);
 }
 
-bool EventHandler::PassesMETCleaningCut() const{
+bool EventHandler::Passes2012METCleaningCut() const{
   for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
     if(isProblemJet(jet)) return false;
   }
@@ -409,11 +487,33 @@ bool EventHandler::PassesMETCleaningCut() const{
     && GetPBNR()>=1;
 }
 
+bool EventHandler::PassesCSA14METCleaningCut() const{
+  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
+     if(isProblemJet(jet)) return false;
+  }
+  //if(pfTypeImets_et->at(0)>2.0*pfmets_et->at(0)) return false;
+  // if(pfTypeImets_et->at(0)>2.0*mets_AK5_et->at(0)) return false; // updated 11/14 (JB-F)
+  return cschalofilter_decision
+    && HBHENoisefilter_decision
+    && hcallaserfilter_decision 
+    && goodVerticesfilter_decision 
+    && trackingfailurefilter_decision 
+    && eebadscfilter_decision 
+    && (ecallaserfilter_decision || sampleName.find("_v66")!=std::string::npos)
+    && trkPOG_logErrorTooManyClustersfilter_decision 
+    && EcalDeadCellTriggerPrimitivefilter_decision 
+    && trkPOG_manystripclus53Xfilter_decision
+    && METFiltersfilter_decision
+    && trkPOG_toomanystripclus53Xfilter_decision
+    && PassesBadJetFilter()
+    && GetPBNR()>=1;
+}
+
 bool EventHandler::isProblemJet(const unsigned int ijet) const{
   return jets_AKPF_pt->at(ijet)>50.0
     && fabs(jets_AKPF_eta->at(ijet))>0.9
     && fabs(jets_AKPF_eta->at(ijet))<1.9
-				     && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
+    && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
@@ -1520,6 +1620,8 @@ double EventHandler::getDZ(double vx, double vy, double vz, double px, double py
   return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
 }
 
+// int EventHandler::GetNumRecoMuons
+
 bool EventHandler::isRecoMuon(const uint imu, const uint level) const{
   if (imu>mus_pt->size()) return false;
   double pt_thresh(10.0);
@@ -1762,40 +1864,164 @@ bool EventHandler::IsMC(){
   return (sampleName.find("Run201") == std::string::npos);
 }
 
-double EventHandler::GetFatJetPt(const unsigned int index) const{
+double EventHandler::GetFatJetPt(const unsigned int index, const unsigned int pt_cut) const{
   if (cfAVersion!=75) return -9999.;
-  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
-  double px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
+  //  SetFastJetCollection(pt_cut);
+  double px(0.), py(0.);
+  switch(pt_cut){
+  case 10:
+    if (index>=fastjets_AK4_R1p2_R0p5pT10_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT10_px->at(index), py=fastjets_AK4_R1p2_R0p5pT10_py->at(index);
+    break;
+  case 15:
+    if (index>=fastjets_AK4_R1p2_R0p5pT15_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT15_px->at(index), py=fastjets_AK4_R1p2_R0p5pT15_py->at(index);
+    break;
+  case 20:
+    if (index>=fastjets_AK4_R1p2_R0p5pT20_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT20_px->at(index), py=fastjets_AK4_R1p2_R0p5pT20_py->at(index);
+    break;
+  case 25:
+    if (index>=fastjets_AK4_R1p2_R0p5pT25_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT25_px->at(index), py=fastjets_AK4_R1p2_R0p5pT25_py->at(index);
+    break;
+  case 30:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
+    break;
+  default:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
+     px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
+    break;
+  }
   return TMath::Sqrt(px*px+py*py);
 }
 
-int EventHandler::GetFatJetnConst(const unsigned int index) const{
+int EventHandler::GetFatJetnConst(const unsigned int index, const unsigned int pt_cut) const{
   if (cfAVersion!=75) return -1;
-  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -1;
-  return fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index); 
+  //  SetFastJetCollection(pt_cut);
+  int nConst;
+  switch(pt_cut){
+  case 10:
+    if (index>=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT10_nconstituents->at(index);
+    break;
+  case 15:
+    if (index>=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT15_nconstituents->at(index);
+    break;
+  case 20:
+    if (index>=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT20_nconstituents->at(index);
+    break;
+  case 25:
+    if (index>=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT25_nconstituents->at(index);
+    break;
+  case 30:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index);
+    break;
+  default:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size()) return -1;
+    nConst=fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index);
+    break;
+  }
+  return nConst; 
 }
 
-double EventHandler::GetFatJetmJ(const unsigned int index) const{
+double EventHandler::GetFatJetmJ(const unsigned int index, const unsigned int pt_cut) const{
   if (cfAVersion!=75) return -9999.;
-  if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -1;
-  TLorentzVector TLV(fastjets_AK4_R1p2_R0p5pT30_px->at(index),fastjets_AK4_R1p2_R0p5pT30_py->at(index),fastjets_AK4_R1p2_R0p5pT30_pz->at(index),fastjets_AK4_R1p2_R0p5pT30_energy->at(index));
+  //  SetFastJetCollection(pt_cut);
+  double px(0.), py(0.), pz(0.), energy(0.);
+  switch(pt_cut){
+  case 10:
+    if (index>=fastjets_AK4_R1p2_R0p5pT10_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT10_px->at(index), py=fastjets_AK4_R1p2_R0p5pT10_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT10_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT10_energy->at(index);
+    break;
+  case 15:
+    if (index>=fastjets_AK4_R1p2_R0p5pT15_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT15_px->at(index), py=fastjets_AK4_R1p2_R0p5pT15_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT15_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT15_energy->at(index);
+    break;
+  case 20:
+    if (index>=fastjets_AK4_R1p2_R0p5pT20_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT20_px->at(index), py=fastjets_AK4_R1p2_R0p5pT20_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT20_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT20_energy->at(index);
+    break;
+  case 25:
+    if (index>=fastjets_AK4_R1p2_R0p5pT25_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT25_px->at(index), py=fastjets_AK4_R1p2_R0p5pT25_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT25_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT25_energy->at(index);
+    break;
+  case 30:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(index);
+    break;
+  default:
+    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
+    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(index);
+    break;
+  }
+  TLorentzVector TLV(px, py, pz, energy);
   return TLV.M();
 }
 
-int EventHandler::GetNFatJets(const double fat_jet_pt_cut) const{
+int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const unsigned int skinny_jet_pt_cut) const{
   if (cfAVersion!=75) return -1;
+  //  SetFastJetCollection(pt_cut);
   uint nJ(0);
-  for (uint ifj(0); ifj<fastjets_AK4_R1p2_R0p5pT30_px->size(); ifj++) {
-    if (GetFatJetPt(ifj)>fat_jet_pt_cut) nJ++;
+  uint vSize(0);
+switch(skinny_jet_pt_cut){
+  case 10:
+    vSize=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size();
+    break;
+  case 15:
+    vSize=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size();
+    break;
+  case 20:
+    vSize=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size();
+    break;
+  case 25:
+    vSize=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size();
+    break;
+  case 30:
+    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
+    break;
+  default:
+    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
+    break;
+  }
+  for (uint ifj(0); ifj<vSize; ifj++) {
+    if (GetFatJetPt(ifj, skinny_jet_pt_cut)>fat_jet_pt_cut) nJ++;
   }
   return nJ;
 }
 
-double EventHandler::GetMJ(const double fat_jet_pt_cut) const{
-  if (cfAVersion!=75) return -9999.;
+double EventHandler::GetMJ(const double fat_jet_pt_cut, const unsigned int skinny_jet_pt_cut) const{
+   if (cfAVersion!=75) return -1;
+  //  SetFastJetCollection(pt_cut);
   double MJ(0.);
-  for (uint ifj(0); ifj<fastjets_AK4_R1p2_R0p5pT30_px->size(); ifj++) {
-    if (GetFatJetPt(ifj)>fat_jet_pt_cut) MJ+=GetFatJetmJ(ifj);
+  uint vSize(0);
+switch(skinny_jet_pt_cut){
+  case 10:
+    vSize=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size();
+    break;
+  case 15:
+    vSize=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size();
+    break;
+  case 20:
+    vSize=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size();
+    break;
+  case 25:
+    vSize=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size();
+    break;
+  case 30:
+    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
+    break;
+  default:
+    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
+    break;
+  }
+  for (uint ifj(0); ifj<vSize; ifj++) {
+    if (GetFatJetPt(ifj, skinny_jet_pt_cut)>fat_jet_pt_cut) MJ+=GetFatJetmJ(ifj, skinny_jet_pt_cut);
   }
   return MJ;
 }
