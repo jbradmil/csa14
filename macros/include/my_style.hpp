@@ -21,23 +21,23 @@ void set_style(TH1 * h, const TString& p) {
   } else {
     h->SetLineColor(kBlack);
     if (p == "znn") {
-      h->SetFillColor (814);
-      h->SetMarkerColor(814);
+      h->SetFillColor(kRed+4);
+      h->SetMarkerColor(kRed+4);
     } else if (p == "qcd") {
-      h->SetFillColor (42);
-      h->SetMarkerColor(42);
+      h->SetFillColor (kYellow-7);
+      h->SetMarkerColor(kYellow-7);
     } else if (p == "ttbar") {
       h->SetFillColor (596);
       h->SetMarkerColor(596);
     } else if (p == "wjets") {
-      h->SetFillColor (840);
-      h->SetMarkerColor(840);
+      h->SetFillColor (kGreen+4);
+      h->SetMarkerColor(kGreen+4);
     } else if (p == "single_top") {
-      h->SetFillColor (kYellow-7);
-      h->SetMarkerColor(kYellow-7);
+      h->SetFillColor (kMagenta);
+      h->SetMarkerColor(kMagenta);
     } else if (p == "other") {
-      h->SetFillColor (922);
-      h->SetMarkerColor(922);
+      h->SetFillColor (kBlue-6);
+      h->SetMarkerColor(kBlue-6);
     } else if (p== "bg") {
       h->SetFillColor(kAzure+1);
       h->SetMarkerColor(kAzure+1);

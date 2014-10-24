@@ -14,10 +14,12 @@
 #include "lumi_reweighting_stand_alone.hpp"
 #include "cfa2014.hpp"
 #include "b_jet.hpp"
+#include "fat_jet.hpp"
 #include "event_number.hpp"
 #include "gen_muon.hpp"
 #include "gen_electron.hpp"
 #include "gen_tau.hpp"
+#include "utils.hpp"
 
 typedef unsigned int uint;
 using std::vector;
@@ -44,6 +46,8 @@ public:
 protected:
   mutable std::vector<BJet> sortedBJetCache;//caching for efficiency
   mutable bool bJetsUpToDate;//cached value correct
+  mutable std::vector<FatJet> sortedFatJetCache;//caching for efficiency
+  mutable bool FatJetsUpToDate;//cached value correct
   mutable std::vector<GenMuon> genMuonCache;
   mutable bool genMuonsUpToDate;
   mutable std::vector<GenElectron> genElectronCache;
@@ -71,12 +75,15 @@ protected:
   mutable std::vector<double> beta;
 
 
-
   int GetcfAVersion() const;
+  unsigned TypeCode() const;
   // void SetFastJetCollection(const uint=30) const;
+  void GetSortedFatJets() const;
+  double GetHighestFatJetmJ(const unsigned int=1) const;
   void GetSortedBJets() const;
   double GetHighestJetPt(const unsigned int=1) const;
   double GetHighestJetCSV(const unsigned int=1) const;
+  int GetJetXIndex(const unsigned int=1) const;
   double GetJetXEta(const unsigned int=1) const;
   double GetJetXPhi(const unsigned int=1) const;
   double GetJetXCSV(const unsigned int=1) const;
@@ -86,7 +93,10 @@ protected:
   void GetEntry(const unsigned int);
   void GetBeta(const std::string which="beta") const;
 
+  bool PassesJSONCut() const;
+
   bool PassesSpecificTrigger(const std::string) const;
+  bool Passes2012RA2bTrigger() const;
   bool Passes2012METCleaningCut() const;
   bool PassesCSA14METCleaningCut() const;
   bool isProblemJet(const unsigned int) const;
@@ -220,6 +230,7 @@ protected:
   double GetSumP(const double=50.) const;
   double GetCentrality(const double=50.) const;
   unsigned int GetNumGoodJets(const double pt=50.) const;
+  unsigned int GetNumTruthMatchedBJets(const double pt=0., bool=false) const;
   unsigned int GetNumCSVTJets(const double=50.) const;
   unsigned int GetNumCSVMJets(const double=50.) const;
   unsigned int GetNumCSVLJets(const double=50.) const;
@@ -228,8 +239,8 @@ protected:
 
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };
-  double getDeltaPhiMETN( unsigned int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin ); //Ben
-  double getDeltaPhiMETN( unsigned int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true); }; //Ben, overloaded
+  double getDeltaPhiMETN(  int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin ); //Ben
+  double getDeltaPhiMETN( int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true); }; //Ben, overloaded
 
   double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid);
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
@@ -240,6 +251,9 @@ protected:
   double GetTransverseMass() const;
   double GetMHT(const double=30., const double=5.) const;
   double GetMHTPhi(const double=30., const double=5.) const;
+
+  double GetDocMET() const;
+  double GetGluinoPt(int=1) const;
 
 };
 

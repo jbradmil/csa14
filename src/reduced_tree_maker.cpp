@@ -20,8 +20,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   std::set<EventNumber> eventList;
   file.cd();
 
-  //  const bool isRealData(sampleName.find("Run2012")!=std::string::npos);
-  //  const bool isttbar(sampleName.find("TTJets")!=std::string::npos || sampleName.find("TT_")!=std::string::npos);
+  const bool isRealData(sampleName.find("Run2012")!=std::string::npos);
+  const bool isttbar(sampleName.find("TTJets")!=std::string::npos || sampleName.find("TT_")!=std::string::npos);
   std::vector<float> dataDist(pu::RunsThrough203002, pu::RunsThrough203002+60);
   std::vector<float> MCDist(pu::Summer2012_S10, pu::Summer2012_S10+60);//QQQ this needs to change later for general pileup scenario
   reweight::LumiReWeighting lumiWeights(MCDist, dataDist);
@@ -32,6 +32,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   float weightppb=scaleFactor;
   cout << "Nentries/Weight per pb: " << Nentries << "/" << weightppb << endl;
+
+  unsigned type_code(0x0);
+
+  bool passes2012RA2bTrigger(false);
+
+  bool passesJSONCut(false);
 
   bool pass_HLT_PFNoPUHT350_PFMET100(false), pass_HLT_PFNoPUHT650(false), 
     pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80(false), pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07(false);
@@ -71,6 +77,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   unsigned short num_csvt_jets30(0), num_csvm_jets30(0), num_csvl_jets30(0);
   unsigned short num_csvt_jets40(0), num_csvm_jets40(0), num_csvl_jets40(0);
 
+  unsigned short num_truth_matched_b_jets(0), num_good_truth_matched_b_jets(0);
+
   // unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
 
 
@@ -86,7 +94,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // unsigned short num_iso_tracks(0);
   
  
-  // float full_weight(0.0), lumi_weight(0.0), top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0);
+  float top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0);
 
   unsigned short num_gen_electrons(0), num_gen_muons(0), num_gen_taus(0);
   // num_gen_taus(0), num_gen_nus(0);
@@ -99,19 +107,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   int num_reco_muons(0), num_reco_veto_muons(0);
   int num_reco_electrons(0), num_reco_veto_electrons(0);
+  int num_ra2b_veto_taus(0), num_ra2b_veto_taus_noIso(0);
 
-  int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
+  // int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
 
 
-  int muon_gen_mother_id;
-  float muon_gen_pt, muon_gen_eta, muon_gen_phi;
-  int muon_reco_match;
-  int muon_signal, muon_veto, muon_PFmatched;
-  float muon_pt, muon_eta, muon_phi;
-  float muon_relIso;
-  float muon_NH_Et, muon_CH_pt, muon_ph_Et, muon_PU_pt;
-  float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
-  float muon_minDR_jet, muon_mT;
+  // int muon_gen_mother_id;
+  // float muon_gen_pt, muon_gen_eta, muon_gen_phi;
+  // int muon_reco_match;
+  // int muon_signal, muon_veto, muon_PFmatched;
+  // float muon_pt, muon_eta, muon_phi;
+  // float muon_relIso;
+  // float muon_NH_Et, muon_CH_pt, muon_ph_Et, muon_PU_pt;
+  // float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
+  // float muon_minDR_jet, muon_mT;
   // int muon2_gen_mother_id;
   // float muon2_gen_pt, muon2_gen_eta, muon2_gen_phi;
   // int muon2_reco_match;
@@ -122,15 +131,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // float muon2_NH_Iso, muon2_CH_Iso, muon2_ph_Iso, muon2_PU_Iso;
   // float muon2_minDR_jet, muon2_mT;
 
-  int electron_gen_mother_id;
-  float electron_gen_pt, electron_gen_eta, electron_gen_phi;
-  int electron_reco_match;
-  int electron_signal, electron_veto, electron_PFmatched;
-  float electron_pt, electron_eta, electron_phi;
-  float electron_relIso;
-  float electron_NH_Et, electron_CH_pt, electron_ph_Et;
-  float electron_NH_Iso, electron_CH_Iso, electron_ph_Iso;
-  float electron_minDR_jet, electron_mT;
+  // int electron_gen_mother_id;
+  // float electron_gen_pt, electron_gen_eta, electron_gen_phi;
+  // int electron_reco_match;
+  // int electron_signal, electron_veto, electron_PFmatched;
+  // float electron_pt, electron_eta, electron_phi;
+  // float electron_relIso;
+  // float electron_NH_Et, electron_CH_pt, electron_ph_Et;
+  // float electron_NH_Iso, electron_CH_Iso, electron_ph_Iso;
+  // float electron_minDR_jet, electron_mT;
   // int electron2_gen_mother_id;
   // float electron2_gen_pt, electron2_gen_eta, electron2_gen_phi;
   // int electron2_reco_match;
@@ -141,10 +150,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // float electron2_NH_Iso, electron2_CH_Iso, electron2_ph_Iso;
   // float electron2_minDR_jet, electron2_mT;
 
-  int lep1, lep2;
+  // int lep1, lep2;
 
   float min_delta_phi_met, min_delta_phi_met_loose_jets;
   float min_delta_phi_met_N, min_delta_phi_met_N_loose_jets;
+  float jet1_DeltaPhiMETN, jet2_DeltaPhiMETN, jet3_DeltaPhiMETN;
+
   // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
   int num_iso_tracks;
 
@@ -184,8 +195,19 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   int num_fatpT30_jets(-1), num_fatpT30_jets_pt100(-1), num_fatpT30_jets_pt150(-1), num_fatpT30_jets_pt200(-1),  num_fatpT30_jets_pt300(-1);
   double fatpT30_MJ(-9999.), fatpT30_MJ_pt100(-9999.), fatpT30_MJ_pt150(-9999.), fatpT30_MJ_pt200(-9999.), fatpT30_MJ_pt300(-9999.);
 
+  double highest_mJ(-1.), scnd_highest_mJ(-1.), thrd_highest_mJ(-1.), frth_highest_mJ(-1.);
+
+  double doc_met(0.);
+  double gluino1_pt(0.), gluino2_pt(0.);
+
+
   reduced_tree.Branch("weightppb", &weightppb);
 
+  reduced_tree.Branch("type_code", &type_code);
+
+ reduced_tree.Branch("passes2012RA2bTrigger", &passes2012RA2bTrigger);
+
+  reduced_tree.Branch("passesJSONCut",&passesJSONCut);
   reduced_tree.Branch("passesPVCut",&passesPVCut);
   reduced_tree.Branch("passes2012METCleaningCut",&passes2012METCleaningCut);
   reduced_tree.Branch("passesCSA14METCleaningCut",&passesCSA14METCleaningCut);
@@ -198,7 +220,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("ecallaserfilter_decision",&ecallaserfilter_decision);
   reduced_tree.Branch("trkPOG_manystripclus53Xfilter_decision",&trkPOG_manystripclus53Xfilter_decision);
   reduced_tree.Branch("eebadscfilter_decision",&eebadscfilter_decision);
+  // This is probably the most important one, and it contains a sumamry of the others
+  // https://cmssdt.cern.ch/SDT/lxr/source/RecoMET/METFilters/python/metFilters_cff.py#0045
   reduced_tree.Branch("METFiltersfilter_decision",&METFiltersfilter_decision);
+
   reduced_tree.Branch("HBHENoisefilter_decision",&HBHENoisefilter_decision);
   reduced_tree.Branch("trkPOG_toomanystripclus53Xfilter_decision",&trkPOG_toomanystripclus53Xfilter_decision);
   reduced_tree.Branch("hcallaserfilter_decision",&hcallaserfilter_decision);
@@ -207,9 +232,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   //  reduced_tree.Branch("full_weight", &full_weight);
   // reduced_tree.Branch("lumi_weight", &lumi_weight);
-  // reduced_tree.Branch("pu_weight", &pu_weight);
-  //  reduced_tree.Branch("top_pt_weight", &top_pt_weight);
-  //  reduced_tree.Branch("top_pt_weight_official", &top_pt_weight_official);
+  reduced_tree.Branch("pu_weight", &pu_weight);
+  reduced_tree.Branch("top_pt_weight", &top_pt_weight);
+  reduced_tree.Branch("top_pt_weight_official", &top_pt_weight_official);
  
   reduced_tree.Branch("run", &run);
   reduced_tree.Branch("event", &event);
@@ -325,37 +350,40 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_csvm_jets40", &num_csvm_jets40); 
   reduced_tree.Branch("num_csvl_jets40", &num_csvl_jets40); 
 
+  reduced_tree.Branch("num_truth_matched_b_jets", &num_truth_matched_b_jets);
+  reduced_tree.Branch("num_good_truth_matched_b_jets", &num_good_truth_matched_b_jets);
+
   reduced_tree.Branch("num_gen_muons", &num_gen_muons);
   reduced_tree.Branch("num_gen_electrons", &num_gen_electrons);
   reduced_tree.Branch("num_gen_taus", &num_gen_taus);
 
-  reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
-  reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
-  reduced_tree.Branch("muon_gen_eta", &muon_gen_eta);
-  reduced_tree.Branch("muon_gen_phi", &muon_gen_phi);
-  reduced_tree.Branch("muon_reco_match", &muon_reco_match);
+  // reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
+  // reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
+  // reduced_tree.Branch("muon_gen_eta", &muon_gen_eta);
+  // reduced_tree.Branch("muon_gen_phi", &muon_gen_phi);
+  // reduced_tree.Branch("muon_reco_match", &muon_reco_match);
 
-  reduced_tree.Branch("muon_signal", &muon_signal);
-  reduced_tree.Branch("muon_veto", &muon_veto);
-  reduced_tree.Branch("muon_PFmatched", &muon_PFmatched);
+  // reduced_tree.Branch("muon_signal", &muon_signal);
+  // reduced_tree.Branch("muon_veto", &muon_veto);
+  // reduced_tree.Branch("muon_PFmatched", &muon_PFmatched);
 
-  reduced_tree.Branch("muon_pt", &muon_pt);
-  reduced_tree.Branch("muon_eta", &muon_eta);
-  reduced_tree.Branch("muon_phi", &muon_phi);
+  // reduced_tree.Branch("muon_pt", &muon_pt);
+  // reduced_tree.Branch("muon_eta", &muon_eta);
+  // reduced_tree.Branch("muon_phi", &muon_phi);
 
-  reduced_tree.Branch("muon_relIso", &muon_relIso);
-  reduced_tree.Branch("muon_NH_Iso", &muon_NH_Iso);
-  reduced_tree.Branch("muon_CH_Iso", &muon_CH_Iso);
-  reduced_tree.Branch("muon_ph_Iso", &muon_ph_Iso);
-  reduced_tree.Branch("muon_PU_Iso", &muon_PU_Iso);
+  // reduced_tree.Branch("muon_relIso", &muon_relIso);
+  // reduced_tree.Branch("muon_NH_Iso", &muon_NH_Iso);
+  // reduced_tree.Branch("muon_CH_Iso", &muon_CH_Iso);
+  // reduced_tree.Branch("muon_ph_Iso", &muon_ph_Iso);
+  // reduced_tree.Branch("muon_PU_Iso", &muon_PU_Iso);
 
-  reduced_tree.Branch("muon_NH_Et", &muon_NH_Et);
-  reduced_tree.Branch("muon_CH_pt", &muon_CH_pt);
-  reduced_tree.Branch("muon_ph_Et", &muon_ph_Et);
-  reduced_tree.Branch("muon_PU_pt", &muon_PU_pt);
+  // reduced_tree.Branch("muon_NH_Et", &muon_NH_Et);
+  // reduced_tree.Branch("muon_CH_pt", &muon_CH_pt);
+  // reduced_tree.Branch("muon_ph_Et", &muon_ph_Et);
+  // reduced_tree.Branch("muon_PU_pt", &muon_PU_pt);
 
-  reduced_tree.Branch("muon_minDR_jet", &muon_minDR_jet);
-  reduced_tree.Branch("muon_mT", &muon_mT);
+  // reduced_tree.Branch("muon_minDR_jet", &muon_minDR_jet);
+  // reduced_tree.Branch("muon_mT", &muon_mT);
 
 
   reduced_tree.Branch("num_reco_veto_muons", &num_reco_veto_muons);
@@ -363,44 +391,49 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   reduced_tree.Branch("num_reco_veto_electrons", &num_reco_veto_electrons);
   reduced_tree.Branch("num_reco_electrons", &num_reco_electrons);
+  reduced_tree.Branch("num_ra2b_veto_taus", &num_ra2b_veto_taus);
+  reduced_tree.Branch("num_ra2b_veto_taus_noIso", &num_ra2b_veto_taus_noIso);
 
-  reduced_tree.Branch("electron_gen_mother_id", &electron_gen_mother_id);
-  reduced_tree.Branch("electron_gen_pt", &electron_gen_pt);
-  reduced_tree.Branch("electron_gen_eta", &electron_gen_eta);
-  reduced_tree.Branch("electron_gen_phi", &electron_gen_phi);
-  reduced_tree.Branch("electron_reco_match", &electron_reco_match);
+  // reduced_tree.Branch("electron_gen_mother_id", &electron_gen_mother_id);
+  // reduced_tree.Branch("electron_gen_pt", &electron_gen_pt);
+  // reduced_tree.Branch("electron_gen_eta", &electron_gen_eta);
+  // reduced_tree.Branch("electron_gen_phi", &electron_gen_phi);
+  // reduced_tree.Branch("electron_reco_match", &electron_reco_match);
 
-  reduced_tree.Branch("electron_signal", &electron_signal);
-  reduced_tree.Branch("electron_veto", &electron_veto);
-  reduced_tree.Branch("electron_PFmatched", &electron_PFmatched);
+  // reduced_tree.Branch("electron_signal", &electron_signal);
+  // reduced_tree.Branch("electron_veto", &electron_veto);
+  // reduced_tree.Branch("electron_PFmatched", &electron_PFmatched);
 
-  reduced_tree.Branch("electron_pt", &electron_pt);
-  reduced_tree.Branch("electron_eta", &electron_eta);
-  reduced_tree.Branch("electron_phi", &electron_phi);
+  // reduced_tree.Branch("electron_pt", &electron_pt);
+  // reduced_tree.Branch("electron_eta", &electron_eta);
+  // reduced_tree.Branch("electron_phi", &electron_phi);
 
-  reduced_tree.Branch("electron_relIso", &electron_relIso);
-  reduced_tree.Branch("electron_NH_Iso", &electron_NH_Iso);
-  reduced_tree.Branch("electron_CH_Iso", &electron_CH_Iso);
-  reduced_tree.Branch("electron_ph_Iso", &electron_ph_Iso);
+  // reduced_tree.Branch("electron_relIso", &electron_relIso);
+  // reduced_tree.Branch("electron_NH_Iso", &electron_NH_Iso);
+  // reduced_tree.Branch("electron_CH_Iso", &electron_CH_Iso);
+  // reduced_tree.Branch("electron_ph_Iso", &electron_ph_Iso);
 
-  reduced_tree.Branch("electron_NH_Et", &electron_NH_Et);
-  reduced_tree.Branch("electron_CH_pt", &electron_CH_pt);
-  reduced_tree.Branch("electron_ph_Et", &electron_ph_Et);
+  // reduced_tree.Branch("electron_NH_Et", &electron_NH_Et);
+  // reduced_tree.Branch("electron_CH_pt", &electron_CH_pt);
+  // reduced_tree.Branch("electron_ph_Et", &electron_ph_Et);
 
-  reduced_tree.Branch("electron_minDR_jet", &electron_minDR_jet);
-  reduced_tree.Branch("electron_mT", &electron_mT);
+  // reduced_tree.Branch("electron_minDR_jet", &electron_minDR_jet);
+  // reduced_tree.Branch("electron_mT", &electron_mT);
 
-  reduced_tree.Branch("num_lost_electrons", &num_lost_electrons);
-  reduced_tree.Branch("num_lost_muons", &num_lost_muons);
-  reduced_tree.Branch("num_lost_leptons", &num_lost_leptons);
+  // reduced_tree.Branch("num_lost_electrons", &num_lost_electrons);
+  // reduced_tree.Branch("num_lost_muons", &num_lost_muons);
+  // reduced_tree.Branch("num_lost_leptons", &num_lost_leptons);
 
-  reduced_tree.Branch("lep1", &lep1);
-  reduced_tree.Branch("lep2", &lep2);
+  // reduced_tree.Branch("lep1", &lep1);
+  // reduced_tree.Branch("lep2", &lep2);
 
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
   reduced_tree.Branch("min_delta_phi_met_N_loose_jets", &min_delta_phi_met_N_loose_jets);
   reduced_tree.Branch("min_delta_phi_met", &min_delta_phi_met);
   reduced_tree.Branch("min_delta_phi_met_loose_jets", &min_delta_phi_met_loose_jets);
+  reduced_tree.Branch("jet1_DeltaPhiMETN", &jet1_DeltaPhiMETN);
+  reduced_tree.Branch("jet2_DeltaPhiMETN", &jet2_DeltaPhiMETN);
+  reduced_tree.Branch("jet3_DeltaPhiMETN", &jet3_DeltaPhiMETN);
   // reduced_tree.Branch("deltaPhiN_1", &deltaPhiN_1);
   // reduced_tree.Branch("deltaPhiN_2", &deltaPhiN_2);
   // reduced_tree.Branch("deltaPhiN_3", &deltaPhiN_3);
@@ -537,6 +570,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("fatpT30_MJ_pt150", &fatpT30_MJ_pt150);
   reduced_tree.Branch("fatpT30_MJ_pt200", &fatpT30_MJ_pt200);
   reduced_tree.Branch("fatpT30_MJ_pt300", &fatpT30_MJ_pt300);
+ 
+  reduced_tree.Branch("highest_mJ", &highest_mJ);
+  reduced_tree.Branch("scnd_highest_mJ", &scnd_highest_mJ);
+  reduced_tree.Branch("thrd_highest_mJ", &thrd_highest_mJ);
+  reduced_tree.Branch("frth_highest_mJ", &frth_highest_mJ);
+
+  reduced_tree.Branch("doc_met", &doc_met);
+  reduced_tree.Branch("gluino1_pt", &gluino1_pt);
+  reduced_tree.Branch("gluino2_pt", &gluino2_pt);
 
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
@@ -547,13 +589,16 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       timer.PrintRemainingTime();
     }
     timer.Iterate();
-    //   cout << "JERR" << endl;
+    // cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
-    //  cout << "*****Event " << i << "*****" << endl;
+   
+    // cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
+
+    type_code=TypeCode();
 
     // just xsec/nGen now
     passes2012METCleaningCut=false;
@@ -563,11 +608,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     passesBadJetFilter=PassesBadJetFilter();
     PBNRcode=GetPBNR();
 
+    passes2012RA2bTrigger=Passes2012RA2bTrigger();
+
     pass_HLT_PFNoPUHT350_PFMET100=PassesSpecificTrigger("HLT_PFNoPUHT350_PFMET100_v");
     pass_HLT_PFNoPUHT650=PassesSpecificTrigger("HLT_PFNoPUHT650_v");
     pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80=PassesSpecificTrigger("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v");
     pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07=PassesSpecificTrigger("HLT_DiCentralPFJet30_PFMET80_BTagCSV07_v");
 
+    passesJSONCut=PassesJSONCut();
     passesPVCut=PassesPVCut();
     num_primary_vertices=GetNumVertices();
     pu_true_num_interactions=GetTrueNumInteractions();
@@ -575,7 +623,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     eoot_pu=GetEarlyOutOfTimePU(1);
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
-    //       cout << "JERR1" << endl;
+    // cout << "JERR1" << endl;
 
     highest_csv=GetHighestJetCSV(1);
     second_highest_csv=GetHighestJetCSV(2);
@@ -622,7 +670,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     jet6_motherId=GetJetXMotherId(6);
     met=pfTypeImets_et->at(0);
     met_phi=pfTypeImets_phi->at(0);
-    //        cout << "JERR2" << endl;
+    // cout << "JERR2" << endl;
     ht20=GetHT(20.);
     ht30=GetHT(30.);
     ht40=GetHT(40.);
@@ -642,7 +690,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_jets_pt70=GetNumGoodJets(70);
     num_jets_pt100=GetNumGoodJets(100);
     num_jets_pt150=GetNumGoodJets(150);
-    //  cout << "num_jets=" << num_jets << endl;
+    // cout << "num_jets=" << num_jets_pt50 << endl;
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
     num_csvl_jets=GetNumCSVLJets();
@@ -655,6 +703,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_csvt_jets40=GetNumCSVTJets(40.);
     num_csvm_jets40=GetNumCSVMJets(40.);
     num_csvl_jets40=GetNumCSVLJets(40.);
+
+    num_truth_matched_b_jets=GetNumTruthMatchedBJets();
+    num_good_truth_matched_b_jets=GetNumTruthMatchedBJets(0.,true);
+
+    
 
     // num_gen_partons=GetNGenPartons();
     // num_gen_partons_pt20=GetNGenPartons(20.);
@@ -689,53 +742,22 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     if (ht80>0) met_over_sqrt_ht80=met/TMath::Sqrt(ht80);
     else met_over_sqrt_ht80=-1.;
 
-    /*
-      num_ra2b_veto_electrons=GetNumRA2bElectrons(0);
-      num_ra2b_veto_muons=GetNumRA2bMuons(0);
-      //   num_ra2b_veto_taus=GetNumRA2bTaus(0);
-      num_ra2b_veto_leptons=num_ra2b_veto_electrons+num_ra2b_veto_muons;
-      num_ra2b_noiso_electrons=GetNumRA2bElectrons(0,false);
-      num_ra2b_noiso_muons=GetNumRA2bMuons(0,false);
-      //   num_ra2b_noiso_taus=GetNumRA2bTaus(0,false);
-      num_ra2b_noiso_leptons=num_ra2b_noiso_electrons+num_ra2b_noiso_muons;
-      num_ra2b_loose_electrons=GetNumRA2bElectrons(1);
-      num_ra2b_loose_muons=GetNumRA2bMuons(1);
-      //    num_ra2b_loose_taus=GetNumRA2bTaus(1);
-      num_ra2b_loose_leptons=num_ra2b_loose_electrons+num_ra2b_loose_muons;
-      num_ra2b_medium_electrons=GetNumRA2bElectrons(2);
-      num_ra2b_medium_muons=GetNumRA2bMuons(2);
-      //    num_ra2b_medium_taus=GetNumRA2bTaus(2);
-      num_ra2b_medium_leptons=num_ra2b_medium_electrons+num_ra2b_medium_muons;
-      num_ra2b_tight_electrons=GetNumRA2bElectrons(3);
-      num_ra2b_tight_muons=GetNumRA2bMuons(3);
-      //    num_ra2b_tight_taus=GetNumRA2bTaus(3);
-      num_ra2b_tight_leptons=num_ra2b_tight_electrons+num_ra2b_tight_muons;
-    */
-    // num_ra2b_iso_tracks=NewGetNumIsoTracks();
+    num_ra2b_veto_taus=GetNumRA2bTaus(0);
+    num_ra2b_veto_taus_noIso=GetNumRA2bTaus(0, false);
+
     
 
-    //  double this_scale_factor(scaleFactor);
-    //   pu_weight=isRealData?1.0:GetPUWeight(lumiWeights);
-    //  lumi_weight=this_scale_factor;
-    //   top_pt_weight=isttbar?GetTopPtWeight():1.0;
-    //   top_pt_weight_official=isttbar?GetTopPtWeightOfficial():1.0;
-    //   full_weight=pu_weight*lumi_weight*top_pt_weight_official;
+    double this_scale_factor(scaleFactor);
+    pu_weight=isRealData?1.0:GetPUWeight(lumiWeights);
+    top_pt_weight=isttbar?GetTopPtWeight():1.0;
+    top_pt_weight_official=isttbar?GetTopPtWeightOfficial():1.0;
+    weightppb=this_scale_factor*pu_weight*top_pt_weight_official;
 
-    if (!genMuonsUpToDate) SetupGenMuons();
-    if (!genElectronsUpToDate) SetupGenElectrons();
-    num_gen_muons=0;
-    num_lost_muons=0;
-    for (uint imu(0); imu<genMuonCache.size(); imu++) {
-      if (genMuonCache[imu].IsIso()) num_gen_muons++;
-      if (!genMuonCache[imu].IsVeto()) num_lost_muons++;
-    }
-    num_gen_electrons=0;
-    num_lost_electrons=0;
-    for (uint iel(0); iel<genElectronCache.size(); iel++) {
-      if (genElectronCache[iel].IsIso()) num_gen_electrons++;
-      if (!genElectronCache[iel].IsVeto()) num_lost_electrons++;
-    }
-    
+    num_gen_taus=GetNGenParticles(15);
+    num_gen_muons=GetNGenParticles(13);
+    num_gen_electrons=GetNGenParticles(11);
+
+   
 
     vector<int> reco_muons, reco_veto_muons;
     if (cmEnergy>8) {
@@ -745,7 +767,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     else {
       reco_muons = GetRA2bMuons(false);
       reco_veto_muons = GetRA2bMuons(true);
-      //    cout << "JERR3" << endl;
+      // cout << "JERR3" << endl;
     }
     num_reco_muons = reco_muons.size();
     num_reco_veto_muons = reco_veto_muons.size();
@@ -758,158 +780,169 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     else {
       reco_electrons = GetRA2bElectrons(false);
       reco_veto_electrons = GetRA2bElectrons(true);
-      //        cout << "JERR4" << endl;
+      // cout << "JERR4" << endl;
     }
 
     num_reco_electrons = reco_electrons.size();
     num_reco_veto_electrons = reco_veto_electrons.size();
-    
-   
-    num_lost_leptons=num_lost_electrons+num_lost_muons;
+    //  num_lost_leptons=num_lost_electrons+num_lost_muons;
 
-    muon_gen_mother_id=-999;
-    muon_gen_pt=-999.;
-    muon_gen_eta=-999.;
-    muon_gen_phi=-999.;
-    muon_reco_match=-1;
-    muon_signal=-1;
-    muon_veto=-1;
-    muon_PFmatched=-1;
-    muon_pt=-1.;
-    muon_eta=-999.;
-    muon_phi=-999.;
-    muon_relIso=-1.;
-    muon_NH_Iso=-1.;
-    muon_CH_Iso=-1.;
-    muon_ph_Iso=-1.;
-    muon_PU_Iso=-1.;  
-    muon_NH_Et=-1.;
-    muon_CH_pt=-1.;
-    muon_ph_Et=-1.;
-    muon_PU_pt=-1.;
-    muon_minDR_jet=-1;
-    muon_mT=-1;
+ 
 
-
-    if (num_gen_muons>=1) {
-      muon_gen_mother_id=genMuonCache[0].GetMotherId();
-      muon_gen_pt=genMuonCache[0].GetLorentzVector().Pt();
-      muon_gen_eta=genMuonCache[0].GetLorentzVector().Eta();
-      muon_gen_phi=genMuonCache[0].GetLorentzVector().Phi();
-      if(genMuonCache[0].GetMusMatch()>=0) {
-	muon_reco_match = genMuonCache[0].GetMusMatch();
-	if (cmEnergy>=13) {
-	  muon_signal=isRecoMuon(muon_reco_match,1);
-	  muon_veto=isRecoMuon(muon_reco_match,0);
-	  muon_PFmatched=mus_isPF->at(muon_reco_match);
-	  muon_pt=mus_pt->at(muon_reco_match);
-	  muon_eta=mus_eta->at(muon_reco_match);
-	  muon_phi=mus_phi->at(muon_reco_match);
-	  muon_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
-	  muon_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
-	  muon_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
-	  muon_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon_reco_match);  
-	  muon_relIso=GetMuonRelIso(muon_reco_match); 
-	}
-	else {
-	  muon_signal=isRA2bMuon(muon_reco_match,1);
-	  muon_veto=isRA2bMuon(muon_reco_match,0);
-	  muon_PFmatched=true;
-	  muon_pt=pf_mus_pt->at(muon_reco_match);
-	  muon_eta=pf_mus_eta->at(muon_reco_match);
-	  muon_phi=pf_mus_phi->at(muon_reco_match);
-	  muon_NH_Et=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
-	  muon_CH_pt=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
-	  muon_ph_Et=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
-	  muon_PU_pt=pf_mus_pfIsolationR04_sumPUPt->at(muon_reco_match);
-	  muon_relIso=GetRA2bMuonRelIso(muon_reco_match);
-	}
-	muon_NH_Iso=muon_NH_Et/muon_pt;
-	muon_CH_Iso=muon_CH_pt/muon_pt;
-	muon_ph_Iso=muon_ph_Et/muon_pt;
-	muon_PU_Iso=muon_PU_pt/muon_pt;
-	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match); // compatible with both old and new samples
-	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
-	//	cout << "muon_minDR_jet: " << muon_minDR_jet << endl;
-      }
-    }
+    // muon_gen_mother_id=-999;
+    // muon_gen_pt=-999.;
+    // muon_gen_eta=-999.;
+    // muon_gen_phi=-999.;
+    // muon_reco_match=-1;
+    // muon_signal=-1;
+    // muon_veto=-1;
+    // muon_PFmatched=-1;
+    // muon_pt=-1.;
+    // muon_eta=-999.;
+    // muon_phi=-999.;
+    // muon_relIso=-1.;
+    // muon_NH_Iso=-1.;
+    // muon_CH_Iso=-1.;
+    // muon_ph_Iso=-1.;
+    // muon_PU_Iso=-1.;  
+    // muon_NH_Et=-1.;
+    // muon_CH_pt=-1.;
+    // muon_ph_Et=-1.;
+    // muon_PU_pt=-1.;
+    // muon_minDR_jet=-1;
+    // muon_mT=-1;
 
 
-    electron_gen_mother_id=-999;
-    electron_gen_pt=-999.;
-    electron_gen_eta=-999.;
-    electron_gen_phi=-999.;
-    electron_reco_match=-1;
-    electron_signal=-1;
-    electron_veto=-1;
-    electron_PFmatched=-1;
-    electron_pt=-1.;
-    electron_eta=-999.;
-    electron_phi=-999.;
-    electron_relIso=-1.;
-    electron_NH_Iso=-1.;
-    electron_CH_Iso=-1.;
-    electron_ph_Iso=-1.;
-    electron_NH_Et=-1.;
-    electron_CH_pt=-1.;
-    electron_ph_Et=-1.;
-    electron_minDR_jet=-1;
-    electron_mT=-1;
+    // if (genMuonCache.size()>=1) {
+    //   // cout << "Gen muons..." << endl;
+    //   muon_gen_mother_id=genMuonCache[0].GetMotherId();
+    //   muon_gen_pt=genMuonCache[0].GetLorentzVector().Pt();
+    //   muon_gen_eta=genMuonCache[0].GetLorentzVector().Eta();
+    //   muon_gen_phi=genMuonCache[0].GetLorentzVector().Phi();
+    //   if(genMuonCache[0].GetMusMatch()>=0) {
+    // 	muon_reco_match = genMuonCache[0].GetMusMatch();
+    // 	if (cmEnergy>=13) {
+    // 	  muon_signal=isRecoMuon(muon_reco_match,1);
+    // 	  muon_veto=isRecoMuon(muon_reco_match,0);
+    // 	  muon_PFmatched=mus_isPF->at(muon_reco_match);
+    // 	  muon_pt=mus_pt->at(muon_reco_match);
+    // 	  muon_eta=mus_eta->at(muon_reco_match);
+    // 	  muon_phi=mus_phi->at(muon_reco_match);
+    // 	  muon_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
+    // 	  muon_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
+    // 	  muon_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
+    // 	  muon_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon_reco_match);  
+    // 	  muon_relIso=GetMuonRelIso(muon_reco_match); 
+    // 	}
+    // 	else {
+    // 	  muon_signal=isRA2bMuon(muon_reco_match,1);
+    // 	  muon_veto=isRA2bMuon(muon_reco_match,0);
+    // 	  muon_PFmatched=true;
+    // 	  muon_pt=pf_mus_pt->at(muon_reco_match);
+    // 	  muon_eta=pf_mus_eta->at(muon_reco_match);
+    // 	  muon_phi=pf_mus_phi->at(muon_reco_match);
+    // 	  muon_NH_Et=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
+    // 	  muon_CH_pt=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
+    // 	  muon_ph_Et=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
+    // 	  muon_PU_pt=pf_mus_pfIsolationR04_sumPUPt->at(muon_reco_match);
+    // 	  muon_relIso=GetRA2bMuonRelIso(muon_reco_match);
+    // 	}
+    // 	muon_NH_Iso=muon_NH_Et/muon_pt;
+    // 	muon_CH_Iso=muon_CH_pt/muon_pt;
+    // 	muon_ph_Iso=muon_ph_Et/muon_pt;
+    // 	muon_PU_Iso=muon_PU_pt/muon_pt;
+    // 	// cout << "muon_minDR_jet... " << endl;
+    // 	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match); // compatible with both old and new samples
+    // 	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
+    // 	// cout << "... " << muon_minDR_jet << endl;
+    //   }
+    // }
+
+
+    // electron_gen_mother_id=-999;
+    // electron_gen_pt=-999.;
+    // electron_gen_eta=-999.;
+    // electron_gen_phi=-999.;
+    // electron_reco_match=-1;
+    // electron_signal=-1;
+    // electron_veto=-1;
+    // electron_PFmatched=-1;
+    // electron_pt=-1.;
+    // electron_eta=-999.;
+    // electron_phi=-999.;
+    // electron_relIso=-1.;
+    // electron_NH_Iso=-1.;
+    // electron_CH_Iso=-1.;
+    // electron_ph_Iso=-1.;
+    // electron_NH_Et=-1.;
+    // electron_CH_pt=-1.;
+    // electron_ph_Et=-1.;
+    // electron_minDR_jet=-1;
+    // electron_mT=-1;
   
 
-    if (num_gen_electrons>=1) {
-      electron_gen_mother_id=genElectronCache[0].GetMotherId();
-      electron_gen_pt=genElectronCache[0].GetLorentzVector().Pt();
-      electron_gen_eta=genElectronCache[0].GetLorentzVector().Eta();
-      electron_gen_phi=genElectronCache[0].GetLorentzVector().Phi();
-      if(genElectronCache[0].GetElsMatch()>=0) {
-	electron_reco_match = genElectronCache[0].GetElsMatch();
-	electron_signal=isRecoElectron(electron_reco_match,1);
-	electron_veto=isRecoElectron(electron_reco_match,0);
-	electron_PFmatched=hasPFMatch(electron_reco_match, particleId::electron);
-	electron_pt=els_pt->at(electron_reco_match);
-	electron_eta=els_eta->at(electron_reco_match);
-	electron_phi=els_phi->at(electron_reco_match);
-	if (cmEnergy<13) { 
-	  electron_relIso=GetElectronRelIso(electron_reco_match);
-	  electron_NH_Et=els_PFneutralHadronIsoR03->at(electron_reco_match);
-	  electron_CH_pt=els_PFchargedHadronIsoR03->at(electron_reco_match);
-	  electron_ph_Et=els_PFphotonIsoR03->at(electron_reco_match);
-	}
-	else {
-	  electron_relIso=GetCSAElectronIsolation(electron_reco_match);
-	  electron_NH_Et=els_pfIsolationR03_sumNeutralHadronEt->at(electron_reco_match);
-	  electron_CH_pt=els_pfIsolationR03_sumChargedHadronPt->at(electron_reco_match);
-	  electron_ph_Et=els_pfIsolationR03_sumPhotonEt->at(electron_reco_match);
-	}
-	electron_NH_Iso=electron_NH_Et/electron_pt;
-	electron_CH_Iso=electron_CH_pt/electron_pt;
-	electron_ph_Iso=electron_ph_Et/electron_pt;
-	electron_minDR_jet=GetMinDRElectronJet(electron_reco_match); // compatible with both old and new samples
-	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
-      }
-    }
+    // if (genElectronCache.size()>=1) {
+    //   // cout << "Gen electrons..." << endl;
+    //   electron_gen_mother_id=genElectronCache[0].GetMotherId();
+    //   electron_gen_pt=genElectronCache[0].GetLorentzVector().Pt();
+    //   electron_gen_eta=genElectronCache[0].GetLorentzVector().Eta();
+    //   electron_gen_phi=genElectronCache[0].GetLorentzVector().Phi();
+    //   if(genElectronCache[0].GetElsMatch()>=0) {
+    // 	// cout << "Reco electrons..." << endl;
+    // 	electron_reco_match = genElectronCache[0].GetElsMatch();
+    // 	if (cmEnergy<13) { 
+    // 	  // // cout << "electron id..." << endl;
+    // 	  // electron_signal=isRA2bElectron(electron_reco_match,1);
+    // 	  // electron_veto=isRA2bElectron(electron_reco_match,0);
+    // 	  // electron_pt=pf_els_pt->at(electron_reco_match);
+    // 	  // electron_eta=pf_els_eta->at(electron_reco_match);
+    // 	  // electron_phi=pf_els_phi->at(electron_reco_match);
+    // 	  // electron_PFmatched=true;
+    // 	  // // cout << "electron isolation..." << endl;
+    // 	  // electron_relIso=GetElectronRelIso(electron_reco_match);
+    // 	  // electron_NH_Et=els_PFneutralHadronIsoR03->at(electron_reco_match);
+    // 	  // electron_CH_pt=els_PFchargedHadronIsoR03->at(electron_reco_match);
+    // 	  // electron_ph_Et=els_PFphotonIsoR03->at(electron_reco_match);
+    // 	}
+    // 	else {
+    // 	  electron_signal=isRecoElectron(electron_reco_match,1);
+    // 	  electron_veto=isRecoElectron(electron_reco_match,0);
+    // 	  electron_pt=els_pt->at(electron_reco_match);
+    // 	  electron_eta=els_eta->at(electron_reco_match);
+    // 	  electron_phi=els_phi->at(electron_reco_match);
+    // 	  electron_PFmatched=els_isPF->at(electron_reco_match);
+    // 	  electron_relIso=GetCSAElectronIsolation(electron_reco_match);
+    // 	  electron_NH_Et=els_pfIsolationR03_sumNeutralHadronEt->at(electron_reco_match);
+    // 	  electron_CH_pt=els_pfIsolationR03_sumChargedHadronPt->at(electron_reco_match);
+    // 	  electron_ph_Et=els_pfIsolationR03_sumPhotonEt->at(electron_reco_match);
+    // 	}
+    // 	electron_NH_Iso=electron_NH_Et/electron_pt;
+    // 	electron_CH_Iso=electron_CH_pt/electron_pt;
+    // 	electron_ph_Iso=electron_ph_Et/electron_pt;
+    // 	// cout << "electron_minDR_jet... " << endl;
+    // 	electron_minDR_jet=GetMinDRElectronJet(electron_reco_match); // compatible with both old and new samples
+    // 	// cout << "... " << electron_minDR_jet << endl;
+    // 	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
+    //   }
+    // }
   
 
 
 
     // cout << "minDeltaPhi..." << endl;
-    min_delta_phi_met=GetMinDeltaPhiMET(3);
+    min_delta_phi_met=GetMinDeltaPhiMET(3,30.);
     min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
-    min_delta_phi_met_N=getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true);
+    min_delta_phi_met_N=getMinDeltaPhiMETN(3,30.,2.4,true,30.,2.4,true,true);
     if (min_delta_phi_met_N>10e7&&num_jets_pt50>2) cout << "Funky event " << event << endl;
-    min_delta_phi_met_N_loose_jets=getMinDeltaPhiMETN(3,20,5.,true,20,5.,false,true);
-    /*    deltaPhiN_1 = getDeltaPhiMETN(0,50,2.4,true,30,2.4,true,true);
-	  deltaPhiN_2 = getDeltaPhiMETN(1,50,2.4,true,30,2.4,true,true);
-	  deltaPhiN_3 = getDeltaPhiMETN(2,50,2.4,true,30,2.4,true,true);
-    */
-    //  cout << "Done!" << endl;
+    min_delta_phi_met_N_loose_jets=getMinDeltaPhiMETN(3,20.,5.,true,20.,5.,false,true);
+    jet1_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(1));
+    jet2_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(2));
+    jet3_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(3));
 
-    // if (sampleName.find("QCD_Pt")!=std::string::npos
-    // 	||sampleName.find("ZJets")!=std::string::npos
-    // 	||sampleName.find("DYJets")!=std::string::npos) num_iso_tracks=0;
-    // else num_iso_tracks=GetNumIsoTracks();
+    if (cfAVersion<=71||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
+    else num_iso_tracks=-1;
 
+    // cout << "mT..." << endl;
     mT=GetTransverseMass();
     SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT<100.);
     QCD_control_sample=(min_delta_phi_met_N<4.);
@@ -928,8 +961,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     nb_bin2=(num_csvm_jets==2);
     nb_bin3=(num_csvm_jets>=3);
 
-    //    cout << "JERR" << endl;
-    if (cfAVersion==75) {
+    doc_met=GetDocMET();
+    gluino1_pt=GetGluinoPt(1);
+    gluino2_pt=GetGluinoPt(2);
+
+    // cout << "Fat jets..." << endl;
+    if (cfAVersion>=75) {
       fatpT10_jet1_pt=GetFatJetPt(0,10);    
       fatpT10_jet2_pt=GetFatJetPt(1,10);
       fatpT10_jet3_pt=GetFatJetPt(2,10);
@@ -1044,7 +1081,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       fatpT30_MJ_pt150=GetMJ(150.,30);
       fatpT30_MJ_pt200=GetMJ(200.,30);
       fatpT30_MJ_pt300=GetMJ(300.,30);
-    }
+
+      highest_mJ=GetHighestFatJetmJ(1);
+      scnd_highest_mJ=GetHighestFatJetmJ(2);
+      thrd_highest_mJ=GetHighestFatJetmJ(3);
+      frth_highest_mJ=GetHighestFatJetmJ(4);
+  }
     reduced_tree.Fill(); 
     //  if (i==20) break;
 

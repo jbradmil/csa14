@@ -3081,6 +3081,9 @@ void cfA::GetCMEnergy(){
       cmEnergy=-1;
     }
   }
+  if (sampleName.find("Run2011")!=std::string::npos) cmEnergy=7;
+  if (sampleName.find("Run2012")!=std::string::npos) cmEnergy=8;
+  if (sampleName.find("Run2015")!=std::string::npos) cmEnergy=13;
 }
 
 void cfA::PrepareNewChains(){
@@ -3319,20 +3322,27 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_trk_nTOBTEC);
     chainA.SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
     chainA.SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
-    chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
-    chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
-    chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
-    chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
-    chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
-    if (cfAVersion>=73) {
-      chainA.SetBranchAddress("goodVerticesfilter_decision", &goodVerticesfilter_decision, &b_goodVerticesfilter_decision);
-      chainA.SetBranchAddress("trkPOGfilter_decision", &trkPOGfilter_decision, &b_trkPOGfilter_decision);
-      chainA.SetBranchAddress("trkPOG_logErrorTooManyClustersfilter_decision", &trkPOG_logErrorTooManyClustersfilter_decision, &b_trkPOG_logErrorTooManyClustersfilter_decision);
-      chainA.SetBranchAddress("EcalDeadCellTriggerPrimitivefilter_decision", &EcalDeadCellTriggerPrimitivefilter_decision, &b_EcalDeadCellTriggerPrimitivefilter_decision);
-      chainA.SetBranchAddress("trkPOG_manystripclus53Xfilter_decision", &trkPOG_manystripclus53Xfilter_decision, &b_trkPOG_manystripclus53Xfilter_decision);
+    if (cfAVersion>=73||cfAVersion<=75) {
+      chainA.SetBranchAddress("oodVerticesfilter_decision", &goodVerticesfilter_decision, &b_goodVerticesfilter_decision);
+      chainA.SetBranchAddress("rkPOGfilter_decision", &trkPOGfilter_decision, &b_trkPOGfilter_decision);
+      chainA.SetBranchAddress("rkPOG_logErrorTooManyClustersfilter_decision", &trkPOG_logErrorTooManyClustersfilter_decision, &b_trkPOG_logErrorTooManyClustersfilter_decision);
+      chainA.SetBranchAddress("calDeadCellTriggerPrimitivefilter_decision", &EcalDeadCellTriggerPrimitivefilter_decision, &b_EcalDeadCellTriggerPrimitivefilter_decision);
+      chainA.SetBranchAddress("rkPOG_manystripclus53Xfilter_decision", &trkPOG_manystripclus53Xfilter_decision, &b_trkPOG_manystripclus53Xfilter_decision);
       chainA.SetBranchAddress("METFiltersfilter_decision", &METFiltersfilter_decision, &b_METFiltersfilter_decision);
-      chainA.SetBranchAddress("HBHENoisefilter_decision", &HBHENoisefilter_decision, &b_HBHENoisefilter_decision);
-      chainA.SetBranchAddress("trkPOG_toomanystripclus53Xfilter_decision", &trkPOG_toomanystripclus53Xfilter_decision, &b_trkPOG_toomanystripclus53Xfilter_decision);
+      chainA.SetBranchAddress("BHENoisefilter_decision", &HBHENoisefilter_decision, &b_HBHENoisefilter_decision);
+      chainA.SetBranchAddress("rkPOG_toomanystripclus53Xfilter_decision", &trkPOG_toomanystripclus53Xfilter_decision, &b_trkPOG_toomanystripclus53Xfilter_decision);
+      chainA.SetBranchAddress("rackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
+      chainA.SetBranchAddress("schalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
+      chainA.SetBranchAddress("callaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+      chainA.SetBranchAddress("callaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
+      chainA.SetBranchAddress("ebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
+    }
+    else {
+      chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
+      chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
+      chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+      chainA.SetBranchAddress("ecallaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
+      chainA.SetBranchAddress("eebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
     }
     chainA.SetBranchAddress("hbhefilter_decision", &hbhefilter_decision, &b_hbhefilter_decision);
     chainA.SetBranchAddress("ecalTPfilter_decision", &ecalTPfilter_decision, &b_ecalTPfilter_decision);
@@ -3395,14 +3405,14 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("mus_jet_ind", &mus_jet_ind, &b_mus_jet_ind);    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
     chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
-  // if (cfAVersion!=73||sampleName.find("HToBB")!=std::string::npos||sampleName.find("TTbarH")!=std::string::npos) {
-  //   chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
-  //   chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
-  //   chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
-  //   chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
-  //   chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
-  //   chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
-  // }
+  if (cfAVersion<=71||cfAVersion>=76) {
+    chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
+    chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
+    chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
+    chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
+    chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
+    chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  }
 }
 
 void cfA::InitializeB(){
@@ -5176,7 +5186,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_mass", &mc_doc_mass, &b_mc_doc_mass);
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
-  if (cmEnergy>=13&&sampleName.find("lite")==std::string::npos) {
+  if (cmEnergy>=13&&(sampleName.find("lite")==std::string::npos||sampleName.find("skimmed")==std::string::npos)) {
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);

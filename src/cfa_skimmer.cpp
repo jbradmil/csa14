@@ -53,7 +53,7 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     if (pfTypeImets_et->at(0)<200.) continue;
     met200Count++;
     // 3 good jets
-    if (GetNumGoodJets(50)<3) continue;
+    if (GetNumGoodJets(50)<6) continue;
     numJetsCount++;
     // 2 b-tags
     if (GetNumCSVMJets(30.)<2) continue;
@@ -62,18 +62,18 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     // if (getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true)<4) continue;
     minDeltaPhiCount++;
     // no leptons
-    vector<int>  reco_veto_muons, reco_veto_electrons;
-    if (cmEnergy>8) {
-      reco_veto_muons=GetRecoMuons(true);
-      reco_veto_electrons=GetRecoElectrons(true);
-    }
-    else {
-      reco_veto_muons=GetRA2bMuons(true);
-      reco_veto_electrons=GetRA2bElectrons(true);
-    }
-    if (reco_veto_muons.size()>0) continue;
+    // vector<int>  reco_veto_muons, reco_veto_electrons;
+    // if (cmEnergy>8) {
+    //   reco_veto_muons=GetRecoMuons(true);
+    //   reco_veto_electrons=GetRecoElectrons(true);
+    // }
+    // else {
+    //   reco_veto_muons=GetRA2bMuons(true);
+    //   reco_veto_electrons=GetRA2bElectrons(true);
+    // }
+    // if (reco_veto_muons.size()>0) continue;
     muonVetoCount++;
-    if (reco_veto_electrons.size()>0) continue;
+    //  if (reco_veto_electrons.size()>0) continue;
     electronVetoCount++;
 
     skimTreeA->Fill();
@@ -93,6 +93,7 @@ void CfASkimmer::Skim(const std::string& out_file_name){
 
   std::cout << "startCount " << startCount << std::endl;
   std::cout << "met200Count " << met200Count << std::endl;
+  std::cout << "numJetsCount " << numJetsCount << std::endl;
   std::cout << "numCSVMCount " << numCSVMCount << std::endl;
   std::cout << "minDeltaPhiCount " << minDeltaPhiCount << std::endl;
   std::cout << "muonVetoCount " << muonVetoCount << std::endl;

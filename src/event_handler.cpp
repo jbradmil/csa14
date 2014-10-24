@@ -28,22 +28,25 @@
 #include "lumi_reweighting_stand_alone.hpp"
 #include "event_number.hpp"
 #include "b_jet.hpp"
+#include "fat_jet.hpp"
 #include "timer.hpp"
 #include "math.hpp"
-// #include "in_json_2012.hpp"
+#include "in_json_2012.hpp"
 
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
-// const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"))
-// const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
-// const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
+const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"));
+const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
+const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
 
 
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
   cfA(fileName, isList),
   sortedBJetCache(0),
   bJetsUpToDate(false),
+  sortedFatJetCache(0),
+  FatJetsUpToDate(false),
   genMuonCache(0),
   genMuonsUpToDate(false),
   genElectronCache(0),
@@ -86,7 +89,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("Njets_AK5PFclean",0);
       chainB.SetBranchStatus("jets_AK5PFclean_*",0);
     }
-    else /*if(sampleName.find("lite")==std::string::npos)*/{
+    else if(sampleName.find("lite")!=std::string::npos){
       chainB.SetBranchStatus("pfcand*",0);
       chainB.SetBranchStatus("mc_final*",0);
     }
@@ -97,6 +100,7 @@ void EventHandler::GetEntry(const unsigned int entry){
   cfA::GetEntry(entry);
   betaUpToDate=false;
   bJetsUpToDate=false;
+  FatJetsUpToDate=false;
   genMuonsUpToDate=false;
   genElectronsUpToDate=false;
   genTausUpToDate=false;
@@ -105,9 +109,137 @@ void EventHandler::GetEntry(const unsigned int entry){
   recoTausUpToDate=false;
 }
 
+unsigned EventHandler::TypeCode() const{
+  // https://github.com/manuelfs/ra4_code/blob/master/src/event_handler.cpp#L606
+  const TString sample_name = sampleName;
+  unsigned sample_code = 0xF;
+  if(sample_name.Contains("SMS")){
+    sample_code = 0x0;
+  }else if(sample_name.Contains("TTJets")
+	   || sample_name.Contains("TT_CT10")){
+    sample_code = 0x1;
+  }else if(sample_name.Contains("WJets")){
+    sample_code = 0x2;
+  }else if(sample_name.Contains("T_s-channel")
+	   || sample_name.Contains("T_tW-channel")
+	   || sample_name.Contains("T_t-channel")
+	   || sample_name.Contains("Tbar_s-channel")
+	   || sample_name.Contains("Tbar_tW-channel")
+	   || sample_name.Contains("Tbar_t-channel")){
+    sample_code = 0x3;
+  }else if(sample_name.Contains("QCD")){
+    sample_code = 0x4;
+  }else if(sample_name.Contains("DY")){
+    sample_code = 0x5;
+  }else{
+    sample_code = 0xF;
+  }
+  unsigned num_leps = 0, num_tau_to_lep = 0, num_taus = 0, num_conversions = 0;
+  bool counting = false;
+  for(unsigned i = 0; i < mc_doc_id->size(); ++i){
+    const int id = static_cast<int>(floor(fabs(mc_doc_id->at(i))+0.5));
+    const int mom = static_cast<int>(floor(fabs(mc_doc_mother_id->at(i))+0.5));
+    const int gmom = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(i))+0.5));
+    const int ggmom = static_cast<int>(floor(fabs(mc_doc_ggrandmother_id->at(i))+0.5));
+    if(mom != 15) counting=false;
+    if((id == 11 || id == 13) && (mom == 24 || (mom == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24))))){
+      ++num_leps;
+      if(mom == 15){
+	++num_tau_to_lep;
+	if(counting){
+	  ++num_conversions;
+	  counting = false;
+	}else{
+	  counting = true;
+	}
+      }
+    }else if(id == 15 && mom == 24){
+      ++num_taus;
+    }
+  }
+  num_leps -= 2*num_conversions;
+  num_tau_to_lep -= 2*num_conversions;
+  if(sample_code > 0xF) sample_code = 0xF;
+  if(num_leps > 0xF) num_leps = 0xF;
+  if(num_tau_to_lep > 0xF) num_tau_to_lep = 0xF;
+  if(num_taus > 0xF) num_taus = 0xF;
+  return (sample_code << 12) | (num_leps << 8) | (num_tau_to_lep << 4) | num_taus;
+}
+
+double EventHandler::GetDocMET() const{
+  double px(0.), py(0.);
+  if(sampleName.find("T1bbbb")!=std::string::npos){
+    //  cout << "GetDOCMET()" << endl;
+    for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+      if (mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23||mc_doc_id->at(imc)==2212) {  // hard scatter
+	if (fabs(static_cast<int>(mc_doc_id->at(imc)))==5) {
+	  //	  printf("px: %3.2f, py: %3.2f\n", mc_doc_px->at(imc), mc_doc_py->at(imc));
+	  px+=mc_doc_px->at(imc);
+	  py+=mc_doc_py->at(imc);
+	}
+      }
+    }
+  } else { // SM: just add up neutrinos
+    for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+      if (mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23||mc_doc_id->at(imc)==2212) {  // hard scatter
+	if (fabs(static_cast<int>(mc_doc_id->at(imc)))==12||fabs(static_cast<int>(mc_doc_id->at(imc)))==14||fabs(static_cast<int>(mc_doc_id->at(imc)))==16) {
+	  px+=mc_doc_px->at(imc);
+	  py+=mc_doc_py->at(imc);
+	}
+      }
+    }
+  }
+  return TMath::Sqrt(px*px+py*py);
+}
+
+double EventHandler::GetGluinoPt(int which) const{
+  double pt(-1.);
+  int count(0);
+  for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
+    if (mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23||mc_doc_id->at(imc)==2212) {
+      if (fabs(static_cast<int>(mc_doc_id->at(imc)))==1000021) {
+	//	printf("px: %3.2f, py: %3.2f, pt: %3.2f\n", mc_doc_px->at(imc), mc_doc_py->at(imc), mc_doc_pt->at(imc));
+	pt = mc_doc_pt->at(imc);
+	count++;
+	if (count==which) break;
+      }
+    }
+  }
+  return pt;
+}
+
+bool EventHandler::PassesJSONCut() const{
+  if(sampleName.find("Run2012")!=std::string::npos){
+    if(sampleName.find("PromptReco")!=std::string::npos
+       &&!inJSON(VRunLumiPrompt, run, lumiblock)) return false;
+    if(sampleName.find("24Aug")!=std::string::npos
+       && !inJSON(VRunLumi24Aug, run, lumiblock)) return false;
+    if(sampleName.find("13Jul")!=std::string::npos
+       && !inJSON(VRunLumi13Jul, run, lumiblock)) return false;
+    return true;
+  }else{
+    return true;
+  }
+}
+
 bool EventHandler::PassesSpecificTrigger(const std::string trigger) const{ // just check if a specific trigger fired
   for(unsigned int a=0; a<trigger_name->size(); ++a){
     if(trigger_name->at(a).find(trigger)!=std::string::npos
+       && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
+      return true;
+    }
+  }
+  return false;
+}
+
+bool EventHandler::Passes2012RA2bTrigger() const{
+  for(unsigned int a=0; a<trigger_name->size(); ++a){
+    if((trigger_name->at(a).find("HLT_PFHT350_PFMET100_v")!=std::string::npos
+	|| trigger_name->at(a).find("HLT_PFNoPUHT350_PFMET100_v")!=std::string::npos
+	|| trigger_name->at(a).find("HLT_PFHT650_v")!=std::string::npos
+	|| trigger_name->at(a).find("HLT_PFNoPUHT650_v")!=std::string::npos
+	|| trigger_name->at(a).find("HLT_DiCentralPFJet50_PFMET80_v")!=std::string::npos
+	|| trigger_name->at(a).find("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v")!=std::string::npos)
        && trigger_prescalevalue->at(a)==1 && trigger_decision->at(a)==1){
       return true;
     }
@@ -126,6 +258,30 @@ void EventHandler::GetSortedBJets() const{
     std::sort(sortedBJetCache.begin(),sortedBJetCache.end(), std::greater<BJet>());
     // Key: we're sorting by pt now, not CSV
     bJetsUpToDate=true;
+  }
+}
+
+void EventHandler::GetSortedFatJets() const{
+  if (cfAVersion<75) return;
+  if(!FatJetsUpToDate){
+    sortedFatJetCache.clear();
+    for(unsigned int i(0); i<fastjets_AK4_R1p2_R0p5pT30_px->size(); ++i){
+      sortedFatJetCache.push_back(FatJet(TLorentzVector(fastjets_AK4_R1p2_R0p5pT30_px->at(i),fastjets_AK4_R1p2_R0p5pT30_py->at(i),fastjets_AK4_R1p2_R0p5pT30_pz->at(i),fastjets_AK4_R1p2_R0p5pT30_energy->at(i)),fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(i),i));
+    }
+    std::sort(sortedFatJetCache.begin(),sortedFatJetCache.end(), std::greater<FatJet>());
+    // Sorted by MJ
+    FatJetsUpToDate=true;
+  }
+}
+
+double EventHandler::GetHighestFatJetmJ(unsigned int pos) const{
+  if (cfAVersion<75) return -DBL_MAX;
+  GetSortedFatJets();
+  --pos;
+  if(pos>=sortedFatJetCache.size()){
+    return -DBL_MAX;
+  }else{
+    return sortedFatJetCache.at(pos).GetmJ();
   }
 }
 
@@ -159,6 +315,16 @@ double EventHandler::GetHighestJetPt(unsigned int pos) const{
     return -DBL_MAX;
   }else{
     return sortedBJetCache.at(pos).GetLorentzVector().Pt();
+  }
+}
+
+int EventHandler::GetJetXIndex(unsigned int pos) const{
+  GetSortedBJets();
+  --pos;
+  if(pos>=sortedBJetCache.size()){
+    return -1;
+  }else{
+    return sortedBJetCache.at(pos).GetIndex();
   }
 }
 
@@ -592,9 +758,11 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(5.0); //Not actually part of the EGamma ID
   double eta_cut(0.007), phi_cut(0.8), sigmaietaieta_cut(0.01), h_over_e_cut(0.15), d0_cut(0.04), dz_cut(0.2), iso_cut(0.15);
+  // cout << "Found " << pf_els_pt->size() << " pf_els" << endl; 
   switch(level){
   case 1:
-    pt_cut=5.0;
+    // cout << "signal electron... " << k << endl;
+   pt_cut=20.0;
     if(pf_els_isEB->at(k)){
       eta_cut=0.007; phi_cut=0.15; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.2; iso_cut=0.15;
@@ -637,6 +805,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
   }
   // if(k>pf_els_pt->size()) return false;
   if (level>0) {
+  // cout << "electron kinematics ..." << endl;
     if (fabs(pf_els_scEta->at(k)) >= 2.5 ) return false;
     if (pf_els_pt->at(k) < pt_cut) return false;
   }
@@ -649,7 +818,7 @@ bool EventHandler::isRA2bElectron(const unsigned int k,
   const double d0(pf_els_d0dum->at(k)-beamx*sin(pf_els_tk_phi->at(k))+beamy*cos(pf_els_tk_phi->at(k)));
   if ( fabs(d0) >= d0_cut ) return false;
   if ( fabs(pf_els_vz->at(k) - pv_z->at(0) ) >= dz_cut ) return false;
-
+  // cout << "electron isolation..." << endl;
   if(GetRA2bElectronRelIso(k)>=iso_cut && use_iso) return false;
   return true;
 }
@@ -780,21 +949,6 @@ bool EventHandler::isQualityTrack(const unsigned int k) const{
   return true;  
 }
 
-int EventHandler::NewGetNumIsoTracks(const double ptThresh) const{
-  int nisotracks=0;
-  if ( GetcfAVersion() < 71 || GetcfAVersion() == 73) return nisotracks;
-  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
-    if ( (isotk_pt->at(itrack) >= ptThresh) &&
-         (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
-         ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
-         ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
-         ){
-      ++nisotracks;
-    }
-  }
-  return nisotracks;
-}
-
 double EventHandler::GetTrueNumInteractions() const{
   double npv(-1.0);
   for(unsigned int i(0); i<PU_bunchCrossing->size(); ++i){
@@ -851,11 +1005,13 @@ unsigned short EventHandler::GetNumVertices() const{
 }
 
 double EventHandler::GetPUWeight(reweight::LumiReWeighting &lumiWeights) const{
+  if (sampleName.find("13TeV")!=std::string::npos) return 1.0;
   return lumiWeights.weight(GetNumInteractions());
 }
 
 
 double EventHandler::GetTopPtWeight() const{
+  if (sampleName.find("13TeV")!=std::string::npos) return 1.0;
   double topPt(-1.0);
 
   //only for use with ttbar
@@ -1393,8 +1549,10 @@ void EventHandler::SetupGenElectrons() const {
       //  cout << "MinDR: " << dR_ind << ", MinDPt: " << dPt_ind << endl;
       //cout << "JERR" << endl;
       double d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-els_pt->at(dR_ind))/2.5,2));
+      if (cmEnergy<13) d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-pf_els_pt->at(dR_ind))/2.5,2));
       //cout << "JERR1" << endl;
       double d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(dPt_ind), els_eta->at(dPt_ind))/0.07,2));
+      if (cmEnergy<13) d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, pf_els_phi->at(dPt_ind), pf_els_eta->at(dPt_ind))/0.07,2));
       d1<d2 ? genElectronCache[genLep].SetElsMatch(min_dR.first) : genElectronCache[genLep].SetElsMatch(min_dPt.first);
     } 
     if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back(static_cast<uint>(genElectronCache[genLep].GetElsMatch()));
@@ -1556,13 +1714,13 @@ int EventHandler::GetNGenPartons(const float ptCut) const{
 int EventHandler::GetNGenParticles(const int pdgId, const float ptCut, const bool hard_scatter_only) const{
  
   uint count(0);
-  bool fromTop(false);
   for(unsigned int imc = 0; imc < mc_doc_id->size(); imc++){
     if (hard_scatter_only && !(mc_doc_status->at(imc)==3||mc_doc_status->at(imc)==22||mc_doc_status->at(imc)==23)) continue;
-    if (static_cast<int>(fabs(mc_doc_id->at(imc)))==5) fromTop=true;
-    if (!fromTop) continue;
-    if (mc_doc_pt->at(imc)<ptCut) continue;
-    if (static_cast<int>(fabs(mc_doc_id->at(imc)))==pdgId) count++;
+       if (mc_doc_pt->at(imc)<ptCut) continue;
+       if (mc_doc_id->at(imc)==mc_doc_mother_id->at(imc)) continue;
+       if (mc_doc_id->at(imc)==mc_doc_grandmother_id->at(imc)) continue;
+       if (mc_doc_id->at(imc)==mc_doc_ggrandmother_id->at(imc)) continue;
+   if (static_cast<int>(fabs(mc_doc_id->at(imc)))==pdgId) count++;
   }
   return count;
 }
@@ -1817,7 +1975,7 @@ bool EventHandler::passedCSABaseElectronSelection(uint iel, float ElectronPTThre
 	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
 			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
-	  && hasPFMatch(iel, 11) 
+	  && els_isPF->at(iel) 
 	  && fabs(d0PV) < 0.02 
 	  && ((fabs(els_scEta->at(iel))<=1.479 // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004
@@ -1844,7 +2002,7 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	  && fabs(getDZ(els_vx->at(iel), els_vy->at(iel), els_vz->at(iel), cos(els_tk_phi->at(iel))*els_tk_pt->at(iel), 
 			sin(els_tk_phi->at(iel))*els_tk_pt->at(iel), els_tk_pz->at(iel), 0)) < 0.1
 	  && fabs(1./els_caloEnergy->at(iel) - els_eOverPIn->at(iel)/els_caloEnergy->at(iel)) < 0.05 
-	  && hasPFMatch(iel, 11) 
+	  && els_isPF->at(iel) 
 	  && fabs(d0PV) < 0.02 
 	  && ((els_isEB->at(iel) // Endcap selection
 	       && fabs(els_dEtaIn->at(iel)) < 0.004
@@ -2060,6 +2218,15 @@ unsigned int EventHandler::GetNumGoodJets(const double pt) const{
   return numGoodJets;
 }
 
+unsigned int EventHandler::GetNumTruthMatchedBJets(const double pt, const bool good) const{
+  int numBJets(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(good&&!isGoodJet(i,true,pt)) continue;
+    if (fabs(static_cast<int>(jets_AKPF_partonFlavour->at(i)))==5) numBJets++;
+  }
+  return numBJets;
+}
+
 unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
@@ -2094,7 +2261,8 @@ double EventHandler::GetMTW(const double lep_pt, const double MET, const double 
   return TMath::Sqrt(2*lep_pt*MET*(1-cos(Math::GetDeltaPhi(lep_phi,MET_phi))));
 }
 
-double EventHandler::getDeltaPhiMETN(unsigned int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {
+double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {
+  if (goodJetI>static_cast<int>(jets_AKPF_phi->size())||goodJetI<0) return DBL_MAX;
   double deltaT = getDeltaPhiMETN_deltaT(goodJetI, otherpt, othereta, otherid);
   //calculate deltaPhiMETN
   double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(goodJetI), pfTypeImets_phi->at(0)));
