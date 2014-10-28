@@ -6,9 +6,19 @@
 #include "TString.h"
 #include "TH1.h"
 #include "TLine.h"
+#include "TColor.h"
 
+TColor uscb_blue(1000, 1/255.,57/255.,166/255.);
+TColor uscb_gold(1001, 255/255.,200/255.,47/255);
+TColor penn_red(1002, 149/255.,0/255.,26/255.);
+TColor pantone(1003, 255/255.,88/255.,0/255.);
+TColor uo_green(1004, 0/255.,79/255.,39/255.);
+TColor tcu_purple(1005, 52/255.,42/255.,123/255.);
+TColor tar_heel_blue(1006, 86/255.,160/255.,211/255.);
 
 void set_style(TH1 * h, const TString& p) {
+
+
   if (p.Contains("t1bbbb")) {
     h->SetFillColor (2);
     h->SetMarkerColor(2);
@@ -21,23 +31,23 @@ void set_style(TH1 * h, const TString& p) {
   } else {
     h->SetLineColor(kBlack);
     if (p == "znn") {
-      h->SetFillColor(kRed+4);
-      h->SetMarkerColor(kRed+4);
+      h->SetFillColor(1002);
+      h->SetMarkerColor(1002);
     } else if (p == "qcd") {
-      h->SetFillColor (kYellow-7);
-      h->SetMarkerColor(kYellow-7);
+      h->SetFillColor (1001);
+      h->SetMarkerColor(1001);
     } else if (p == "ttbar") {
-      h->SetFillColor (596);
-      h->SetMarkerColor(596);
+      h->SetFillColor(1000);
+      h->SetMarkerColor(1000);
     } else if (p == "wjets") {
-      h->SetFillColor (kGreen+4);
-      h->SetMarkerColor(kGreen+4);
+      h->SetFillColor (1004);
+      h->SetMarkerColor(1004);
     } else if (p == "single_top") {
-      h->SetFillColor (kMagenta);
-      h->SetMarkerColor(kMagenta);
+      h->SetFillColor (1005);
+      h->SetMarkerColor(1005);
     } else if (p == "other") {
-      h->SetFillColor (kBlue-6);
-      h->SetMarkerColor(kBlue-6);
+      h->SetFillColor (1003);
+      h->SetMarkerColor(1003);
     } else if (p== "bg") {
       h->SetFillColor(kAzure+1);
       h->SetMarkerColor(kAzure+1);

@@ -3322,22 +3322,22 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("trk_nTOBTEC", &trk_nTOBTEC, &b_trk_nTOBTEC);
     chainA.SetBranchAddress("trk_ratioAllTOBTEC", &trk_ratioAllTOBTEC, &b_trk_ratioAllTOBTEC);
     chainA.SetBranchAddress("trk_ratioJetTOBTEC", &trk_ratioJetTOBTEC, &b_trk_ratioJetTOBTEC);
-    if (cfAVersion>=73||cfAVersion<=75) {
-      chainA.SetBranchAddress("oodVerticesfilter_decision", &goodVerticesfilter_decision, &b_goodVerticesfilter_decision);
-      chainA.SetBranchAddress("rkPOGfilter_decision", &trkPOGfilter_decision, &b_trkPOGfilter_decision);
-      chainA.SetBranchAddress("rkPOG_logErrorTooManyClustersfilter_decision", &trkPOG_logErrorTooManyClustersfilter_decision, &b_trkPOG_logErrorTooManyClustersfilter_decision);
-      chainA.SetBranchAddress("calDeadCellTriggerPrimitivefilter_decision", &EcalDeadCellTriggerPrimitivefilter_decision, &b_EcalDeadCellTriggerPrimitivefilter_decision);
-      chainA.SetBranchAddress("rkPOG_manystripclus53Xfilter_decision", &trkPOG_manystripclus53Xfilter_decision, &b_trkPOG_manystripclus53Xfilter_decision);
-      chainA.SetBranchAddress("METFiltersfilter_decision", &METFiltersfilter_decision, &b_METFiltersfilter_decision);
-      chainA.SetBranchAddress("BHENoisefilter_decision", &HBHENoisefilter_decision, &b_HBHENoisefilter_decision);
-      chainA.SetBranchAddress("rkPOG_toomanystripclus53Xfilter_decision", &trkPOG_toomanystripclus53Xfilter_decision, &b_trkPOG_toomanystripclus53Xfilter_decision);
-      chainA.SetBranchAddress("rackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
-      chainA.SetBranchAddress("schalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
-      chainA.SetBranchAddress("callaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
-      chainA.SetBranchAddress("callaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
-      chainA.SetBranchAddress("ebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
-    }
-    else {
+    // if (cfAVersion>=73||cfAVersion<=75) {
+    //   chainA.SetBranchAddress("oodVerticesfilter_decision", &goodVerticesfilter_decision, &b_goodVerticesfilter_decision);
+    //   chainA.SetBranchAddress("rkPOGfilter_decision", &trkPOGfilter_decision, &b_trkPOGfilter_decision);
+    //   chainA.SetBranchAddress("rkPOG_logErrorTooManyClustersfilter_decision", &trkPOG_logErrorTooManyClustersfilter_decision, &b_trkPOG_logErrorTooManyClustersfilter_decision);
+    //   chainA.SetBranchAddress("calDeadCellTriggerPrimitivefilter_decision", &EcalDeadCellTriggerPrimitivefilter_decision, &b_EcalDeadCellTriggerPrimitivefilter_decision);
+    //   chainA.SetBranchAddress("rkPOG_manystripclus53Xfilter_decision", &trkPOG_manystripclus53Xfilter_decision, &b_trkPOG_manystripclus53Xfilter_decision);
+    //   chainA.SetBranchAddress("METFiltersfilter_decision", &METFiltersfilter_decision, &b_METFiltersfilter_decision);
+    //   chainA.SetBranchAddress("BHENoisefilter_decision", &HBHENoisefilter_decision, &b_HBHENoisefilter_decision);
+    //   chainA.SetBranchAddress("rkPOG_toomanystripclus53Xfilter_decision", &trkPOG_toomanystripclus53Xfilter_decision, &b_trkPOG_toomanystripclus53Xfilter_decision);
+    //   chainA.SetBranchAddress("rackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
+    //   chainA.SetBranchAddress("schalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
+    //   chainA.SetBranchAddress("callaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
+    //   chainA.SetBranchAddress("callaserfilter_decision", &ecallaserfilter_decision, &b_ecallaserfilter_decision);
+    //   chainA.SetBranchAddress("ebadscfilter_decision", &eebadscfilter_decision, &b_eebadscfilter_decision);
+    // }
+    if (cfAVersion<=71||cfAVersion>=76) {
       chainA.SetBranchAddress("trackingfailurefilter_decision", &trackingfailurefilter_decision, &b_trackingfailurefilter_decision);
       chainA.SetBranchAddress("cschalofilter_decision", &cschalofilter_decision, &b_cschalofilter_decision);
       chainA.SetBranchAddress("hcallaserfilter_decision", &hcallaserfilter_decision, &b_hcallaserfilter_decision);
@@ -3362,7 +3362,7 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("passprescaleHT350filter_decision", &passprescaleHT350filter_decision, &b_passprescaleHT350filter_decision);
     chainA.SetBranchAddress("passprescaleHT400filter_decision", &passprescaleHT400filter_decision, &b_passprescaleHT400filter_decision);
     chainA.SetBranchAddress("passprescaleHT450filter_decision", &passprescaleHT450filter_decision, &b_passprescaleHT450filter_decision);
-    chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
+     if (cfAVersion==71) chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
     chainA.SetBranchAddress("MPT", &MPT, &b_MPT);
     chainA.SetBranchAddress("genHT", &genHT, &b_genHT);
     chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3", &jets_AK5PFclean_corrL2L3, &b_jets_AK5PFclean_corrL2L3);
@@ -3377,7 +3377,19 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("pfmets_fullSignif", &pfmets_fullSignif, &b_pfmets_fullSignif);
     chainA.SetBranchAddress("pfmets_fullSignifCov00", &pfmets_fullSignifCov00, &b_pfmets_fullSignifCov00);
     chainA.SetBranchAddress("pfmets_fullSignifCov10", &pfmets_fullSignifCov10, &b_pfmets_fullSignifCov10);
-    chainA.SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11); 
+   if (cfAVersion==71) {
+    chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
+    chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
+    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
+    chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
+    chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
+    }
     chainA.SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
     chainA.SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
     chainA.SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
@@ -3387,16 +3399,6 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("photon_phIsoValues", &photon_phIsoValues, &b_photon_phIsoValues);
     chainA.SetBranchAddress("photon_nhIsoValues", &photon_nhIsoValues, &b_photon_nhIsoValues);
     chainA.SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
-    chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
-    chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
-    chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
-    chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
   }
   else {
     chainA.SetBranchAddress("els_isPF", &els_isPF, &b_els_isPF);
@@ -3405,7 +3407,7 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("mus_jet_ind", &mus_jet_ind, &b_mus_jet_ind);    chainA.SetBranchAddress("taus_el_ind", &taus_el_ind, &b_taus_el_ind);
     chainA.SetBranchAddress("taus_mu_ind", &taus_mu_ind, &b_taus_mu_ind);
   }
-  if (cfAVersion<=71||cfAVersion>=76) {
+  if (cfAVersion==71||cfAVersion>=76) {
     chainA.SetBranchAddress("isotk_pt", &isotk_pt, &b_isotk_pt);
     chainA.SetBranchAddress("isotk_phi", &isotk_phi, &b_isotk_phi);
     chainA.SetBranchAddress("isotk_eta", &isotk_eta, &b_isotk_eta);
@@ -3417,6 +3419,7 @@ void cfA::InitializeA(){
 
 void cfA::InitializeB(){
   std::cout << "cmEnergy=" << cmEnergy << std::endl;
+  std::cout << "cfAVersion=" << cfAVersion << std::endl;
 
   NbeamSpot=0;
   beamSpot_x=0;

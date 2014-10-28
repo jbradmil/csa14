@@ -212,21 +212,24 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("passes2012METCleaningCut",&passes2012METCleaningCut);
   reduced_tree.Branch("passesCSA14METCleaningCut",&passesCSA14METCleaningCut);
   reduced_tree.Branch("trackingfailurefilter_decision",&trackingfailurefilter_decision);
-  reduced_tree.Branch("goodVerticesfilter_decision",&goodVerticesfilter_decision);
   reduced_tree.Branch("cschalofilter_decision",&cschalofilter_decision);
-  reduced_tree.Branch("trkPOGfilter_decision",&trkPOGfilter_decision);
-  reduced_tree.Branch("trkPOG_logErrorTooManyClustersfilter_decision",&trkPOG_logErrorTooManyClustersfilter_decision);
-  reduced_tree.Branch("EcalDeadCellTriggerPrimitivefilter_decision",&EcalDeadCellTriggerPrimitivefilter_decision);
   reduced_tree.Branch("ecallaserfilter_decision",&ecallaserfilter_decision);
-  reduced_tree.Branch("trkPOG_manystripclus53Xfilter_decision",&trkPOG_manystripclus53Xfilter_decision);
-  reduced_tree.Branch("eebadscfilter_decision",&eebadscfilter_decision);
-  // This is probably the most important one, and it contains a sumamry of the others
-  // https://cmssdt.cern.ch/SDT/lxr/source/RecoMET/METFilters/python/metFilters_cff.py#0045
-  reduced_tree.Branch("METFiltersfilter_decision",&METFiltersfilter_decision);
-
   reduced_tree.Branch("HBHENoisefilter_decision",&HBHENoisefilter_decision);
-  reduced_tree.Branch("trkPOG_toomanystripclus53Xfilter_decision",&trkPOG_toomanystripclus53Xfilter_decision);
   reduced_tree.Branch("hcallaserfilter_decision",&hcallaserfilter_decision);
+
+  // if (cfAVersion>=73&&cfAVersion<=75) {
+  //   reduced_tree.Branch("goodVerticesfilter_decision",&goodVerticesfilter_decision);
+  //   reduced_tree.Branch("trkPOGfilter_decision",&trkPOGfilter_decision);
+  //   reduced_tree.Branch("trkPOG_logErrorTooManyClustersfilter_decision",&trkPOG_logErrorTooManyClustersfilter_decision);
+  //   reduced_tree.Branch("EcalDeadCellTriggerPrimitivefilter_decision",&EcalDeadCellTriggerPrimitivefilter_decision);
+  //   reduced_tree.Branch("trkPOG_manystripclus53Xfilter_decision",&trkPOG_manystripclus53Xfilter_decision);
+  //   reduced_tree.Branch("eebadscfilter_decision",&eebadscfilter_decision);
+  //   reduced_tree.Branch("trkPOG_toomanystripclus53Xfilter_decision",&trkPOG_toomanystripclus53Xfilter_decision);
+  //   // This is probably the most important one, and it contains a sumamry of the others
+  //   // https://cmssdt.cern.ch/SDT/lxr/source/RecoMET/METFilters/python/metFilters_cff.py#0045
+  //   reduced_tree.Branch("METFiltersfilter_decision",&METFiltersfilter_decision);
+  // }
+
   reduced_tree.Branch("passesBadJetFilter",&passesBadJetFilter);
   reduced_tree.Branch("PBNRcode",&PBNRcode);
 
@@ -939,7 +942,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     jet2_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(2));
     jet3_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(3));
 
-    if (cfAVersion<=71||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
+    if (cfAVersion==71||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
     else num_iso_tracks=-1;
 
     // cout << "mT..." << endl;

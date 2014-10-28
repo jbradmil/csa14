@@ -13,8 +13,8 @@ void SkimReducedTree(string inFilename, string outFilename) {
   inCh->Add(inFilename.c_str());
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
-  TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
-  // TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200");
+  //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
+  TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200");
   outCh->Write();
   outfile->Close();
 

@@ -149,6 +149,8 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-350_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0552*0.561*0.561;
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-400_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0294*0.561*0.561;
   crossSectionTable["SMS-TChiHH_2b2b_2J_mChargino-450_mLSP-1_TuneZ2star_8TeV-madgraph-tauola"]=0.0163*0.561*0.561;
+  crossSectionTable["SMS-T1bbbb_2J_mGo-1025_mLSP-50_TuneZ2star_8TeV"]=0.0195439;
+  crossSectionTable["SMS-T1tttt_2J_mGo-1025_mLSP-75_TuneZ2star_8TeV"]=0.0195439;
   // CSA14 samples
   crossSectionTable["SMS-T1tttt_2J_mGl-1500_mLSP-100"]=0.0141903;
   crossSectionTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=0.0856418;
@@ -303,6 +305,9 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-350_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=80478;
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-400_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=79013;
   totalEventsTable["SMS-TChiHH_2b2b_2J_mChargino-450_mLSP-1_TuneZ2star_8TeV-madgraph-tauola_Summer12-START53_V19_FSIM-v1_AODSIM_UCSB1871_v71"]=76402;
+  totalEventsTable["SMS-T1bbbb_2J_mGo-1025_mLSP-50_TuneZ2star_8TeV"]=110722;
+  totalEventsTable["SMS-T1tttt_2J_mGo-1075_mLSP-75_TuneZ2star_8TeV"]=123483;
+
 // CSA14 samples
   totalEventsTable["SMS-T1tttt_2J_mGl-1500_mLSP-100"]=105679;
   totalEventsTable["SMS-T1tttt_2J_mGl-1200_mLSP-800"]=100322;

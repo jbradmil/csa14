@@ -1,3 +1,11 @@
+root -b -q macros/cutflow/optimize_n_jets_v2.C+\(\"reduced\_trees/skimmed/SMS-T1tttt_2J_mGl-1500_mLSP-100*v75*.root\",\"all\",\"T1tttt\_1500\_100\_met\_400\_ht30\_1000\"\) 
+root -b -q macros/cutflow/optimize_n_jets_v2.C+\(\"reduced\_trees/skimmed/SMS-T1tttt_2J_mGl-1200_mLSP-800*v75*.root\",\"all\",\"T1tttt\_1200\_800\_met\_400\_ht30\_1000\"\) 
+root -b -q macros/cutflow/optimize_n_jets_v2.C+\(\"reduced\_trees/skimmed/SMS-T1bbbb_2J_mGl-1500_mLSP-100*v75*.root\",\"all\",\"T1bbbb\_1500\_100\_met\_400\_ht30\_1000\"\) 
+root -b -q macros/cutflow/optimize_n_jets_v2.C+\(\"reduced\_trees/skimmed/SMS-T1bbbb_2J_mGl-1000_mLSP-900*v75*.root\",\"all\",\"T1bbbb\_1000\_900\_met\_400\_ht30\_1000\"\)
+
+
+
+
 root -b -q macros/cutflow/optimize_n_jets.C+\(\"reduced\_trees/skimmed/SMS-T1tttt_2J_mGl-1500_mLSP-100*v75*.root\",\"all\",\"T1tttt\_1500\_100\_met\_200\_ht40\_750\",\"ht40\>750\"\) 
 root -b -q macros/cutflow/optimize_n_jets.C+\(\"reduced\_trees/skimmed/SMS-T1tttt_2J_mGl-1200_mLSP-800*v75*.root\",\"all\",\"T1tttt\_1200\_800\_met\_200\_ht40\_750\",\"ht40\>750\"\) 
 root -b -q macros/cutflow/optimize_n_jets.C+\(\"reduced\_trees/skimmed/SMS-T1bbbb_2J_mGl-1500_mLSP-100*v75*.root\",\"all\",\"T1bbbb\_1500\_100\_met\_200\_ht40\_750\",\"ht40\>750\"\) 
