@@ -3282,7 +3282,7 @@ void cfA::InitializeA(){
   chainA.SetBranchAddress("PU_NumInteractions", &PU_NumInteractions, &b_PU_NumInteractions);
   chainA.SetBranchAddress("PU_bunchCrossing", &PU_bunchCrossing, &b_PU_bunchCrossing);
   chainA.SetBranchAddress("PU_TrueNumInteractions", &PU_TrueNumInteractions, &b_PU_TrueNumInteractions);
-  if (cmEnergy<=8) {
+  if (cfAVersion<=71) {
     chainA.SetBranchAddress("trigger_lastfiltername", &trigger_lastfiltername, &b_trigger_lastfiltername);
     chainA.SetBranchAddress("triggerobject_pt", &triggerobject_pt, &b_triggerobject_pt);
     chainA.SetBranchAddress("triggerobject_px", &triggerobject_px, &b_triggerobject_px);
@@ -4842,7 +4842,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("els_pz", &els_pz, &b_els_pz);
   chainB.SetBranchAddress("els_status", &els_status, &b_els_status);
   chainB.SetBranchAddress("els_theta", &els_theta, &b_els_theta);
-  if (cmEnergy>8) {
+  if (cfAVersion>=73) {
     chainB.SetBranchAddress("els_pfIsolationR03_sumChargedHadronPt", &els_pfIsolationR03_sumChargedHadronPt, &b_els_pfIsolationR03_sumChargedHadronPt);
     chainB.SetBranchAddress("els_pfIsolationR03_sumNeutralHadronEt", &els_pfIsolationR03_sumNeutralHadronEt, &b_els_pfIsolationR03_sumNeutralHadronEt);
     chainB.SetBranchAddress("els_pfIsolationR03_sumPhotonEt", &els_pfIsolationR03_sumPhotonEt, &b_els_pfIsolationR03_sumPhotonEt);
@@ -4961,7 +4961,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("els_cy", &els_cy, &b_els_cy);
   chainB.SetBranchAddress("els_cz", &els_cz, &b_els_cz);
   chainB.SetBranchAddress("els_PATpassConversionVeto", &els_PATpassConversionVeto, &b_els_PATpassConversionVeto);
-  if (cmEnergy>8) {
+  if (cfAVersion>=73) {
     chainB.SetBranchAddress("Njets_AK4", &Njets_AKPF, &b_Njets_AKPF);
     chainB.SetBranchAddress("jets_AK4_status", &jets_AKPF_status, &b_jets_AKPF_status);
     chainB.SetBranchAddress("jets_AK4_phi", &jets_AKPF_phi, &b_jets_AKPF_phi);
@@ -5189,7 +5189,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_mass", &mc_doc_mass, &b_mc_doc_mass);
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
-  if (cmEnergy>=13&&(sampleName.find("lite")==std::string::npos||sampleName.find("skimmed")==std::string::npos)) {
+  if (cfAVersion>=73&&(sampleName.find("lite")==std::string::npos||sampleName.find("skimmed")==std::string::npos)) {
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
@@ -5318,7 +5318,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_nutaus_vertex_z", &mc_nutaus_vertex_z, &b_mc_nutaus_vertex_z);
   chainB.SetBranchAddress("mc_nutaus_mass", &mc_nutaus_mass, &b_mc_nutaus_mass);
   chainB.SetBranchAddress("mc_nutaus_numOfDaughters", &mc_nutaus_numOfDaughters, &b_mc_nutaus_numOfDaughters);
-  if (cmEnergy<13) {
+  if (cfAVersion<=71) {
     chainB.SetBranchAddress("Nmc_pdf", &Nmc_pdf, &b_Nmc_pdf);
     chainB.SetBranchAddress("mc_pdf_x1", &mc_pdf_x1, &b_mc_pdf_x1);
     chainB.SetBranchAddress("mc_pdf_x2", &mc_pdf_x2, &b_mc_pdf_x2);
@@ -5368,7 +5368,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_taus_vertex_z", &mc_taus_vertex_z, &b_mc_taus_vertex_z);
   chainB.SetBranchAddress("mc_taus_mass", &mc_taus_mass, &b_mc_taus_mass);
   chainB.SetBranchAddress("mc_taus_numOfDaughters", &mc_taus_numOfDaughters, &b_mc_taus_numOfDaughters);
-  if (cmEnergy<13) {
+  if (cfAVersion<=71) {
     chainB.SetBranchAddress("NmetsHO", &NmetsHO, &b_NmetsHO);
     chainB.SetBranchAddress("metsHO_et", &metsHO_et, &b_metsHO_et);
     chainB.SetBranchAddress("metsHO_phi", &metsHO_phi, &b_metsHO_phi);
@@ -5624,7 +5624,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
   chainB.SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
   chainB.SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
-  if (cmEnergy<13) {
+  if (cfAVersion<=71) {
     chainB.SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
     chainB.SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);
     chainB.SetBranchAddress("pfTypeINoXYCorrmets_phi", &pfTypeINoXYCorrmets_phi, &b_pfTypeINoXYCorrmets_phi);
@@ -5672,7 +5672,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("mets_unCPhi", &pfTypeImets_unCPhi, &b_pfTypeImets_unCPhi);
     chainB.SetBranchAddress("mets_unCPt", &pfTypeImets_unCPt, &b_pfTypeImets_unCPt);
   }
-  if (cmEnergy<13) {
+  if (cfAVersion<=71) {
     chainB.SetBranchAddress("Npf_els", &Npf_els, &b_Npf_els);
     chainB.SetBranchAddress("pf_els_energy", &pf_els_energy, &b_pf_els_energy);
     chainB.SetBranchAddress("pf_els_et", &pf_els_et, &b_pf_els_et);
@@ -6079,7 +6079,7 @@ void cfA::InitializeB(){
   if (sampleName.find("lite")==std::string::npos) {
     chainB.SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
     chainB.SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
-    if (cmEnergy<=8) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
+    if (cfAVersion<=71) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
     chainB.SetBranchAddress("pfcand_pt", &pfcand_pt, &b_pfcand_pt);
     chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
     chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);
@@ -6090,7 +6090,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
     chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
   }
-  if (cmEnergy<=8) {
+  if (cfAVersion<=71) {
     chainB.SetBranchAddress("Npfmets", &Npfmets, &b_Npfmets);
     chainB.SetBranchAddress("pfmets_et", &pfmets_et, &b_pfmets_et);
     chainB.SetBranchAddress("pfmets_phi", &pfmets_phi, &b_pfmets_phi);
@@ -6231,7 +6231,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("taus_signalPFChargedHadrCandsSize", &taus_signalPFChargedHadrCandsSize, &b_taus_signalPFChargedHadrCandsSize);
     chainB.SetBranchAddress("taus_muDecision", &taus_muDecision, &b_taus_muDecision);
     chainB.SetBranchAddress("taus_Nprongs", &taus_Nprongs, &b_taus_Nprongs);
-    if (cmEnergy<=8) {
+    if (cfAVersion<=71) {
       chainB.SetBranchAddress("Ntcmets", &Ntcmets, &b_Ntcmets);
       chainB.SetBranchAddress("tcmets_et", &tcmets_et, &b_tcmets_et);
       chainB.SetBranchAddress("tcmets_phi", &tcmets_phi, &b_tcmets_phi);
@@ -6270,7 +6270,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("orbitNumber", &orbitNumber, &b_orbitNumber);
     chainB.SetBranchAddress("weight", &weight, &b_weight);
     chainB.SetBranchAddress("model_params", &model_params, &b_model_params);
-    if (cfAVersion==75) { // temporary fix, calling this v75
+    if (cfAVersion>=75) { // temporary fix, calling this v75
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_px", &fastjets_AK4_R1p2_R0p5pT10_px, &b_fastjets_AK4_R1p2_R0p5pT10_px);
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_py", &fastjets_AK4_R1p2_R0p5pT10_py, &b_fastjets_AK4_R1p2_R0p5pT10_py);
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_pz", &fastjets_AK4_R1p2_R0p5pT10_pz, &b_fastjets_AK4_R1p2_R0p5pT10_pz);

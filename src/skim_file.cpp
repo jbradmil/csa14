@@ -9,10 +9,10 @@
 
 int main(int argc, char *argv[]){
   std::string inFilename("");
-  bool isLocal(false);
+  bool isList(false), isLocal(false);
   int Nentries(-1);
   int c(0);
-  while((c=getopt(argc, argv, "i:n:l"))!=-1){
+  while((c=getopt(argc, argv, "i:n:lL"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
@@ -21,6 +21,8 @@ int main(int argc, char *argv[]){
       Nentries=atoi(optarg);
       break;
     case 'l':
+      isList=true;
+    case 'L':
       isLocal=true;
       break;
     default:
@@ -29,10 +31,7 @@ int main(int argc, char *argv[]){
   }
 
   std::string outFilename("");
-  if(!isLocal){
-    outFilename="skims/"+inFilename+"_skimmed.root";
-    inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
-  }else{
+  if(isLocal){
     std::string baseName(inFilename);
     size_t pos=baseName.find(".root");
     if(pos!=std::string::npos){
@@ -44,7 +43,11 @@ int main(int argc, char *argv[]){
     }
     outFilename="skims/"+baseName+"_skimmed.root";
   }
+  else{
+    outFilename="skims/"+inFilename+"_skimmed.root";
+    inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
+  }
 
-  CfASkimmer cs(inFilename, false, Nentries);
+  CfASkimmer cs(inFilename, isList, Nentries);
   cs.Skim(outFilename);
 }

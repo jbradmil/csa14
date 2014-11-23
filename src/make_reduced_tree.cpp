@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <unistd.h>
+#include "TSystem.h"
 #include "reduced_tree_maker.hpp"
 #include "weights.hpp"
 
@@ -29,15 +30,17 @@ int main(int argc, char *argv[]){
   }
   
   std::string outFilename("");
+  std::string dirName("");
   if(iscfA){
-    outFilename="reduced_trees/"+inFilename+".root";
+    dirName="reduced_trees/"+inFilename;
+    outFilename=dirName+"/"+inFilename+".root";
     inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
   }else{
     std::string baseName(inFilename);
     size_t pos(baseName.find(".root"));
-    if(pos!=std::string::npos){
-      baseName.erase(pos);
-    }
+    if(pos!=std::string::npos)  baseName.erase(pos);
+    pos=baseName.find(".list");
+    if(pos!=std::string::npos)  baseName.erase(pos);
     pos=baseName.rfind("/");
     if(pos!=std::string::npos){
       if(pos!=baseName.size()-1){
@@ -46,9 +49,14 @@ int main(int argc, char *argv[]){
         baseName.append("file_name_ended_with_slash");
       }
     }
-    outFilename="reduced_trees/"+baseName+".root";
+    dirName="reduced_trees/"+baseName;
+    pos=dirName.find(".part");
+    if(pos!=std::string::npos)  dirName.erase(pos);
+    outFilename=dirName+"/"+baseName+".root";
     std::cout << inFilename << "\n" << baseName << "\n" << outFilename << "\n";
   }
+
+  if (gSystem->AccessPathName(dirName.c_str())) gSystem->mkdir(dirName.c_str());
 
   WeightCalculator w(19399,Nentries);
   ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries);

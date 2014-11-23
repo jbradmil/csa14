@@ -10,11 +10,16 @@ using namespace std;
 
 void SkimReducedTree(string inFilename, string outFilename) {
   TChain *inCh = new TChain("reduced_tree");
-  inCh->Add(inFilename.c_str());
+  cout << "Input: " << inFilename+"/*root" << endl;
+  inCh->Add((inFilename+"/*root").c_str()); // give it reduced_trees/SAMPLE_NAME
+  cout << "Output: " << outFilename << endl;
+
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
-  TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200");
+  //  TTree *outCh = inCh->CopyTree("met>400&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&num_jets_pt30>=4");
+  TTree *outCh = inCh->CopyTree("met>200&&ht30>500&min_delta_phi_met_N>4&&num_jets_pt30>=4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
+  cout << "Saved " << outCh->GetEntries() << " events." << endl;
   outCh->Write();
   outfile->Close();
 
