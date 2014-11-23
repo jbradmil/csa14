@@ -30,7 +30,7 @@ unsigned int FatJet::GetIndex() const{
   return fastjets_AK4_R1p2_R0p5pT30_index;
 }
 
-int FatJet::GetmJ() const{
+double FatJet::GetmJ() const{
   return mJ;
 }
 

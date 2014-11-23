@@ -16,7 +16,7 @@ public:
   TLorentzVector GetLorentzVector() const;
   double GetNConst() const;
   unsigned int GetIndex() const;
-  int GetmJ() const;
+  double GetmJ() const;
 
   bool operator==(const FatJet &jet) const;
   bool operator!=(const FatJet &jet) const;
@@ -28,7 +28,7 @@ private:
   TLorentzVector vec;
   double nConst;
   int fastjets_AK4_R1p2_R0p5pT30_index;
-  int mJ;
+  double mJ;
 };
 
 #endif
