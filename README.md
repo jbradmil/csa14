@@ -1,7 +1,7 @@
 csa14
 =====
 
-Code for making plots for CSA14 from cfA ntuples.  Originally based on ald77/Hbb.git and manuelfs/ucsb_analysis.git
+Code for making plots for CSA14 from cfA ntuples.  Tested on SLC5, SLC6, and Mac OSX (Mavericks). Originally based on ald77/Hbb.git and manuelfs/ucsb_analysis.git
 
 Note: the makefile is by default written using linux sed syntax.  To
 make it OSX-compatible, change
