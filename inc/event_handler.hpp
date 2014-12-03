@@ -193,8 +193,10 @@ protected:
   bool hasPFMatch(const int index, const int pdgId) const;
   bool IsFromB(const int, const int, const int) const;
 
-  vector<int> GetRecoMuons(const bool veto, const bool mT_cut=false, const bool orth=false) const;
-  bool isRecoMuon(const uint imu, const uint level=0, const bool=false, const bool=false) const;
+  TLorentzVector GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const; 
+
+  vector<int> GetRecoMuons(const bool veto, const bool iso2D=false, const bool mT_cut=false, const bool orth=false) const;
+  bool isRecoMuon(const uint imu, const uint level=0, const bool=false, const bool=false, const bool=false) const;
   bool isTrueMuon(const double eta, const double phi) const;
   bool isbMuon(const double eta, const double phi) const;
   double GetMuonRelIso(const unsigned int imu) const;
@@ -204,8 +206,8 @@ protected:
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(const bool veto, const bool mT_cut=false, const bool orth=false) const;
-  bool isRecoElectron(const uint imu, const uint level=0, const bool=false, const bool=false) const;
+  vector<int> GetRecoElectrons(const bool veto, const bool iso2D=false, const bool mT_cut=false, const bool orth=false) const;
+  bool isRecoElectron(const uint imu, const uint level=0, const bool=false, const bool=false, const bool=false) const;
 
   vector<int> GetRA2bElectrons(const bool veto) const;
   vector<int> GetRA2bMuons(const bool veto) const;
@@ -245,6 +247,7 @@ protected:
   double GetMTW(const double, const double, const double, const double) const;
   double GetMTWb(const double, const double, const double, const double, const bool=false) const;
   double GetMinMTWb(const double=30., const double=0.679, const bool=false) const;
+  double Get2ndMTWb(const double=30., const double=0.679, const bool=false) const;
 
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };

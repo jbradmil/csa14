@@ -6,17 +6,17 @@
 
 class FatJet{
 public:
-  explicit FatJet(const TLorentzVector=TLorentzVector(0.0,0.0,0.0,0.0), const double nConstIn=-DBL_MAX, const int fastjets_AK4_R1p2_R0p5pT30_indexIn=0);
+  explicit FatJet(const TLorentzVector=TLorentzVector(0.0,0.0,0.0,0.0), const int nConstIn=-1, const int fastjets_AK4_R1p2_R0p5pT30_indexIn=0);
 
   void SetLorentzVector(const TLorentzVector vecIn);
-  void SetNConst(const double nConstIn);
+  void SetNConst(const int nConstIn);
   void SetIndex(const double fastjets_AK4_R1p2_R0p5pT30_indexIn);
   void SetmJ();
 
   TLorentzVector GetLorentzVector() const;
-  double GetNConst() const;
+  int GetNConst() const;
   unsigned int GetIndex() const;
-  int GetmJ() const;
+  double GetmJ() const;
 
   bool operator==(const FatJet &jet) const;
   bool operator!=(const FatJet &jet) const;
@@ -26,9 +26,9 @@ public:
   bool operator>=(const FatJet &jet) const;
 private:
   TLorentzVector vec;
-  double nConst;
+  int nConst;
   int fastjets_AK4_R1p2_R0p5pT30_index;
-  int mJ;
+  double mJ;
 };
 
 #endif

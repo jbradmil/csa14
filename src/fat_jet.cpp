@@ -2,7 +2,7 @@
 #include "fat_jet.hpp"
 #include "TLorentzVector.h"
 
-FatJet::FatJet(const TLorentzVector vecIn, const double nConstIn, const int fastjets_AK4_R1p2_R0p5pT30_indexIn):vec(vecIn),nConst(nConstIn),fastjets_AK4_R1p2_R0p5pT30_index(fastjets_AK4_R1p2_R0p5pT30_indexIn){
+FatJet::FatJet(const TLorentzVector vecIn, const int nConstIn, const int fastjets_AK4_R1p2_R0p5pT30_indexIn):vec(vecIn),nConst(nConstIn),fastjets_AK4_R1p2_R0p5pT30_index(fastjets_AK4_R1p2_R0p5pT30_indexIn){
   mJ=vecIn.M();
 }
 
@@ -10,7 +10,7 @@ void FatJet::SetLorentzVector(const TLorentzVector vecIn){
   vec=vecIn;
 }
 
-void FatJet::SetNConst(const double nConstIn){
+void FatJet::SetNConst(const int nConstIn){
   nConst=nConstIn;
 }
 
@@ -22,7 +22,7 @@ TLorentzVector FatJet::GetLorentzVector() const{
   return vec;
 }
 
-double FatJet::GetNConst() const{
+int FatJet::GetNConst() const{
   return nConst;
 }
 
@@ -30,7 +30,7 @@ unsigned int FatJet::GetIndex() const{
   return fastjets_AK4_R1p2_R0p5pT30_index;
 }
 
-int FatJet::GetmJ() const{
+double FatJet::GetmJ() const{
   return mJ;
 }
 

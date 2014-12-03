@@ -1817,13 +1817,13 @@ bool EventHandler::hasPFMatch(const int index, const int pdgId) const{
   else return (deltaPT<5);
 }
 
-vector<int> EventHandler::GetRecoMuons(const bool veto, const bool mT_cut, const bool orth) const{
+vector<int> EventHandler::GetRecoMuons(const bool veto, const bool iso2D, const bool mT_cut, const bool orth) const{
   vector<int> muons;
   for(uint index=0; index<mus_pt->size(); index++)
     if(veto){
-      if(isRecoMuon(index, 0, mT_cut, orth)) muons.push_back(index);
+      if(isRecoMuon(index, 0, iso2D, mT_cut, orth)) muons.push_back(index);
     }	else {
-      if(isRecoMuon(index, 1, mT_cut, orth)) muons.push_back(index);
+      if(isRecoMuon(index, 1, iso2D, mT_cut, orth)) muons.push_back(index);
     }
   return muons;
 }
@@ -1845,7 +1845,7 @@ double EventHandler::getDZ(double vx, double vy, double vz, double px, double py
 
 // int EventHandler::GetNumRecoMuons
 
-bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool mT_cut, const bool orth) const{
+bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D, const bool mT_cut, const bool orth) const{
   if (imu>mus_pt->size()) return false;
   double pt_thresh(10.0);
   if(level>=1) pt_thresh=20.0;
@@ -1865,7 +1865,7 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool mT_cu
   if ( !mus_tk_numvalPixelhits->at(imu)) return false;
   if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
 
-  if (GetMuonRelIso(imu) > 0.2) return false;
+  
 
   // need to make sure both collections have the "slimmed cuts"
   // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
@@ -1875,6 +1875,19 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool mT_cu
 	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
 	mus_isPFMuon->at(imu))) return false;
   
+  if (iso2D) {
+    TLorentzVector nearestJet(GetNearestJet(TLorentzVector(mus_px->at(imu),mus_py->at(imu),mus_pz->at(imu),mus_energy->at(imu)),mus_jet_ind->at(imu)));
+    if (nearestJet.Pt()>0)
+      {
+        TLorentzVector muVec;
+        muVec.SetPtEtaPhiM(mus_pt->at(imu),mus_eta->at(imu),mus_phi->at(imu),mus_energy->at(imu));
+        double ptRel = TMath::Abs(muVec.Perp(nearestJet.Vect()));
+        double minDR = Math::GetDeltaR(mus_phi->at(imu), mus_eta->at(imu), nearestJet.Phi(), nearestJet.Eta());
+	if (ptRel>25 || minDR>0.4) return true;
+        else return false;
+      } else return true;
+  } else if (GetMuonRelIso(imu) > 0.2) return false;
+
   double mT=GetMTW(mus_pt->at(imu), pfTypeImets_et->at(0), mus_phi->at(imu), pfTypeImets_phi->at(0));
   bool orthRA4(mus_pt->at(imu)<20||GetMuonRelIso(imu)>0.12);
   if (mT_cut&&mT>100) {
@@ -1898,13 +1911,13 @@ vector<int> EventHandler::GetRecoTaus() const{
   return taus;
 }
 
-vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool mT_cut, const bool orth) const{
+vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool iso2D, const bool mT_cut, const bool orth) const{
   vector<int> electrons;
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
-      if(isRecoElectron(index,3,mT_cut,orth)) electrons.push_back(index);
+      if(isRecoElectron(index,3,iso2D,mT_cut,orth)) electrons.push_back(index);
     }	else {
-      if(isRecoElectron(index,0,mT_cut,orth)) electrons.push_back(index);
+      if(isRecoElectron(index,0,iso2D,mT_cut,orth)) electrons.push_back(index);
     }
   return electrons;
 }
@@ -1920,7 +1933,7 @@ vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
   return electrons;
 }
 
-bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool mT_cut, const bool orth) const{
+bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool iso2D, const bool mT_cut, const bool orth) const{
   //N.B.: cut does not have the fabs(1/E-1/p) / ooEmooP and conversion rejection cuts from the EGamma POG!!!
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
@@ -2002,14 +2015,26 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool m
   const double d0(els_d0dum->at(iel)-beamx*sin(els_tk_phi->at(iel))+beamy*cos(els_tk_phi->at(iel)));
   if ( fabs(d0) >= d0_cut ) return false;
   if ( fabs(els_vz->at(iel) - pv_z->at(0) ) >= dz_cut ) return false;
-
-  float rel_iso(999.);
-  if (cfAVersion<=71) rel_iso=GetElectronRelIso(iel);
-  else rel_iso=GetCSAElectronIsolation(iel);
-  if(rel_iso>=iso_cut) return false;
+  if (iso2D) {
+    TLorentzVector nearestJet(GetNearestJet(TLorentzVector(els_px->at(iel),els_py->at(iel),els_pz->at(iel),els_energy->at(iel)),els_jet_ind->at(iel)));
+    if (nearestJet.Pt()>0)
+      {
+	TLorentzVector elVec;
+	elVec.SetPtEtaPhiM(els_pt->at(iel),els_scEta->at(iel),els_phi->at(iel),els_energy->at(iel));
+	double ptRel = TMath::Abs(elVec.Perp(nearestJet.Vect()));
+	double minDR = Math::GetDeltaR(els_phi->at(iel), els_eta->at(iel), nearestJet.Phi(), nearestJet.Eta());
+	if (ptRel>25 || minDR>0.4) return true;
+	else return false;
+      } else return true;
+  } else{
+    float rel_iso(999.);
+    if (cfAVersion<=71) rel_iso=GetElectronRelIso(iel);
+    else rel_iso=GetCSAElectronIsolation(iel);
+    if(rel_iso>=iso_cut) return false;
+  }
 
   double mT=GetMTW(els_pt->at(iel), pfTypeImets_et->at(0), els_phi->at(iel), pfTypeImets_phi->at(0));
-  bool orthRA4(els_pt->at(iel)<20||rel_iso>0.15);
+  bool orthRA4(els_pt->at(iel)<20||GetCSAElectronIsolation(iel)>0.15);
   if (mT_cut&&mT>100) {
     if (orth&&!orthRA4) return true;
     else return false;
@@ -2094,6 +2119,29 @@ bool EventHandler::passedBaseElectronSelection(uint iel, float ElectronPTThresho
 	  );
 }
 
+TLorentzVector EventHandler::GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const {
+  double minDR(DBL_MAX);
+  TLorentzVector TLV(0,0,0,0), TLV_out(0,0,0,0);
+  // printf("lepton: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",lepton.Px(),lepton.Py(),lepton.Pz(),lepton.E());
+  for(unsigned int ijet(0); ijet<jets_AKPF_phi->size(); ++ijet){
+    if(jets_AKPF_pt->at(ijet)<30.) continue;
+      TLV.SetPxPyPzE(jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet), jets_AKPF_pz->at(ijet), jets_AKPF_energy->at(ijet));
+      // printf("jet: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
+      if (jet_ind==ijet) {
+	TLV-=lepton;
+	// printf("jet(corr): px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
+      }
+      double DR=Math::GetDeltaR(lepton.Phi(), lepton.Eta(), TLV.Phi(), TLV.Eta());
+      //  cout << "DR: " << DR << endl;
+      if (DR<minDR) {
+	minDR=DR;
+	//	cout << "minDR: " << minDR << endl;
+	TLV_out=TLV;
+      }
+  }
+
+  return TLV;
+}
 
 bool EventHandler::IsMC(){
   return (sampleName.find("Run201") == std::string::npos);
@@ -2401,6 +2449,27 @@ double EventHandler::GetMinMTWb(const double pt, const double bTag, const bool u
   }
   if (min_mT==DBL_MAX) return -999.;
   else return min_mT;
+}
+
+double EventHandler::Get2ndMTWb(const double pt, const double bTag, const bool use_W_mass) const{
+  GetSortedBJets();
+  double max_mT(-1.);
+  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
+    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
+    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
+    double mT=GetMTWb(sortedBJetCache[jet].GetLorentzVector().Pt(), pfTypeImets_et->at(0), sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0), use_W_mass);
+    if (mT>max_mT) max_mT=mT;
+  }
+  // now find 2nd
+  double max2_mT(-1.); 
+  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
+    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
+    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
+    double mT=GetMTWb(sortedBJetCache[jet].GetLorentzVector().Pt(), pfTypeImets_et->at(0), sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0), use_W_mass);
+    if (mT==max_mT) continue;
+    if (mT>max2_mT) max2_mT=mT;
+  }
+  return max2_mT;
 }
 
 double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {

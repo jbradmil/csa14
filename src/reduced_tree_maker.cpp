@@ -111,8 +111,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   // num_lost_taus(0);
 
-  int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
-  int num_reco_electrons(0), num_reco_veto_electrons(0), num_reco_veto_electrons_mT100(0), num_reco_veto_electrons_mT100_orth(0);
+  int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_iso2D(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
+  int num_reco_electrons(0), num_reco_veto_electrons(0), num_reco_veto_electrons_iso2D(0), num_reco_veto_electrons_mT100(0), num_reco_veto_electrons_mT100_orth(0);
   int num_ra2b_veto_taus(0), num_ra2b_veto_taus_noIso(0);
 
   // int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
@@ -125,6 +125,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float muon_mT, muon_dphi_met;
   float muon_relIso;
   float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
+  float muon_ptRel, muon_minDR;
+
+
 
   int electron_true;
   int electron_signal, electron_veto;
@@ -132,6 +135,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float electron_mT, electron_dphi_met;
   float electron_relIso;
   float electron_NH_Iso, electron_CH_Iso, electron_ph_Iso;
+  float electron_ptRel, electron_minDR;
 
   // int lep1, lep2;
 
@@ -183,6 +187,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   double highest_mJ(-1.), scnd_highest_mJ(-1.), thrd_highest_mJ(-1.), frth_highest_mJ(-1.);
 
   double min_mTWB(0.), min_mTWB_Wmass(0.);
+  double mTWB_2nd(0.);
 
   double doc_met(0.);
   double gluino1_pt(0.), gluino2_pt(0.);
@@ -380,6 +385,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("muon_ph_Iso", &muon_ph_Iso);
   reduced_tree.Branch("muon_PU_Iso", &muon_PU_Iso);
 
+  reduced_tree.Branch("muon_ptRel", &muon_ptRel);
+  reduced_tree.Branch("muon_minDR",&muon_minDR);
+
+
 
   // reduced_tree.Branch("muon_NH_Et", &muon_NH_Et);
   // reduced_tree.Branch("muon_CH_pt", &muon_CH_pt);
@@ -391,11 +400,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
 
   reduced_tree.Branch("num_reco_veto_muons", &num_reco_veto_muons);
+  reduced_tree.Branch("num_reco_veto_muons_iso2D", &num_reco_veto_muons_iso2D);
   reduced_tree.Branch("num_reco_veto_muons_mT100", &num_reco_veto_muons_mT100);
   reduced_tree.Branch("num_reco_veto_muons_mT100_orth", &num_reco_veto_muons_mT100_orth);
   reduced_tree.Branch("num_reco_muons", &num_reco_muons);
 
   reduced_tree.Branch("num_reco_veto_electrons", &num_reco_veto_electrons);
+  reduced_tree.Branch("num_reco_veto_electrons_iso2D", &num_reco_veto_electrons_iso2D);
   reduced_tree.Branch("num_reco_veto_electrons_mT100", &num_reco_veto_electrons_mT100);
   reduced_tree.Branch("num_reco_veto_electrons_mT100_orth", &num_reco_veto_electrons_mT100_orth);
   reduced_tree.Branch("num_reco_electrons", &num_reco_electrons);
@@ -425,6 +436,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("electron_NH_Iso", &electron_NH_Iso);
   reduced_tree.Branch("electron_CH_Iso", &electron_CH_Iso);
   reduced_tree.Branch("electron_ph_Iso", &electron_ph_Iso);
+
+  reduced_tree.Branch("electron_ptRel", &electron_ptRel);
+  reduced_tree.Branch("electron_minDR",&electron_minDR);
 
   // reduced_tree.Branch("electron_NH_Et", &electron_NH_Et);
   // reduced_tree.Branch("electron_CH_pt", &electron_CH_pt);
@@ -601,6 +615,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   reduced_tree.Branch("min_mTWB", &min_mTWB);
   reduced_tree.Branch("min_mTWB_Wmass", &min_mTWB_Wmass);
+  reduced_tree.Branch("mTWB_2nd", &mTWB_2nd);
 
   reduced_tree.Branch("doc_met", &doc_met);
   reduced_tree.Branch("gluino1_pt", &gluino1_pt);
@@ -797,12 +812,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
    
 
-    vector<int> reco_muons, reco_veto_muons, reco_veto_muons_mT, reco_veto_muons_mT_orth;
+    vector<int> reco_muons, reco_veto_muons;
+    vector<int> reco_veto_muons_iso2D, reco_veto_muons_mT, reco_veto_muons_mT_orth;
     if (cfAVersion>=73) {
       reco_muons = GetRecoMuons(false);
       reco_veto_muons = GetRecoMuons(true);
-      reco_veto_muons_mT=GetRecoMuons(true,true);
-      reco_veto_muons_mT_orth=GetRecoMuons(true,true,true);
+      reco_veto_muons_iso2D = GetRecoMuons(true,true);
+      reco_veto_muons_mT=GetRecoMuons(true,false,true);
+      reco_veto_muons_mT_orth=GetRecoMuons(true,false,true,true);
     }
     else {
       reco_muons = GetRA2bMuons(false);
@@ -810,24 +827,27 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     }
     num_reco_muons = reco_muons.size();
     num_reco_veto_muons = reco_veto_muons.size();
+    num_reco_veto_muons_iso2D = reco_veto_muons_iso2D.size();    
     num_reco_veto_muons_mT100 = reco_veto_muons_mT.size();
     num_reco_veto_muons_mT100_orth = reco_veto_muons_mT_orth.size();
 
-    vector<int> reco_electrons, reco_veto_electrons, reco_veto_electrons_mT, reco_veto_electrons_mT_orth;
+    vector<int> reco_electrons, reco_veto_electrons;
+    vector<int> reco_veto_electrons_iso2D, reco_veto_electrons_mT, reco_veto_electrons_mT_orth;
     if (cfAVersion>=73) {
       reco_electrons = GetRecoElectrons(false);
       reco_veto_electrons = GetRecoElectrons(true);
-      reco_veto_electrons_mT = GetRecoElectrons(true,true);
-      reco_veto_electrons_mT_orth = GetRecoElectrons(true,true,true);
+      reco_veto_electrons_iso2D=GetRecoElectrons(true,true);
+      reco_veto_electrons_mT = GetRecoElectrons(true,false,true);
+      reco_veto_electrons_mT_orth = GetRecoElectrons(true,false,true,true);
     }
     else {
       reco_electrons = GetRA2bElectrons(false);
       reco_veto_electrons = GetRA2bElectrons(true);
-
     }
 
     num_reco_electrons = reco_electrons.size();
     num_reco_veto_electrons = reco_veto_electrons.size();
+    num_reco_veto_electrons_iso2D = reco_veto_electrons_iso2D.size();
     num_reco_veto_electrons_mT100 = reco_veto_electrons_mT.size();
     num_reco_veto_electrons_mT100_orth = reco_veto_electrons_mT_orth.size();
 
@@ -875,6 +895,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     muon_CH_Iso=-1.;
     muon_ph_Iso=-1.;
     muon_PU_Iso=-1.;  
+    muon_ptRel=-1.;
+    muon_minDR=-1.;
     muon_mT=-1.;
     muon_dphi_met=-999.;
 
@@ -892,6 +914,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	muon_ph_Iso=mus_pfIsolationR04_sumPhotonEt->at(muon_index)/muon_pt;
 	muon_PU_Iso=mus_pfIsolationR04_sumPUPt->at(muon_index)/muon_pt;  
 	muon_relIso=GetMuonRelIso(muon_index); 
+        TLorentzVector nearestJet(GetNearestJet(TLorentzVector(mus_px->at(muon_index),mus_py->at(muon_index),
+							       mus_pz->at(muon_index),mus_energy->at(muon_index)), mus_jet_ind->at(muon_index)));
+	if (nearestJet.Pt()>0)
+          {
+            TLorentzVector muVec;
+            muVec.SetPtEtaPhiM(muon_pt,muon_eta,muon_phi,mus_energy->at(muon_index));
+            muon_ptRel = TMath::Abs(muVec.Perp(nearestJet.Vect()));
+            muon_minDR = Math::GetDeltaR(muon_phi, muon_eta, nearestJet.Phi(), nearestJet.Eta());
+          }
 	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
 	muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
       }
@@ -1004,6 +1035,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     electron_NH_Iso=-1.;
     electron_CH_Iso=-1.;
     electron_ph_Iso=-1.;
+    electron_ptRel=-1.;
+    electron_minDR=-1.;
     electron_mT=-1.;
     electron_dphi_met=-999.;
 
@@ -1019,6 +1052,15 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	electron_CH_Iso=els_pfIsolationR03_sumChargedHadronPt->at(electron_index);
 	electron_ph_Iso=els_pfIsolationR03_sumPhotonEt->at(electron_index);
 	electron_relIso=GetCSAElectronIsolation(electron_index); 
+	TLorentzVector nearestJet(GetNearestJet(TLorentzVector(els_px->at(electron_index),els_py->at(electron_index),
+							       els_pz->at(electron_index),els_energy->at(electron_index)), els_jet_ind->at(electron_index)));
+	if (nearestJet.Pt()>0)
+	  {
+	    TLorentzVector elVec;
+	    elVec.SetPtEtaPhiM(electron_pt,electron_eta,electron_phi,els_energy->at(electron_index));
+	    electron_ptRel = TMath::Abs(elVec.Perp(nearestJet.Vect()));
+	    electron_minDR = Math::GetDeltaR(els_phi->at(electron_index), els_eta->at(electron_index), nearestJet.Phi(), nearestJet.Eta());
+	  }
 	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
 	electron_dphi_met=fabs(Math::GetDeltaPhi(electron_phi,met_phi));
       }
@@ -1260,6 +1302,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     min_mTWB=GetMinMTWb();
     min_mTWB_Wmass=GetMinMTWb(30., 0.679, true);
+    mTWB_2nd=Get2ndMTWb();
 
     reduced_tree.Fill(); 
     //  if (i==20) break;

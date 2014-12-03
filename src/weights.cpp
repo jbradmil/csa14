@@ -158,7 +158,10 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=0.325388;
   crossSectionTable["SMS-T1qqqq_2J_mGl-1400_mLSP-100"]=0.0252977;
   crossSectionTable["SMS-T1qqqq_2J_mGl-1000_mLSP-800"]=0.325388;  
+  crossSectionTable["SMS-T2tt_2J_mStop-425_mLSP-325"]=1.31169;
+  crossSectionTable["SMS-T2tt_2J_mStop-500_mLSP-325"]=0.51848;
   crossSectionTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=0.107045;
+  crossSectionTable["SMS-T2tt_2J_mStop-850_mLSP-100"]=0.0189612;
   //  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25"]=818.8;
   //  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=818.8;
   // https://twiki.cern.ch/twiki/bin/view/Sandbox/FullNNLOcrossSections#Top_cross_section_for_13_TeV
@@ -319,7 +322,10 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900"]=97584;
   totalEventsTable["SMS-T1qqqq_2J_mGl-1400_mLSP-100"]=103943;
   totalEventsTable["SMS-T1qqqq_2J_mGl-1000_mLSP-800"]=97513;
+  totalEventsTable["SMS-T2tt_2J_mStop-425_mLSP-325"]=1045470;
+  totalEventsTable["SMS-T2tt_2J_mStop-500_mLSP-325"]=112116;
   totalEventsTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=107131;
+  totalEventsTable["SMS-T2tt_2J_mStop-850_mLSP-100"]=102839;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25"]=25474122;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=17184825;
   totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4087868/*3181078*/;
