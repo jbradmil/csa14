@@ -19,7 +19,7 @@ vpath %.exe $(EXEDIR)
 vpath %.d $(MAKEDIR)
 
 # Add new executables to this list
-all: make_reduced_tree.exe print_collections.exe skim_file.exe skim_reduced_tree.exe
+all: make_reduced_tree.exe print_collections.exe skim_file.exe skim_reduced_tree.exe slim_cfa_files.exe
 
 # List any object files your executable oneed to be linked with
 $(EXEDIR)/generate_cfa_class.exe: generate_cfa_class.o
@@ -27,11 +27,12 @@ $(EXEDIR)/make_reduced_tree.exe: make_reduced_tree.o event_handler.o event_numbe
 $(EXEDIR)/print_collections.exe: print_collections.o object_printer.o cfa2014.o
 $(EXEDIR)/skim_file.exe: skim_file.o event_handler.o event_number.o b_jet.o fat_jet.o math.o pu_constants.o timer.o cfa2014.o cfa_skimmer.o gen_muon.o gen_electron.o gen_tau.o in_json_2012.o
 $(EXEDIR)/skim_reduced_tree.exe: skim_reduced_tree.o 
+$(EXEDIR)/slim_cfa_files.exe: slim_cfa_files.o
 
 -include $(addsuffix .d,$(addprefix $(MAKEDIR)/,$(notdir $(basename $(wildcard $(SRCDIR)/*.cpp)))))
 -include $(MAKEDIR)/cfa2014.d
 
-# Note: you need a space after sed -i for Max OSX.  You must NOT have a space for linux.
+# Note: you need a space after sed -i to compile in Mac OSX.  You must NOT have a space in linux.
 $(MAKEDIR)/%.d: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -MM -MG -MF $@ $< 
 	sed -i'' 's#$*.o#$(OBJDIR)/$*.o $(MAKEDIR)/$*.d#g' $@
