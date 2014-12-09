@@ -82,6 +82,7 @@ protected:
   int GetLSPMass() const;
 
   // void SetFastJetCollection(const uint=30) const;
+  void ClusterFatJets() const;
   void GetSortedFatJets() const;
   double GetHighestFatJetmJ(const unsigned int=1) const;
   void GetSortedBJets() const;
@@ -248,6 +249,7 @@ protected:
   double GetMTWb(const double, const double, const double, const double, const bool=false) const;
   double GetMinMTWb(const double=30., const double=0.679, const bool=false) const;
   double Get2ndMTWb(const double=30., const double=0.679, const bool=false) const;
+  double GetMinDeltaPhibMET(const double=30., const double=0.679) const;
 
   double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true );
   double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,50.,2.4,true,30.,2.4,true,true); };
@@ -258,7 +260,7 @@ protected:
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
   double GetMinDeltaPhiMET(const unsigned int=3, const double=50., const double=2.4) const;
 
-  int GetNumIsoTracks(const double=10.0) const;
+  int GetNumIsoTracks(const double=15.0, const bool=true) const;
 
   double GetTransverseMass() const;
   double GetMHT(const double=30., const double=5.) const;

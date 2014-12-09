@@ -33,12 +33,17 @@
 #include "math.hpp"
 #include "in_json_2012.hpp"
 
+#include "fastjet/ClusterSequence.hh"
+#include "fastjet/PseudoJet.hh"
+
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
 const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"));
 const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
 const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
+
+using namespace fastjet;
 
 
 EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
@@ -61,17 +66,10 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   recoTausUpToDate(false), 
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
-  // fastjets_AK4_R1p2_R0p5_px(fastjets_AK4_R1p2_R0p5pT30_px),
-  // fastjets_AK4_R1p2_R0p5_py(fastjets_AK4_R1p2_R0p5pT30_py),
-  // fastjets_AK4_R1p2_R0p5_pz(fastjets_AK4_R1p2_R0p5pT30_pz),
-  // fastjets_AK4_R1p2_R0p5_energy(fastjets_AK4_R1p2_R0p5pT30_energy),
-  // fastjets_AK4_R1p2_R0p5_phi(fastjets_AK4_R1p2_R0p5pT30_phi),
-  // fastjets_AK4_R1p2_R0p5_eta(fastjets_AK4_R1p2_R0p5pT30_eta),
-  // fastjets_AK4_R1p2_R0p5_index(fastjets_AK4_R1p2_R0p5pT30_index),
-  // fastjets_AK4_R1p2_R0p5_nconstituents(fastjets_AK4_R1p2_R0p5pT30_nconstituents),
   beta(0){
   if (fastMode){
-    if(cfAVersion<=71) { // turn off unnecessary branches
+    chainB.SetBranchStatus("pfcand*",0);
+    if(cfAVersion<=71||cfAVersion==74) { // turn off unnecessary branches
       chainA.SetBranchStatus("triggerobject_*",0);
       chainA.SetBranchStatus("standalone_t*",0);
       chainA.SetBranchStatus("L1trigger_*",0);
@@ -88,9 +86,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("pf_photons_*",0);
       chainB.SetBranchStatus("Njets_AK5PFclean",0);
       chainB.SetBranchStatus("jets_AK5PFclean_*",0);
-    }
-    else if(sampleName.find("lite")!=std::string::npos){
-      chainB.SetBranchStatus("pfcand*",0);
+    } else {
       chainB.SetBranchStatus("mc_final*",0);
     }
   }
@@ -286,25 +282,56 @@ void EventHandler::GetSortedBJets() const{
   }
 }
 
-void EventHandler::GetSortedFatJets() const{
-  if (cfAVersion<75) return;
+void EventHandler::ClusterFatJets() const{
   if(!FatJetsUpToDate){
     sortedFatJetCache.clear();
-    //  cout << "Load sortedFatJetCache..." << endl;
-    for(unsigned int i(0); i<fastjets_AK4_R1p2_R0p5pT30_px->size(); ++i){
-      if (TMath::Sqrt(fastjets_AK4_R1p2_R0p5pT30_px->at(i)*fastjets_AK4_R1p2_R0p5pT30_px->at(i)+fastjets_AK4_R1p2_R0p5pT30_py->at(i)*fastjets_AK4_R1p2_R0p5pT30_py->at(i))>50) {
-	sortedFatJetCache.push_back(FatJet(TLorentzVector(fastjets_AK4_R1p2_R0p5pT30_px->at(i),fastjets_AK4_R1p2_R0p5pT30_py->at(i),fastjets_AK4_R1p2_R0p5pT30_pz->at(i),fastjets_AK4_R1p2_R0p5pT30_energy->at(i)),fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(i),i));
-      }
+    //  cout << "ClusterFatJets" << endl;
+    vector<PseudoJet> fjets_skinny_30(0);
+    vector<PseudoJet> skinny_jets_pt30;
+    for(size_t jet = 0; jet<jets_AKPF_pt->size(); ++jet){
+      // if(is_nan(jets_AKPF_px->at(jet)) || is_nan(jets_AKPF_py->at(jet))
+      // 	  || is_nan(jets_AKPF_pz->at(jet)) || is_nan(jets_AKPF_energy->at(jet))) continue;
+      const PseudoJet this_pj(jets_AKPF_px->at(jet), jets_AKPF_py->at(jet),
+			      jets_AKPF_pz->at(jet), jets_AKPF_energy->at(jet));
+      if(this_pj.pt()>30.0) skinny_jets_pt30.push_back(this_pj);
     }
-    std::sort(sortedFatJetCache.begin(),sortedFatJetCache.end(), std::greater<FatJet>());
-    //   cout << "Found " << sortedFatJetCache.size() << " fat jets." << endl;
-    // Sorted by MJ
+    //  cout << "Found " << skinny_jets_pt30.size() << " skinny jets." << endl;
+    // Define clustering parameters
+    fastjet::Strategy strategy = fastjet::Best;
+    fastjet::RecombinationScheme recomb_scheme = fastjet::E_scheme;
+    fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, 1.2, recomb_scheme, strategy);
+    // run the jet clustering with the above jet definition
+    fastjet::ClusterSequence cs_skinny_30(skinny_jets_pt30, jet_def);
+    //   cout << "Found " << cs_skinny_30.inclusive_jets().size() << " fat jets." << endl;
+    fjets_skinny_30 = sorted_by_pt(cs_skinny_30.inclusive_jets());
+    for(size_t jet = 0; jet<fjets_skinny_30.size(); ++jet){ // now add fat jets to cache
+      sortedFatJetCache.push_back(FatJet(TLorentzVector(fjets_skinny_30[jet].px(),fjets_skinny_30[jet].py(),fjets_skinny_30[jet].pz(),fjets_skinny_30[jet].E()),fjets_skinny_30[jet].constituents().size(),jet));
+    }
+  }
+  FatJetsUpToDate=true;
+}
+
+void EventHandler::GetSortedFatJets() const{
+  if(!FatJetsUpToDate){
+    sortedFatJetCache.clear();
+    if (cfAVersion>=74) {
+      //  cout << "Load sortedFatJetCache..." << endl;
+      for(unsigned int i(0); i<fastjets_AKPF_R1p2_R0p5pT30_px->size(); ++i){
+	//	if (TMath::Sqrt(fastjets_AKPF_R1p2_R0p5pT30_px->at(i)*fastjets_AKPF_R1p2_R0p5pT30_px->at(i)+fastjets_AKPF_R1p2_R0p5pT30_py->at(i)*fastjets_AKPF_R1p2_R0p5pT30_py->at(i))>50) {
+	sortedFatJetCache.push_back(FatJet(TLorentzVector(fastjets_AKPF_R1p2_R0p5pT30_px->at(i),fastjets_AKPF_R1p2_R0p5pT30_py->at(i),fastjets_AKPF_R1p2_R0p5pT30_pz->at(i),fastjets_AKPF_R1p2_R0p5pT30_energy->at(i)),fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(i),i));
+	//	}
+      }
+      std::sort(sortedFatJetCache.begin(),sortedFatJetCache.end(), std::greater<FatJet>());
+      //   cout << "Found " << sortedFatJetCache.size() << " fat jets." << endl;
+      // Sorted by MJ
+      FatJetsUpToDate=true;
+    }
+    else ClusterFatJets();
     FatJetsUpToDate=true;
   }
 }
 
 double EventHandler::GetHighestFatJetmJ(unsigned int pos) const{
-  if (cfAVersion<75) return -DBL_MAX;
   GetSortedFatJets();
   --pos;
   if(pos>=sortedFatJetCache.size()){
@@ -425,7 +452,7 @@ double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
 bool EventHandler::jetHasEMu(const int ijet) const{
   // has an isolated (veto) muon
   if (!recoMuonsUpToDate) {
-    if (cfAVersion>=73) recoMuonCache=GetRecoMuons(true);
+    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
     else recoMuonCache=GetRA2bMuons(true);
     recoMuonsUpToDate=true;
   }
@@ -435,7 +462,7 @@ bool EventHandler::jetHasEMu(const int ijet) const{
   }
   // has an isolated (veto) electron
   if (!recoElectronsUpToDate) {
-    if (cfAVersion>=73) recoElectronCache=GetRecoElectrons(true);
+    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
     else recoElectronCache=GetRA2bElectrons(true);
     recoElectronsUpToDate=true;
   }
@@ -448,7 +475,7 @@ bool EventHandler::jetHasEMu(const int ijet) const{
 
 bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
   if (!recoMuonsUpToDate) {
-    if (cfAVersion>=73) recoMuonCache=GetRecoMuons(true);
+    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
     else recoMuonCache=GetRA2bMuons(true);
     recoMuonsUpToDate=true;
   }
@@ -465,7 +492,7 @@ bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
 
 bool EventHandler::isInElectronCollection(const double eta, const double phi) const{
   if (!recoElectronsUpToDate) {
-    if (cfAVersion>=73) recoElectronCache=GetRecoElectrons(true);
+    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
     else recoElectronCache=GetRA2bElectrons(true);
     recoElectronsUpToDate=true;
   }
@@ -586,70 +613,70 @@ void EventHandler::SetScaleFactor(const double scaleFactorIn){
 
 // void EventHandler::SetFastJetCollection(const unsigned int pt_cut) const{
 //   // pt cut is on the skinny jets we recluster;
-//    fastjets_AK4_R1p2_R0p5_px->clear();
-//    fastjets_AK4_R1p2_R0p5_py->clear();
-//    fastjets_AK4_R1p2_R0p5_pz->clear();
-//    fastjets_AK4_R1p2_R0p5_energy->clear();
-//    fastjets_AK4_R1p2_R0p5_phi->clear();
-//    fastjets_AK4_R1p2_R0p5_eta->clear();
-//    fastjets_AK4_R1p2_R0p5_index->clear();
-//    fastjets_AK4_R1p2_R0p5_nconstituents->clear();
+//    fastjets_AKPF_R1p2_R0p5_px->clear();
+//    fastjets_AKPF_R1p2_R0p5_py->clear();
+//    fastjets_AKPF_R1p2_R0p5_pz->clear();
+//    fastjets_AKPF_R1p2_R0p5_energy->clear();
+//    fastjets_AKPF_R1p2_R0p5_phi->clear();
+//    fastjets_AKPF_R1p2_R0p5_eta->clear();
+//    fastjets_AKPF_R1p2_R0p5_index->clear();
+//    fastjets_AKPF_R1p2_R0p5_nconstituents->clear();
 //   switch (pt_cut) {
 //   case 10:
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT10_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT10_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT10_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT10_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT10_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT10_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT10_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT10_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT10_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT10_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT10_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT10_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT10_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT10_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT10_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT10_nconstituents;
 //   case 15:
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT15_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT15_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT15_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT15_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT15_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT15_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT15_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT15_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT15_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT15_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT15_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT15_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT15_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT15_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT15_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT15_nconstituents;
 //   case 20:
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT20_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT20_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT20_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT20_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT20_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT20_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT20_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT20_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT20_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT20_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT20_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT20_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT20_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT20_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT20_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT20_nconstituents;
 //   case 25:
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT25_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT25_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT25_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT25_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT25_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT25_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT25_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT25_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT25_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT25_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT25_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT25_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT25_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT25_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT25_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT25_nconstituents;
 //   case 30: 
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT30_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT30_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT30_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT30_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT30_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT30_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT30_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT30_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT30_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT30_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT30_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT30_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT30_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT30_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT30_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT30_nconstituents;
 //     break;
 //   default: // 30 GeV
-//     fastjets_AK4_R1p2_R0p5_px=fastjets_AK4_R1p2_R0p5pT30_px;
-//     fastjets_AK4_R1p2_R0p5_py=fastjets_AK4_R1p2_R0p5pT30_py;
-//     fastjets_AK4_R1p2_R0p5_pz=fastjets_AK4_R1p2_R0p5pT30_pz;
-//     fastjets_AK4_R1p2_R0p5_energy=fastjets_AK4_R1p2_R0p5pT30_energy;
-//     fastjets_AK4_R1p2_R0p5_phi=fastjets_AK4_R1p2_R0p5pT30_phi;
-//     fastjets_AK4_R1p2_R0p5_eta=fastjets_AK4_R1p2_R0p5pT30_eta;
-//     fastjets_AK4_R1p2_R0p5_index=fastjets_AK4_R1p2_R0p5pT30_index;
-//     fastjets_AK4_R1p2_R0p5_nconstituents=fastjets_AK4_R1p2_R0p5pT30_nconstituents;
+//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT30_px;
+//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT30_py;
+//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT30_pz;
+//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT30_energy;
+//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT30_phi;
+//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT30_eta;
+//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT30_index;
+//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT30_nconstituents;
 //   }
 
 // }
@@ -743,7 +770,7 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   if( jetid && !jetPassLooseID(ijet) ) return false;
   // if(!betaUpToDate) GetBeta();
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
-  if (cfAVersion>=73) { // overlap removal
+  if (cfAVersion>=75) { // overlap removal
     if (jetHasEMu(ijet)) return false;
   }
   return true;
@@ -1010,7 +1037,7 @@ double EventHandler::GetPUWeight(reweight::LumiReWeighting &lumiWeights) const{
 
 
 double EventHandler::GetTopPtWeight() const{
-  if (sampleName.find("13TeV")!=std::string::npos) return 1.0;
+  if (cfAVersion==73||cfAVersion>=75) return 1.0;
   double topPt(-1.0);
 
   //only for use with ttbar
@@ -1345,7 +1372,7 @@ bool EventHandler::IsFromB(const int mom, const int gmom, const int ggmom) const
 float EventHandler::GetMinDRMuonJet(const int mu) const{
   float minDR(999.);
   float mu_eta(mus_eta->at(mu)), mu_phi(mus_phi->at(mu));
-  if (cfAVersion<=71) {
+  if (cfAVersion<=71||cfAVersion==74) {
     mu_eta=pf_mus_eta->at(mu);
     mu_phi=pf_mus_phi->at(mu);
   }
@@ -1379,7 +1406,7 @@ void EventHandler::SetupGenMuons() const {
     double gen_eta(genMuonCache[genLep].GetLorentzVector().Eta());
     double gen_phi(genMuonCache[genLep].GetLorentzVector().Phi());
     std::pair <int,double> min_dR, min_dPt;
-    if (cfAVersion<71) {
+    if (cfAVersion<71||cfAVersion==74) {
       min_dR = GetGenMuonMinDR(genLep, mus_matched);
       min_dPt = GetGenMuonMinDPt(genLep, mus_matched);
     }
@@ -1407,7 +1434,7 @@ void EventHandler::SetupGenMuons() const {
     int reco_index(genMuonCache[genLep].GetMusMatch());
     genMuonCache[genLep].SetIsVeto(0);
     if (reco_index>=0) {
-      if (cfAVersion>=73) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
+      if (cfAVersion>=75) genMuonCache[genLep].SetIsVeto(isRecoMuon(reco_index, 0));
       else genMuonCache[genLep].SetIsVeto(isRA2bMuon(reco_index, 0));
     }
     //   printf("gen muon %d: mc/mus = %d/%d--is veto? %d\n", genLep, gen_index, reco_index, genMuonCache[genLep].IsVeto());
@@ -1614,10 +1641,10 @@ void EventHandler::SetupGenElectrons() const {
       //  cout << "MinDR: " << dR_ind << ", MinDPt: " << dPt_ind << endl;
       //cout << "JERR" << endl;
       double d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-els_pt->at(dR_ind))/2.5,2));
-      if (cfAVersion<=71) d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-pf_els_pt->at(dR_ind))/2.5,2));
+      if (cfAVersion<=71||cfAVersion==74) d1 = sqrt(pow(genElectronCache[genLep].GetMinDR().second/0.07,2)+pow(fabs(gen_pt-pf_els_pt->at(dR_ind))/2.5,2));
       //cout << "JERR1" << endl;
       double d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, els_phi->at(dPt_ind), els_eta->at(dPt_ind))/0.07,2));
-      if (cfAVersion<=71) d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, pf_els_phi->at(dPt_ind), pf_els_eta->at(dPt_ind))/0.07,2));
+      if (cfAVersion<=71||cfAVersion==74) d2 = sqrt(pow(genElectronCache[genLep].GetMinDPt().second/2.5,2)+pow(Math::GetDeltaR(gen_phi, gen_eta, pf_els_phi->at(dPt_ind), pf_els_eta->at(dPt_ind))/0.07,2));
       d1<d2 ? genElectronCache[genLep].SetElsMatch(min_dR.first) : genElectronCache[genLep].SetElsMatch(min_dPt.first);
     } 
     if (genElectronCache[genLep].GetElsMatch()>=0) els_matched.push_back(static_cast<uint>(genElectronCache[genLep].GetElsMatch()));
@@ -1870,7 +1897,7 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D
   // need to make sure both collections have the "slimmed cuts"
   // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
 
-  if (cfAVersion>=73&&!mus_isPF->at(imu)) return false;
+  if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
   if (!(mus_pt->at(imu)>5.0 ||
 	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
 	mus_isPFMuon->at(imu))) return false;
@@ -1967,13 +1994,13 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool i
 
       dEtaIn_cut=0.004; phi_cut=0.03; sigmaietaieta_cut=0.01; h_over_e_cut=0.12;
       d0_cut=0.02; dz_cut=0.1; iso_cut=0.10;
-      if (cfAVersion>=73) {
+      if (cfAVersion>=75) {
 	dEtaIn_cut=0.009; iso_cut=0.18;
       }
     }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){
       dEtaIn_cut=0.005; phi_cut=0.02; sigmaietaieta_cut=0.03; h_over_e_cut=0.1;
       d0_cut=0.02; dz_cut=0.1; iso_cut=(els_pt->at(iel)>20.0?0.10:0.07);
-      if (cfAVersion>=73) {
+      if (cfAVersion>=75) {
 	dEtaIn_cut=0.01; sigmaietaieta_cut=0.031;
 	h_over_e_cut=0.12; iso_cut=0.16;
       }    
@@ -1985,14 +2012,14 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool i
     if(fabs(els_scEta->at(iel))<=1.479){ // barrel
       dEtaIn_cut=0.07; phi_cut=0.8; sigmaietaieta_cut=0.01; h_over_e_cut=0.15;
       d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
-      if (cfAVersion>=73) {
+      if (cfAVersion>=75) {
 	dEtaIn_cut=0.02; phi_cut=0.2579; sigmaietaieta_cut=0.0125; h_over_e_cut=0.2564;
 	d0_cut=0.025; dz_cut=0.5863; iso_cut=0.3313;     
       }
     }else if(fabs(els_scEta->at(iel))>1.479&&fabs(els_scEta->at(iel))<2.5){ // endcap
       dEtaIn_cut=0.01; phi_cut=0.7; sigmaietaieta_cut=0.03; h_over_e_cut=dmax;
       d0_cut=0.04; dz_cut=0.2; iso_cut=0.15;
-      if (cfAVersion>=73) {
+      if (cfAVersion>=75) {
 	dEtaIn_cut=0.0141; phi_cut=0.2591; sigmaietaieta_cut=0.0371; h_over_e_cut=0.1335;
 	d0_cut=0.2232; dz_cut=0.9513; iso_cut=0.3816; 
       }
@@ -2007,8 +2034,8 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool i
 
   if ( fabs(els_dEtaIn->at(iel)) > dEtaIn_cut)  return false;
   if ( fabs(els_dPhiIn->at(iel)) > phi_cut)  return false;
-  if (cfAVersion<=71 && els_sigmaIEtaIEta->at(iel) > sigmaietaieta_cut) return false;
-  if (cfAVersion>=73 && els_full5x5_sigmaIetaIeta->at(iel) > sigmaietaieta_cut) return false;
+  if ((cfAVersion<=71||cfAVersion==74) && els_sigmaIEtaIEta->at(iel) > sigmaietaieta_cut) return false;
+  if (cfAVersion>=75 && els_full5x5_sigmaIetaIeta->at(iel) > sigmaietaieta_cut) return false;
   if (els_hadOverEm->at(iel) > h_over_e_cut) return false;
 
   const double beamx(beamSpot_x->at(0)), beamy(beamSpot_y->at(0)); 
@@ -2028,7 +2055,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool i
       } else return true;
   } else{
     float rel_iso(999.);
-    if (cfAVersion<=71) rel_iso=GetElectronRelIso(iel);
+    if (cfAVersion<=71||cfAVersion==74) rel_iso=GetElectronRelIso(iel);
     else rel_iso=GetCSAElectronIsolation(iel);
     if(rel_iso>=iso_cut) return false;
   }
@@ -2125,22 +2152,22 @@ TLorentzVector EventHandler::GetNearestJet(const TLorentzVector lepton, const ui
   // printf("lepton: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",lepton.Px(),lepton.Py(),lepton.Pz(),lepton.E());
   for(unsigned int ijet(0); ijet<jets_AKPF_phi->size(); ++ijet){
     if(jets_AKPF_pt->at(ijet)<30.) continue;
-      TLV.SetPxPyPzE(jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet), jets_AKPF_pz->at(ijet), jets_AKPF_energy->at(ijet));
-      // printf("jet: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
-      if (jet_ind==ijet) {
-	TLV-=lepton;
-	// printf("jet(corr): px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
-      }
-      double DR=Math::GetDeltaR(lepton.Phi(), lepton.Eta(), TLV.Phi(), TLV.Eta());
-      //  cout << "DR: " << DR << endl;
-      if (DR<minDR) {
-	minDR=DR;
-	//	cout << "minDR: " << minDR << endl;
-	TLV_out=TLV;
-      }
+    TLV.SetPxPyPzE(jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet), jets_AKPF_pz->at(ijet), jets_AKPF_energy->at(ijet));
+    // printf("jet: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
+    if (jet_ind==ijet) {
+      TLV-=lepton;
+      // printf("jet(corr): px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
+    }
+    double DR=Math::GetDeltaR(lepton.Phi(), lepton.Eta(), TLV.Phi(), TLV.Eta());
+    //  cout << "DR: " << DR << endl;
+    if (DR<minDR) {
+      minDR=DR;
+      //	cout << "minDR: " << minDR << endl;
+      TLV_out=TLV;
+    }
   }
 
-  return TLV;
+  return TLV_out;
 }
 
 bool EventHandler::IsMC(){
@@ -2148,209 +2175,235 @@ bool EventHandler::IsMC(){
 }
 
 double EventHandler::GetFatJetPt(const unsigned int index, const unsigned int pt_cut) const{
-  if (cfAVersion<75) return -9999.;
-  //  SetFastJetCollection(pt_cut);
+  GetSortedFatJets();
   double px(0.), py(0.);
-  switch(pt_cut){
-  case 10:
-    if (index>=fastjets_AK4_R1p2_R0p5pT10_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT10_px->at(index), py=fastjets_AK4_R1p2_R0p5pT10_py->at(index);
-    break;
-  case 15:
-    if (index>=fastjets_AK4_R1p2_R0p5pT15_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT15_px->at(index), py=fastjets_AK4_R1p2_R0p5pT15_py->at(index);
-    break;
-  case 20:
-    if (index>=fastjets_AK4_R1p2_R0p5pT20_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT20_px->at(index), py=fastjets_AK4_R1p2_R0p5pT20_py->at(index);
-    break;
-  case 25:
-    if (index>=fastjets_AK4_R1p2_R0p5pT25_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT25_px->at(index), py=fastjets_AK4_R1p2_R0p5pT25_py->at(index);
-    break;
-  case 30:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
-    break;
-  default:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index);
-    break;
+  if (cfAVersion>=74) {
+    switch(pt_cut){
+    case 10:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT10_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT10_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(index);
+      break;
+    case 15:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT15_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT15_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(index);
+      break;
+    case 20:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT20_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT20_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(index);
+      break;
+    case 25:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT25_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT25_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(index);
+      break;
+    case 30:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index);
+      break;
+    default:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index);
+      break;
+    }
+  }
+  else {
+    px = sortedFatJetCache[index].GetLorentzVector().Px();
+    py = sortedFatJetCache[index].GetLorentzVector().Py();
   }
   return TMath::Sqrt(px*px+py*py);
 }
 
 int EventHandler::GetFatJetnConst(const unsigned int index, const unsigned int pt_cut) const{
-  if (cfAVersion<75) return -1;
-  //  SetFastJetCollection(pt_cut);
+  GetSortedFatJets();
   int nConst;
-  switch(pt_cut){
-  case 10:
-    if (index>=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT10_nconstituents->at(index);
-    break;
-  case 15:
-    if (index>=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT15_nconstituents->at(index);
-    break;
-  case 20:
-    if (index>=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT20_nconstituents->at(index);
-    break;
-  case 25:
-    if (index>=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT25_nconstituents->at(index);
-    break;
-  case 30:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index);
-    break;
-  default:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size()) return -1;
-    nConst=fastjets_AK4_R1p2_R0p5pT30_nconstituents->at(index);
-    break;
-  }
+  if (cfAVersion>=74) {
+    switch(pt_cut){
+    case 10:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->at(index);
+      break;
+    case 15:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->at(index);
+      break;
+    case 20:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->at(index);
+      break;
+    case 25:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->at(index);
+      break;
+    case 30:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(index);
+      break;
+    default:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size()) return -1;
+      nConst=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(index);
+      break;
+    }
+  } else nConst=sortedFatJetCache[index].GetNConst();
   return nConst; 
 }
 
 double EventHandler::GetFatJetmJ(const unsigned int index, const unsigned int pt_cut) const{
-  if (cfAVersion<75) return -9999.;
-  //  SetFastJetCollection(pt_cut);
+  GetSortedFatJets();
   double px(0.), py(0.), pz(0.), energy(0.);
-  switch(pt_cut){
-  case 10:
-    if (index>=fastjets_AK4_R1p2_R0p5pT10_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT10_px->at(index), py=fastjets_AK4_R1p2_R0p5pT10_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT10_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT10_energy->at(index);
-    break;
-  case 15:
-    if (index>=fastjets_AK4_R1p2_R0p5pT15_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT15_px->at(index), py=fastjets_AK4_R1p2_R0p5pT15_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT15_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT15_energy->at(index);
-    break;
-  case 20:
-    if (index>=fastjets_AK4_R1p2_R0p5pT20_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT20_px->at(index), py=fastjets_AK4_R1p2_R0p5pT20_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT20_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT20_energy->at(index);
-    break;
-  case 25:
-    if (index>=fastjets_AK4_R1p2_R0p5pT25_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT25_px->at(index), py=fastjets_AK4_R1p2_R0p5pT25_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT25_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT25_energy->at(index);
-    break;
-  case 30:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(index);
-    break;
-  default:
-    if (index>=fastjets_AK4_R1p2_R0p5pT30_px->size()) return -9999.;
-    px=fastjets_AK4_R1p2_R0p5pT30_px->at(index), py=fastjets_AK4_R1p2_R0p5pT30_py->at(index), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(index);
-    break;
+  if (cfAVersion>=74) {
+    switch(pt_cut){
+    case 10:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT10_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT10_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(index);
+      break;
+    case 15:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT15_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT15_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(index);
+      break;
+    case 20:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT20_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT20_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(index);
+      break;
+    case 25:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT25_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT25_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(index);
+      break;
+    case 30:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(index);
+      break;
+    default:
+      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
+      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(index);
+      break;
+    }
+  }
+  else {
+    px = sortedFatJetCache[index].GetLorentzVector().Px();
+    py = sortedFatJetCache[index].GetLorentzVector().Py();
+    pz = sortedFatJetCache[index].GetLorentzVector().Pz();
+    energy = sortedFatJetCache[index].GetLorentzVector().E();
   }
   TLorentzVector TLV(px, py, pz, energy);
   return TLV.M();
 }
 
 int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const double fat_jet_eta_cut, const unsigned int skinny_jet_pt_cut) const{
-  if (cfAVersion<75) return -1;
-  //  SetFastJetCollection(pt_cut);
+  GetSortedFatJets();
   uint nJ(0);
   uint vSize(0);
-  switch(skinny_jet_pt_cut){
-  case 10:
-    vSize=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size();
-    break;
-  case 15:
-    vSize=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size();
-    break;
-  case 20:
-    vSize=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size();
-    break;
-  case 25:
-    vSize=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size();
-    break;
-  case 30:
-    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
-    break;
-  default:
-    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
-    break;
-  }
-  for (uint ifj(0); ifj<vSize; ifj++) {
-    double px(0.), py(0.), pz(0.), energy(0.);
+  if (cfAVersion>=74) {
     switch(skinny_jet_pt_cut){
     case 10:
-      px=fastjets_AK4_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT10_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size();
       break;
     case 15:
-      px=fastjets_AK4_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT15_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size();
       break;
     case 20:
-      px=fastjets_AK4_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT20_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size();
       break;
     case 25:
-      px=fastjets_AK4_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT25_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size();
       break;
     case 30:
-      px=fastjets_AK4_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
       break;
     default:
-      px=fastjets_AK4_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
       break;
     }
-    TLorentzVector TLV(px, py, pz, energy);
-    double pt(TLV.Pt()), eta(TLV.Eta());
-    if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) nJ++;
+    for (uint ifj(0); ifj<vSize; ifj++) {
+      double px(0.), py(0.), pz(0.), energy(0.);
+      switch(skinny_jet_pt_cut){
+      case 10:
+	px=fastjets_AKPF_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(ifj);
+	break;
+      case 15:
+	px=fastjets_AKPF_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(ifj);
+	break;
+      case 20:
+	px=fastjets_AKPF_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(ifj);
+	break;
+      case 25:
+	px=fastjets_AKPF_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(ifj);
+	break;
+      case 30:
+	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
+	break;
+      default:
+	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
+	break;
+      }
+      TLorentzVector TLV(px, py, pz, energy);
+      double pt(TLV.Pt()), eta(TLV.Eta());
+      if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) nJ++;
+    }
+  }
+  else {
+    for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
+      if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut) nJ++;
+    }
   }
   return nJ;
 }
 
 double EventHandler::GetMJ(const double fat_jet_pt_cut, const double fat_jet_eta_cut, const unsigned int skinny_jet_pt_cut) const{
-  if (cfAVersion<75) return -1;
-  //  SetFastJetCollection(pt_cut);
+  GetSortedFatJets();
   double MJ(0.);
   uint vSize(0);
-  switch(skinny_jet_pt_cut){
-  case 10:
-    vSize=fastjets_AK4_R1p2_R0p5pT10_nconstituents->size();
-    break;
-  case 15:
-    vSize=fastjets_AK4_R1p2_R0p5pT15_nconstituents->size();
-    break;
-  case 20:
-    vSize=fastjets_AK4_R1p2_R0p5pT20_nconstituents->size();
-    break;
-  case 25:
-    vSize=fastjets_AK4_R1p2_R0p5pT25_nconstituents->size();
-    break;
-  case 30:
-    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
-    break;
-  default:
-    vSize=fastjets_AK4_R1p2_R0p5pT30_nconstituents->size();
-    break;
-  }
-  for (uint ifj(0); ifj<vSize; ifj++) {
-    double px(0.), py(0.), pz(0.), energy(0.);
+  if (cfAVersion>=74) {
     switch(skinny_jet_pt_cut){
     case 10:
-      px=fastjets_AK4_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT10_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size();
       break;
     case 15:
-      px=fastjets_AK4_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT15_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size();
       break;
     case 20:
-      px=fastjets_AK4_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT20_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size();
       break;
     case 25:
-      px=fastjets_AK4_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT25_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size();
       break;
     case 30:
-      px=fastjets_AK4_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
       break;
     default:
-      px=fastjets_AK4_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AK4_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AK4_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AK4_R1p2_R0p5pT30_energy->at(ifj);
+      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
       break;
     }
-    TLorentzVector TLV(px, py, pz, energy);
-    double pt(TLV.Pt()), eta(TLV.Eta());
-    if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) MJ+=GetFatJetmJ(ifj, skinny_jet_pt_cut);
+    for (uint ifj(0); ifj<vSize; ifj++) {
+      double px(0.), py(0.), pz(0.), energy(0.);
+      switch(skinny_jet_pt_cut){
+      case 10:
+	px=fastjets_AKPF_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(ifj);
+	break;
+      case 15:
+	px=fastjets_AKPF_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(ifj);
+	break;
+      case 20:
+	px=fastjets_AKPF_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(ifj);
+	break;
+      case 25:
+	px=fastjets_AKPF_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(ifj);
+	break;
+      case 30:
+	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
+	break;
+      default:
+	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
+	break;
+      }
+      TLorentzVector TLV(px, py, pz, energy);
+      double pt(TLV.Pt()), eta(TLV.Eta());
+      if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) MJ+=GetFatJetmJ(ifj, skinny_jet_pt_cut);
+    }
+  }
+  else {
+    for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
+      if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut)
+	MJ+=sortedFatJetCache[ifj].GetLorentzVector().M();
+    }
   }
   return MJ;
 }
@@ -2451,6 +2504,20 @@ double EventHandler::GetMinMTWb(const double pt, const double bTag, const bool u
   else return min_mT;
 }
 
+double EventHandler::GetMinDeltaPhibMET(const double pt, const double bTag) const{
+  GetSortedBJets();
+  double min_dPhi(DBL_MAX);
+  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
+    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
+    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
+    double dPhi=Math::GetDeltaPhi(sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0));
+    if (dPhi<min_dPhi) min_dPhi=dPhi;
+  }
+  if (min_dPhi==DBL_MAX) return -999.;
+  else return min_dPhi;
+}
+
+
 double EventHandler::Get2ndMTWb(const double pt, const double bTag, const bool use_W_mass) const{
   GetSortedBJets();
   double max_mT(-1.);
@@ -2477,7 +2544,6 @@ double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta
   double deltaT = getDeltaPhiMETN_deltaT(goodJetI, otherpt, othereta, otherid);
   //calculate deltaPhiMETN
   double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(goodJetI), pfTypeImets_phi->at(0)));
-  //  if (event==77544) printf("dp, dT for jet %d: %3.2f, %3.2f\n",goodJetI,dp,deltaT);
   double dpN;
   if(useArcsin) {
     if( deltaT/pfTypeImets_et->at(0) >= 1.0) dpN = dp / (TMath::Pi()/2.0);
@@ -2493,14 +2559,8 @@ double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt
   double sum = 0;
   for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
     if(i==goodJetI) continue;
-    //    if (event==77544) cout << "Inspecting other jet " << i << " isGood? " << isGoodJet(i, otherid, otherpt, othereta) << endl;
     if(isGoodJet(i, otherid, otherpt, othereta)){
       double jetres = 0.1;
-      // if (event==77544) {
-      // 	printf("jet1: %d--(px, py) = (%3.2f, %3.2f)\n",goodJetI,jets_AKPF_px->at(goodJetI), jets_AKPF_py->at(goodJetI));
-      // 	printf("jet2: %d--(px, py) = (%3.2f, %3.2f)\n",i,jets_AKPF_px->at(i), jets_AKPF_py->at(i));
-      // 	printf("sum += %3.2f\n",pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2));
-      // }
       sum += pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2);
     }//is good jet
   }//i
@@ -2511,15 +2571,12 @@ double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt
 double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
 					float otherpt, float othereta, bool otherid, bool useArcsin) 
 {
-  //  if (event==77544) cout << "Found " << GetNumGoodJets() << " good jets." << endl;
   double mdpN=1E12;
   unsigned int nGoodJets(0);
   for (unsigned int i=0; i<jets_AKPF_pt->size(); i++) {
     if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
-    //  if (event==77544) printf("Jet %d is good--(pt,eta,phi)=(%3.2f,%3.2f,%3.2f)\n",i,jets_AKPF_pt->at(i),jets_AKPF_eta->at(i),jets_AKPF_phi->at(i));
     nGoodJets++;
     double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin);
-    //  if (event==77544)  printf("i/dpN: %d/%3.2f\n",i,dpN); 
     //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
     // Jack --  might have fixed things above...
     if (dpN>=0&&dpN<mdpN) mdpN=dpN;
@@ -2546,12 +2603,13 @@ double EventHandler::GetMinDeltaPhiMET(const unsigned int maxjets, const double 
   return mindp;
 }
 
-int EventHandler::GetNumIsoTracks(const double ptThresh) const{
+int EventHandler::GetNumIsoTracks(const double ptThresh, const bool mT_cut) const{
   int nisotracks=0;
   for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
     if ( (isotk_pt->at(itrack) >= ptThresh) &&
 	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
 	 ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
+	 ( !mT_cut || GetMTW(isotk_pt->at(itrack),pfTypeImets_et->at(0),isotk_phi->at(itrack),pfTypeImets_phi->at(0))<100 ) &&
 	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
 	 ){
       ++nisotracks;
@@ -2563,18 +2621,18 @@ int EventHandler::GetNumIsoTracks(const double ptThresh) const{
 double EventHandler::GetTransverseMass() const{
   //Find leading lepton
   if (!recoMuonsUpToDate) {
-    if (cfAVersion>=73) recoMuonCache=GetRecoMuons(true);
+    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
     else recoMuonCache=GetRA2bMuons(true);
     recoMuonsUpToDate=true;
   }
   if (!recoElectronsUpToDate) {
-    if (cfAVersion>=73) recoElectronCache=GetRecoElectrons(true);
+    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
     else recoElectronCache=GetRA2bElectrons(true);
     recoElectronsUpToDate=true;
   }
   double lep_pt(-1.), lep_phi(-1);
   if (recoMuonCache.size()>0) {
-    if (cfAVersion>=73) {
+    if (cfAVersion>=75) {
       lep_pt=mus_pt->at(recoMuonCache[0]);
       lep_pt=mus_phi->at(recoMuonCache[0]);
     }
@@ -2584,11 +2642,11 @@ double EventHandler::GetTransverseMass() const{
     }
   }
   if (recoElectronCache.size()>0) {
-    if (cfAVersion>=73&&els_pt->at(recoElectronCache[0])>lep_pt) {
+    if (cfAVersion>=75&&els_pt->at(recoElectronCache[0])>lep_pt) {
       lep_pt=els_pt->at(recoElectronCache[0]);
       lep_pt=els_phi->at(recoElectronCache[0]);
     }
-    else if (cfAVersion<=71&&pf_els_pt->at(recoElectronCache[0])>lep_pt) {
+    else if ((cfAVersion<=71||cfAVersion==74)&&pf_els_pt->at(recoElectronCache[0])>lep_pt) {
       lep_pt=pf_els_pt->at(recoElectronCache[0]);
       lep_pt=pf_els_phi->at(recoElectronCache[0]);
     }

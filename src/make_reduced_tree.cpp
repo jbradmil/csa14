@@ -30,9 +30,12 @@ int main(int argc, char *argv[]){
   }
   
   std::string outFilename("");
-  std::string dirName("");
+  std::string dirName("reduced_trees/");
+  std::string energy("");
+  if (inFilename.find("v71")!=std::string::npos || inFilename.find("v74")!=std::string::npos) energy="8TeV";
+  else energy = "13TeV";
   if(iscfA){
-    dirName="reduced_trees/"+inFilename;
+    dirName=dirName+energy+"/"+inFilename;
     outFilename=dirName+"/"+inFilename+".root";
     inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
   }else{
@@ -49,9 +52,10 @@ int main(int argc, char *argv[]){
         baseName.append("file_name_ended_with_slash");
       }
     }
-    dirName="reduced_trees/"+baseName;
+    dirName=baseName;
     pos=dirName.find(".part");
     if(pos!=std::string::npos)  dirName.erase(pos);
+    dirName="reduced_trees/"+energy+"/"+dirName;
     outFilename=dirName+"/"+baseName+".root";
     std::cout << inFilename << "\n" << baseName << "\n" << outFilename << "\n";
   }

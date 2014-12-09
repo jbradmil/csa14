@@ -37,14 +37,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   unsigned type_code(0x0);
 
- short lsp_mass(0), gluino_mass(0);
+  short lsp_mass(0), gluino_mass(0);
 
   bool passes2012RA2bTrigger(false);
 
   bool passesJSONCut(false);
 
-  bool pass_HLT_PFNoPUHT350_PFMET100(false), pass_HLT_PFNoPUHT650(false), 
-    pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80(false), pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07(false);
+  bool pass_HLT_PFHT350_PFMET100(false), pass_HLT_PFHT650(false), 
+    pass_HLT_DiCentralPFJet50_PFMET80(false), pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07(false);
 
   bool passesPVCut(false), passes2012METCleaningCut(false), passesCSA14METCleaningCut(false);
   bool passesBadJetFilter(false);
@@ -188,6 +188,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   double min_mTWB(0.), min_mTWB_Wmass(0.);
   double mTWB_2nd(0.);
+  double min_delta_phi_b_met(0.);
 
   double doc_met(0.);
   double gluino1_pt(0.), gluino2_pt(0.);
@@ -240,9 +241,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("lumiblock", &lumiblock);
   reduced_tree.Branch("entry", &entry);
 
-  reduced_tree.Branch("pass_HLT_PFNoPUHT350_PFMET100", &pass_HLT_PFNoPUHT350_PFMET100);
-  reduced_tree.Branch("pass_HLT_PFNoPUHT650", &pass_HLT_PFNoPUHT650);
-  reduced_tree.Branch("pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80", &pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80);
+  reduced_tree.Branch("pass_HLT_PFHT350_PFMET100", &pass_HLT_PFHT350_PFMET100);
+  reduced_tree.Branch("pass_HLT_PFHT650", &pass_HLT_PFHT650);
+  reduced_tree.Branch("pass_HLT_DiCentralPFJet50_PFMET80", &pass_HLT_DiCentralPFJet50_PFMET80);
   reduced_tree.Branch("pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07", &pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07);
 
   reduced_tree.Branch("pu_true_num_interactions", &pu_true_num_interactions);
@@ -482,97 +483,99 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("nb_bin2", &nb_bin2);
   reduced_tree.Branch("nb_bin3", &nb_bin3);
 
-  reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
-  reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
-  reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
-  reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
-  reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
-  reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
-  reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
-  reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
-  reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
-  reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
-  reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
-  reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
-  reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
-  reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
-  reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
-  reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
-  reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
-  reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
-  reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
-  reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
-  reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
-  reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
+  if (cfAVersion>=74) {
+    reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
+    reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
+    reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
+    reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
+    reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
+    reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
+    reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
+    reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
+    reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
+    reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
+    reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
+    reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
+    reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
+    reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
+    reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
+    reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
+    reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
+    reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
+    reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
+    reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
+    reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
+    reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
 
-  reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
-  reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
-  reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
-  reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
-  reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
-  reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
-  reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
-  reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
-  reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
-  reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
-  reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
-  reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
-  reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
-  reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
-  reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
-  reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
-  reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
-  reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
-  reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
-  reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
-  reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
-  reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
+    reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
+    reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
+    reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
+    reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
+    reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
+    reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
+    reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
+    reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
+    reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
+    reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
+    reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
+    reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
+    reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
+    reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
+    reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
+    reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
+    reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
+    reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
+    reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
+    reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
+    reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
+    reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
 
-  reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
-  reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
-  reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
-  reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
-  reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
-  reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
-  reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
-  reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
-  reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
-  reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
-  reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
-  reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
-  reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
-  reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
-  reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
-  reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
-  reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
-  reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
-  reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
-  reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
-  reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
-  reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
+    reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
+    reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
+    reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
+    reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
+    reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
+    reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
+    reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
+    reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
+    reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
+    reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
+    reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
+    reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
+    reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
+    reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
+    reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
+    reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
+    reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
+    reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
+    reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
+    reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
+    reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
+    reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
 
-  reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
-  reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
-  reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
-  reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
-  reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
-  reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
-  reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
-  reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
-  reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
-  reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
-  reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
-  reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
-  reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
-  reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
-  reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
-  reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
-  reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
-  reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
-  reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
-  reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
-  reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
-  reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
+    reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
+    reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
+    reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
+    reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
+    reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
+    reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
+    reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
+    reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
+    reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
+    reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
+    reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
+    reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
+    reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
+    reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
+    reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
+    reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
+    reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
+    reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
+    reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
+    reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
+    reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
+    reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
+  }
 
   reduced_tree.Branch("fatpT30_jet1_pt", &fatpT30_jet1_pt);
   reduced_tree.Branch("fatpT30_jet2_pt", &fatpT30_jet2_pt);
@@ -616,6 +619,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("min_mTWB", &min_mTWB);
   reduced_tree.Branch("min_mTWB_Wmass", &min_mTWB_Wmass);
   reduced_tree.Branch("mTWB_2nd", &mTWB_2nd);
+  reduced_tree.Branch("min_delta_phi_b_met", &min_delta_phi_b_met);
 
   reduced_tree.Branch("doc_met", &doc_met);
   reduced_tree.Branch("gluino1_pt", &gluino1_pt);
@@ -649,16 +653,16 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     // just xsec/nGen now
     passes2012METCleaningCut=false;
     passesCSA14METCleaningCut=false;
-    // if (cfAVersion<=71) passes2012METCleaningCut=Passes2012METCleaningCut();
+    if (cfAVersion<=71||cfAVersion==74) passes2012METCleaningCut=Passes2012METCleaningCut();
     // else passesCSA14METCleaningCut=PassesCSA14METCleaningCut();
     passesBadJetFilter=PassesBadJetFilter();
     PBNRcode=GetPBNR();
 
     passes2012RA2bTrigger=Passes2012RA2bTrigger();
 
-    pass_HLT_PFNoPUHT350_PFMET100=PassesSpecificTrigger("HLT_PFNoPUHT350_PFMET100_v");
-    pass_HLT_PFNoPUHT650=PassesSpecificTrigger("HLT_PFNoPUHT650_v");
-    pass_HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80=PassesSpecificTrigger("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v");
+    pass_HLT_PFHT350_PFMET100=PassesSpecificTrigger("HLT_PFNoPUHT350_PFMET100_v")||PassesSpecificTrigger("HLT_PFHT350_PFMET100_v");
+    pass_HLT_PFHT650=PassesSpecificTrigger("HLT_PFNoPUHT650_v")||PassesSpecificTrigger("HLT_PFHT650_v");
+    pass_HLT_DiCentralPFJet50_PFMET80=PassesSpecificTrigger("HLT_DiCentralPFNoPUJet50_PFMETORPFMETNoMu80_v")||PassesSpecificTrigger("HLT_DiCentralPFJet50_PFMET80_v");
     pass_HLT_DiCentralPFJet30_PFMET80_BTagCSV07=PassesSpecificTrigger("HLT_DiCentralPFJet30_PFMET80_BTagCSV07_v");
 
     passesJSONCut=PassesJSONCut();
@@ -814,7 +818,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     vector<int> reco_muons, reco_veto_muons;
     vector<int> reco_veto_muons_iso2D, reco_veto_muons_mT, reco_veto_muons_mT_orth;
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       reco_muons = GetRecoMuons(false);
       reco_veto_muons = GetRecoMuons(true);
       reco_veto_muons_iso2D = GetRecoMuons(true,true);
@@ -833,7 +837,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     vector<int> reco_electrons, reco_veto_electrons;
     vector<int> reco_veto_electrons_iso2D, reco_veto_electrons_mT, reco_veto_electrons_mT_orth;
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       reco_electrons = GetRecoElectrons(false);
       reco_veto_electrons = GetRecoElectrons(true);
       reco_veto_electrons_iso2D=GetRecoElectrons(true,true);
@@ -867,7 +871,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     // muon_mT=-1;
 
     uint muon_index(0);
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       for (uint imu(0); imu<mus_pt->size(); imu++) {
 	if (isRecoMuon(imu,0)) {
 	  muon_index=imu;
@@ -900,7 +904,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     muon_mT=-1.;
     muon_dphi_met=-999.;
 
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       if (mus_pt->size()>0) {
 	muon_signal=isRecoMuon(muon_index,1);
 	muon_veto=isRecoMuon(muon_index,0);
@@ -927,23 +931,23 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
       }
     } else if (pf_mus_pt->size()>0) {
-        //	cout << "JERR3" << endl;
-	muon_signal=isRA2bMuon(muon_index,1);
-	//	cout << "JERR4" << endl;
-	muon_veto=isRA2bMuon(muon_index,0);
-	muon_pt=pf_mus_pt->at(muon_index);
-	muon_eta=pf_mus_eta->at(muon_index);
-	muon_phi=pf_mus_phi->at(muon_index);
-	muon_true=isTrueMuon(muon_eta, muon_phi);
-	muon_b=isbMuon(muon_eta, muon_phi);
-	muon_NH_Iso=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_index)/muon_pt;
-	muon_CH_Iso=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_index)/muon_pt;
-	muon_ph_Iso=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_index)/muon_pt;
-	muon_PU_Iso=pf_mus_pfIsolationR04_sumPUPt->at(muon_index)/muon_pt;  
-	muon_relIso=GetRA2bMuonRelIso(muon_index); 
-	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
-	muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
-  }
+      //	cout << "JERR3" << endl;
+      muon_signal=isRA2bMuon(muon_index,1);
+      //	cout << "JERR4" << endl;
+      muon_veto=isRA2bMuon(muon_index,0);
+      muon_pt=pf_mus_pt->at(muon_index);
+      muon_eta=pf_mus_eta->at(muon_index);
+      muon_phi=pf_mus_phi->at(muon_index);
+      muon_true=isTrueMuon(muon_eta, muon_phi);
+      muon_b=isbMuon(muon_eta, muon_phi);
+      muon_NH_Iso=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_index)/muon_pt;
+      muon_CH_Iso=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_index)/muon_pt;
+      muon_ph_Iso=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_index)/muon_pt;
+      muon_PU_Iso=pf_mus_pfIsolationR04_sumPUPt->at(muon_index)/muon_pt;  
+      muon_relIso=GetRA2bMuonRelIso(muon_index); 
+      muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
+      muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
+    }
     
 
 
@@ -1009,7 +1013,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     // electron_mT=-1;
 
     uint electron_index(0);
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       for (uint iel(0); iel<els_pt->size(); iel++) {
 	if (isRecoElectron(iel,0)) {
 	  electron_index=iel;
@@ -1040,7 +1044,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     electron_mT=-1.;
     electron_dphi_met=-999.;
 
-    if (cfAVersion>=73) {
+    if (cfAVersion>=73&&cfAVersion!=74) {
       if (els_pt->size()>0) {
 	electron_signal=isRecoElectron(electron_index,1);
 	electron_veto=isRecoElectron(electron_index,0);
@@ -1141,7 +1145,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     jet2_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(2));
     jet3_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(3));
 
-    if (cfAVersion==71||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
+    if (cfAVersion==71||cfAVersion==74||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
     else num_iso_tracks=-1;
 
     // cout << "mT..." << endl;
@@ -1168,7 +1172,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     gluino2_pt=GetGluinoPt(2);
 
     // cout << "Fat jets..." << endl;
-    if (cfAVersion>=75) {
+    if (cfAVersion>=74) {
       fatpT10_jet1_pt=GetFatJetPt(0,10);    
       fatpT10_jet2_pt=GetFatJetPt(1,10);
       fatpT10_jet3_pt=GetFatJetPt(2,10);
@@ -1260,49 +1264,51 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       fatpT25_MJ_pt150=GetMJ(150.,25);
       fatpT25_MJ_pt200=GetMJ(200.,25);
       fatpT25_MJ_pt300=GetMJ(300.,25);
-
-      fatpT30_jet1_pt=GetFatJetPt(0,30);    
-      fatpT30_jet2_pt=GetFatJetPt(1,30);
-      fatpT30_jet3_pt=GetFatJetPt(2,30);
-      fatpT30_jet4_pt=GetFatJetPt(3,30);
-      fatpT30_jet1_nConst=GetFatJetnConst(0,30);
-      fatpT30_jet2_nConst=GetFatJetnConst(1,30);
-      fatpT30_jet3_nConst=GetFatJetnConst(2,30);
-      fatpT30_jet4_nConst=GetFatJetnConst(3,30);
-      fatpT30_jet1_mJ=GetFatJetmJ(0,30);
-      fatpT30_jet2_mJ=GetFatJetmJ(1,30);
-      fatpT30_jet3_mJ=GetFatJetmJ(2,30);
-      fatpT30_jet4_mJ=GetFatJetmJ(3,30);
-      num_fatpT30_jets=GetNFatJets(50.,30);
-      num_fatpT30_jets_pt100=GetNFatJets(100.,30);
-      num_fatpT30_jets_pt150=GetNFatJets(150.,30);
-      num_fatpT30_jets_pt200=GetNFatJets(200.,30);
-      num_fatpT30_jets_pt300=GetNFatJets(300.,30);
-      fatpT30_MJ=GetMJ(50.,30);
-      fatpT30_MJ_pt100=GetMJ(100.,30);
-      fatpT30_MJ_pt150=GetMJ(150.,30);
-      fatpT30_MJ_pt200=GetMJ(200.,30);
-      fatpT30_MJ_pt300=GetMJ(300.,30);
-      num_fatpT30central_jets=GetNFatJets(50.,1.5,30);
-      num_fatpT30central_jets_pt100=GetNFatJets(100.,1.5,30);
-      num_fatpT30central_jets_pt150=GetNFatJets(150.,1.5,30);
-      num_fatpT30central_jets_pt200=GetNFatJets(200.,1.5,30);
-      num_fatpT30central_jets_pt300=GetNFatJets(300.,1.5,30);
-      fatpT30central_MJ=GetMJ(50.,1.5,30);
-      fatpT30central_MJ_pt100=GetMJ(100.,1.5,30);
-      fatpT30central_MJ_pt150=GetMJ(150.,1.5,30);
-      fatpT30central_MJ_pt200=GetMJ(200.,1.5,30);
-      fatpT30central_MJ_pt300=GetMJ(300.,1.5,30);
-
-      highest_mJ=GetHighestFatJetmJ(1);
-      scnd_highest_mJ=GetHighestFatJetmJ(2);
-      thrd_highest_mJ=GetHighestFatJetmJ(3);
-      frth_highest_mJ=GetHighestFatJetmJ(4);
     }
+    fatpT30_jet1_pt=GetFatJetPt(0,30);    
+    fatpT30_jet2_pt=GetFatJetPt(1,30);
+    fatpT30_jet3_pt=GetFatJetPt(2,30);
+    fatpT30_jet4_pt=GetFatJetPt(3,30);
+    fatpT30_jet1_nConst=GetFatJetnConst(0,30);
+    fatpT30_jet2_nConst=GetFatJetnConst(1,30);
+    fatpT30_jet3_nConst=GetFatJetnConst(2,30);
+    fatpT30_jet4_nConst=GetFatJetnConst(3,30);
+    fatpT30_jet1_mJ=GetFatJetmJ(0,30);
+    fatpT30_jet2_mJ=GetFatJetmJ(1,30);
+    fatpT30_jet3_mJ=GetFatJetmJ(2,30);
+    fatpT30_jet4_mJ=GetFatJetmJ(3,30);
+    num_fatpT30_jets=GetNFatJets(50.,30);
+    num_fatpT30_jets_pt100=GetNFatJets(100.,30);
+    num_fatpT30_jets_pt150=GetNFatJets(150.,30);
+    num_fatpT30_jets_pt200=GetNFatJets(200.,30);
+    num_fatpT30_jets_pt300=GetNFatJets(300.,30);
+    fatpT30_MJ=GetMJ(50.,30);
+    fatpT30_MJ_pt100=GetMJ(100.,30);
+    fatpT30_MJ_pt150=GetMJ(150.,30);
+    fatpT30_MJ_pt200=GetMJ(200.,30);
+    fatpT30_MJ_pt300=GetMJ(300.,30);
+    num_fatpT30central_jets=GetNFatJets(50.,1.5,30);
+    num_fatpT30central_jets_pt100=GetNFatJets(100.,1.5,30);
+    num_fatpT30central_jets_pt150=GetNFatJets(150.,1.5,30);
+    num_fatpT30central_jets_pt200=GetNFatJets(200.,1.5,30);
+    num_fatpT30central_jets_pt300=GetNFatJets(300.,1.5,30);
+    fatpT30central_MJ=GetMJ(50.,1.5,30);
+    fatpT30central_MJ_pt100=GetMJ(100.,1.5,30);
+    fatpT30central_MJ_pt150=GetMJ(150.,1.5,30);
+    fatpT30central_MJ_pt200=GetMJ(200.,1.5,30);
+    fatpT30central_MJ_pt300=GetMJ(300.,1.5,30);
+
+    highest_mJ=GetHighestFatJetmJ(1);
+    scnd_highest_mJ=GetHighestFatJetmJ(2);
+    thrd_highest_mJ=GetHighestFatJetmJ(3);
+    frth_highest_mJ=GetHighestFatJetmJ(4);
+    
 
     min_mTWB=GetMinMTWb();
     min_mTWB_Wmass=GetMinMTWb(30., 0.679, true);
     mTWB_2nd=Get2ndMTWb();
+
+    min_delta_phi_b_met=GetMinDeltaPhibMET();
 
     reduced_tree.Fill(); 
     //  if (i==20) break;
