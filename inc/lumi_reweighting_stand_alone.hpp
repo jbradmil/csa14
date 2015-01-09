@@ -1319,6 +1319,7 @@ namespace reweight {
 
     double weight( float n_int ){
       int bin = weights_->GetXaxis()->FindBin( n_int );
+      // std::cout << "n_int " << n_int << ", weight " << weights_->GetBinContent( bin ) << std::endl;
       return weights_->GetBinContent( bin );
     }
 

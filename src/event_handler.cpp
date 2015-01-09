@@ -36,9 +36,14 @@
 #include "fastjet/ClusterSequence.hh"
 #include "fastjet/PseudoJet.hh"
 
+#include "BTagWeight2.hpp"
+
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
 const double EventHandler::CSVLCut(0.244);
+const double EventHandler::ICSVTCut(0.941);
+const double EventHandler::ICSVMCut(0.814);
+const double EventHandler::ICSVLCut(0.423);
 const std::vector<std::vector<int> > VRunLumiPrompt(MakeVRunLumi("Golden"));
 const std::vector<std::vector<int> > VRunLumi24Aug(MakeVRunLumi("24Aug"));
 const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
@@ -66,7 +71,8 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   recoTausUpToDate(false), 
   betaUpToDate(false),
   scaleFactor(scaleFactorIn),
-  beta(0){
+  beta(0),
+  f_tageff_(0){
   if (fastMode){
     chainB.SetBranchStatus("pfcand*",0);
     if(cfAVersion<=71||cfAVersion==74) { // turn off unnecessary branches
@@ -90,6 +96,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("mc_final*",0);
     }
   }
+  LoadJetTagEffMaps();
 }
 
 void EventHandler::GetEntry(const unsigned int entry){
@@ -229,6 +236,457 @@ double EventHandler::GetGluinoPt(int which) const{
   return pt;
 }
 
+double EventHandler::GetTriggerEffWeight(const double pt_cut) const {
+  if(sampleName.find("Run2012")!=std::string::npos) return 1.;
+  if (cfAVersion>=75)  return 1.;
+
+  double trig_eff_weight=1.;
+  bool isQCD(sampleName.find("QCD_")!=std::string::npos || sampleName.find("BJets_HT")!=std::string::npos);
+
+  double met=pfTypeImets_et->at(0);
+  double ht=GetHT(pt_cut);
+  if (isQCD) {
+    if (ht<500&&met<150) trig_eff_weight=0.86;
+    else if (ht<500&&met>150&&met<250) trig_eff_weight=0.88;
+    else if (ht>500&&ht<800&&met<150) trig_eff_weight=0.67;
+    else if(ht>500&&ht<800&&met>150&&met<250) trig_eff_weight=1.0;
+   else if (ht>800||met>250) trig_eff_weight=1.0;
+  } else {
+    if (ht<500&&met<150) trig_eff_weight=0.91;
+    else if (ht<500&&met>150&&met<250) trig_eff_weight=0.98;
+    else if (ht>500&&ht<800&&met<150) trig_eff_weight=0.95;
+    else if(ht>500&&ht<800&&met>150&&met<250) trig_eff_weight=0.99;
+    else if (ht>800||met>250) trig_eff_weight=1.0;
+  }
+
+  return trig_eff_weight;
+}
+
+void EventHandler::LoadJetTagEffMaps() {
+  if (cfAVersion<=71) {
+    assert(f_tageff_ ==0);
+    TString filename = AssembleBTagEffFilename();
+    filename.Prepend("btagEffMaps/");
+    f_tageff_ = new TFile(filename,"READ");
+    if (f_tageff_->IsZombie()) {
+      cout<<"Failed to load the b-tag eff map for sample "<<sampleName<<endl;
+      //comment this next line to ALLOW JOBS TO RUN WITHOUT BTAG EFF
+      //if (!isSampleRealData()) assert(0); //it's just too frustrating to let jobs continue in this state
+      delete f_tageff_;
+      f_tageff_=0;
+    }
+    else {
+      TH1D * h_btageff = static_cast<TH1D*>(f_tageff_->Get("h_btageff"));
+      int nbins=h_btageff->GetNbinsX();
+      if (nbins != 17) {
+	cout<<" b tag eff map has the wrong number of bins! "<<nbins<<endl;
+	assert(0);
+      }
+      else {
+	std::cout << "Successfully loaded b-tag eff maps in " << filename << endl;
+      }
+    }
+  }
+}
+
+TString EventHandler::AssembleBTagEffFilename() {
+  unsigned found = sampleName.find_last_of("/");
+  std::string truncated_name = sampleName.substr(0,found);
+  found = truncated_name.find_last_of("/");
+  truncated_name = truncated_name.substr(found+1);
+  return "histos_btageff_csvm_"+truncated_name+".root";
+}
+
+double EventHandler::GetBtagWeight(double pt_cut) const{
+  if(sampleName.find("Run2012")!=std::string::npos) return 1.;
+  if (cfAVersion>=75)  return 1.;
+  vector<BTagWeight::JetInfo> jetinfos;
+  int ntagged=0;
+  for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet, true, pt_cut)){
+      //for each jet, what is the flavor and is it tagged (CSVM)
+      if (jets_AKPF_btag_secVertexCombined->at(ijet) >=0.679) ntagged++;
+      int flavor = static_cast<int>(jets_AKPF_partonFlavour->at(ijet));
+      double pt = jets_AKPF_pt->at(ijet);
+      double eta = jets_AKPF_eta->at(ijet);
+      double SF = GetBtagSF(flavor, pt, eta);
+      double effmc = GetBtagEffMC(flavor, pt);
+      jetinfos.push_back( BTagWeight::JetInfo(effmc,SF));
+    }
+  }
+  BTagWeight btvweq(ntagged,ntagged);
+  return btvweq.weight(jetinfos,ntagged);
+}
+
+double EventHandler::GetPIDBtagWeight(double pt_cut) const{
+  if(sampleName.find("Run2012")!=std::string::npos) return 1.;
+  if (cfAVersion>=75)  return 1.;
+  /*
+    alternative b-tag SF procedure. Akin to 'PIDweighting' in BaBar.
+    Use the b-tag algorithm output and calculate a weight for the _event_ based on the jet parton content and the b-tag SFs
+  */
+  //careful because 'weight' is a global variable' :-(
+  double outputweight=1;
+  //loop over jets in the event
+  for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
+    //only consider good jets (eta, quality, pT)
+    if(isGoodJet(ijet, true, pt_cut)){
+      //for each jet, what is the flavor and is it tagged
+      int flavor = static_cast<int>(jets_AKPF_partonFlavour->at(ijet));
+      double pt = jets_AKPF_pt->at(ijet);
+      double eta = jets_AKPF_eta->at(ijet);
+      bool istagged = (jets_AKPF_btag_secVertexCombined->at(ijet) >=0.679);
+      double SF = GetBtagSF(flavor, pt, eta);
+      if (istagged) {
+	outputweight *= SF;
+      }
+      else {
+	double effmc = GetBtagEffMC(flavor, pt);
+	outputweight *= (1.0 - effmc*SF)/(1.0-effmc);
+      }
+    }
+  }
+  return outputweight;
+}
+
+double EventHandler::GetBtagSF(const int flavor,const double pt,const double jet_eta,const int tagcat) const{
+  //this is for CSV L+M+T
+  //This is the Moriond13 prescription
+  if (tagcat==0) return 1;
+  if (tagcat==4) return 0;
+  const double eta = fabs(jet_eta);
+  if (eta>2.4) return 0; //no b-tag eff here!
+  double SF=1;
+  if (abs(flavor) == 5 || abs(flavor)==4) { // heavy flavor SFs
+    const double x = pt>800? 800 : pt;
+    if (tagcat == 1) { //CSVL
+      SF = 0.981149*((1.+(-0.000713295*x))/(1.+(-0.000703264*x)));
+    }
+    else if (tagcat == 2) { //CSVM
+      SF = 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
+    }
+    else if (tagcat == 3) {//CSVT
+      SF = 0.869965*((1.+(0.0335062*x))/(1.+(0.0304598*x)));
+    }
+    else assert(0);
+  } //if heavy flavor
+  else { //light flavor SFs
+    double x = pt;
+    if ( pt> 800) x = 800;
+    if ( pt> 700 && eta>=1.5 && tagcat==1) x=700; //special maximum pt for high eta, CSVL
+    //adapted from https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs_Moriond2013.C
+    if( tagcat == 1 && eta< 0.5) {
+      SF = ((1.04901+(0.00152181*x))+(-3.43568e-06*(x*x)))+(2.17219e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 0.5 && eta < 1.0) {
+      SF = ((0.991915+(0.00172552*x))+(-3.92652e-06*(x*x)))+(2.56816e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 1.0 && eta < 1.5) {
+      SF = ((0.962127+(0.00192796*x))+(-4.53385e-06*(x*x)))+(3.0605e-09*(x*(x*x)));
+    }
+    else if( tagcat == 1 && eta >= 1.5 && eta <= 2.4) {
+      SF = ((1.06121+(0.000332747*x))+(-8.81201e-07*(x*x)))+(7.43896e-10*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta< 0.8) {
+      SF = ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta >= 0.8 && eta < 1.6) {
+     SF = ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
+    }
+    else if( tagcat == 2 && eta >= 1.6 && eta <= 2.4) {
+      SF = ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
+    }
+    else if( tagcat == 3 && eta <= 2.4) {
+      SF = ((1.01739+(0.00283619*x))+(-7.93013e-06*(x*x)))+(5.97491e-09*(x*(x*x)));
+    }
+    else assert(0);
+  } //else (light flavor SFs)
+  return SF;
+}
+
+double EventHandler::GetBtagEffMC(const int flavor, const double pt) const{
+  if (f_tageff_==0) return 0;
+  std::string sbtageff = "h_btageff";
+  std::string sctageff = "h_ctageff";
+  std::string sltageff = "h_ltageff";
+  TH1D * h_btageff = static_cast<TH1D*>(f_tageff_->Get(sbtageff.c_str()));
+  TH1D * h_ctageff = static_cast<TH1D*>(f_tageff_->Get(sctageff.c_str()));
+  TH1D * h_ltageff = static_cast<TH1D*>(f_tageff_->Get(sltageff.c_str()));
+  TH1D* hh;
+  if (abs(flavor)==5) hh=h_btageff;
+  else if (abs(flavor)==4) hh=h_ctageff;
+  else hh=h_ltageff;
+  return hh->GetBinContent( hh->FindBin(pt));
+}
+
+// This gives you the weight you apply to the MC when you don't cut on b-tags
+void EventHandler::CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Prob1, double &ProbGEQ2,
+				     double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4) {
+
+  //must initialize correctly
+  Prob2 = 0;
+  Prob1 = 0; ProbGEQ1 = 1; Prob0 = 1; ProbGEQ2 = 0;
+  Prob3 = 0; ProbGEQ4 = 0;
+
+  if(sampleName.find("Run2012")!=std::string::npos) { // for data, set all to 1--not really needed
+    Prob0=1;
+    ProbGEQ1=1;
+    Prob1=1;
+    ProbGEQ2=1;
+    Prob2=1;
+    ProbGEQ3=1;
+    Prob3=1;
+    ProbGEQ4=1;
+    return;
+  }
+
+  if (f_tageff_ == 0) { //if the b-tag eff file is not there make sure it will be obvious to the user -- fill all with zero
+    Prob0=0;
+    ProbGEQ1=0;
+    Prob1=0;
+    ProbGEQ2=0;
+    Prob2=0;
+    ProbGEQ3=0;
+    Prob3=0;
+    ProbGEQ4=0;
+    return;
+  }
+
+  char btageffname[200], ctageffname[200], ltageffname[200];
+  std::string sbtageff = "h_btageff";  std::string sctageff = "h_ctageff";  std::string sltageff = "h_ltageff";
+  sprintf(btageffname,"%s",sbtageff.c_str());   
+  sprintf(ctageffname,"%s",sctageff.c_str());   
+  sprintf(ltageffname,"%s",sltageff.c_str());   
+  TH1D * h_btageff  = static_cast<TH1D*>(f_tageff_->Get(btageffname));
+  TH1D * h_ctageff  = static_cast<TH1D*>(f_tageff_->Get(ctageffname));
+  TH1D * h_ltageff  = static_cast<TH1D*>(f_tageff_->Get(ltageffname));
+
+  for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
+    double subprob1=0;
+    double subprob2=0;
+
+    if(isGoodJet(ijet,true,50)){ //switch to 50 GeV threshold for b jets (8 TeV)
+
+      double effi = GetJetTagEff(ijet, h_btageff, h_ctageff, h_ltageff);
+      //      cout << "jet: " << ijet << ", effi: " << effi << endl;
+      Prob0 = Prob0* ( 1 - effi);
+      
+      double product = 1;
+      for (unsigned int kjet=0; kjet<jets_AKPF_pt->size(); ++kjet) {
+	if(isGoodJet(kjet,true,50)){
+	  double effk = GetJetTagEff(kjet, h_btageff, h_ctageff, h_ltageff);
+	  if(kjet != ijet) product = product*(1-effk);
+	  if(kjet > ijet){
+	    double subproduct = 1;
+	    for (unsigned int jjet=0; jjet<jets_AKPF_pt->size(); ++jjet) {
+	      if(jjet != kjet && jjet != ijet){
+		if(isGoodJet(jjet,true,50)){
+		  double effj = GetJetTagEff(jjet, h_btageff, h_ctageff, h_ltageff);
+		  subproduct = subproduct*(1-effj);
+                  if ( jjet > kjet) {
+		    double subproduct2 = 1;
+		    for (unsigned int ljet=0; ljet<jets_AKPF_pt->size(); ++ljet) {
+		      if(ljet != kjet && ljet != ijet && ljet != jjet){
+			if(isGoodJet(ljet,true,50)){
+			  double effl = GetJetTagEff(ljet, h_btageff, h_ctageff, h_ltageff);
+			  subproduct2 = subproduct2*(1-effl);
+			}
+                      }
+                    } //ljet loop
+                    subprob2 += effk*effj*subproduct2;
+		  }
+		}
+	      }
+	    }//j loop
+	    subprob1 += effk*subproduct;
+	  }
+	}
+      }//k loop
+      
+      Prob1 += effi*product;
+      Prob2 += effi*subprob1;
+      Prob3 += effi*subprob2; 
+
+    }
+  }
+
+  //  std::cout << "prob0 = " << Prob0 << ", prob1 = " << Prob1 << ", prob2 = " << Prob2 << std::endl;  
+
+  ProbGEQ1 = 1 - Prob0;
+  ProbGEQ2 = 1 - Prob1 - Prob0;
+  ProbGEQ3 = 1 - Prob2 - Prob1 - Prob0;
+  ProbGEQ4 = 1 - Prob3 - Prob2 - Prob1 - Prob0;
+
+  return;
+
+}
+
+//get MC btag efficiency
+double EventHandler::GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff) {
+
+  double tageff=0;
+  const float pt = jets_AKPF_pt->at(ijet);
+  const float eta = fabs(jets_AKPF_eta->at(ijet));
+  int flavor = static_cast<int>(jets_AKPF_partonFlavour->at(ijet));
+
+  //x is the pt value that will be used to evaluate the SF
+  //the max pt depends on flavor, and, for LF jets, eta
+  const double cutoff1=800.; const double cutoff2=700.;
+  double x;
+  //HF or central LF, max is 800
+  if ( abs(flavor)==5 || abs(flavor)==4 || eta<1.5) x = pt > cutoff1 ? cutoff1 : pt;
+  //high eta LF, max is 700
+  else x = pt > cutoff2 ? cutoff2 : pt;
+
+  if( isGoodJet(ijet,true,50) ) {
+
+    //  if (theBTagEffType_ == kBTagEff05 || theBTagEffType_ == kBTagEffup5 || theBTagEffType_ == kBTagEffdown5) { //new  BTV-11-004 prescription 
+
+    if (abs(flavor) ==4 || abs(flavor)==5) { //heavy flavor
+      double errFactor = 1;
+
+      if (pt >cutoff1) { //use twice the errors
+	errFactor=2;
+      }
+      if (abs(flavor) == 4)  errFactor=2; //charm has double the errors   "SFc = SFb with twice the quoted uncertainty"
+      //not clear to me what to do for charm with pT> cutoff. errFactor of 2 or 4? must be small effect though
+
+      // Tagger: CSVM within 20 < pt < 800 GeV, abs(eta) < 2.4, x = pt
+      double  SFb = 0.726981*((1.+(0.253238*x))/(1.+(0.188389*x)));
+
+      //apply FASTSTIM correction where needed
+      SFb *= GetbJetFastsimSF("value",flavor,pt);
+       
+      // skip syst variations, for now
+
+      // cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SFb<<endl;
+      if      (abs(flavor) == 5) tageff = SFb * h_btageff->GetBinContent( h_btageff->FindBin( pt ) );
+      else if (abs(flavor) == 4) tageff = SFb * h_ctageff->GetBinContent( h_ctageff->FindBin( pt ) );
+      else assert(0);
+    } // if heavy flavor
+    else { //light flavor [ see https://twiki.cern.ch/twiki/pub/CMS/BtagPOG/SFlightFuncs_Moriond2013.C ]
+      //note that these are valid only to a cutoff value, so use 'x' and not 'pt'
+      double SF=0;
+      double nominalSF=0;
+      if ( eta < 0.8 ) {
+	nominalSF =  ((1.06238+(0.00198635*x))+(-4.89082e-06*(x*x)))+(3.29312e-09*(x*(x*x))); // SF without + or - variation in mistag rate
+	SF = nominalSF;
+      }
+      else if (eta>=0.8 && eta<1.6) {
+	nominalSF = ((1.08048+(0.00110831*x))+(-2.96189e-06*(x*x)))+(2.16266e-09*(x*(x*x)));
+	SF = nominalSF;
+      }
+      else if (eta>=1.6 && eta<=2.4) {
+	nominalSF = ((1.09145+(0.000687171*x))+(-2.45054e-06*(x*x)))+(1.7844e-09*(x*(x*x)));
+	SF = nominalSF;
+      }
+      //design question -- what do to for jets at eta>2.4? assert? or return tageff=0?
+      //i guess tageff 0 makes the most sense, so leave SF = 0
+	
+      // double deltaSF = SF - nominalSF; //here is the nominal uncertainty on the fullsim SF
+
+      //5 June 2013 -- new code to apply LF mistags
+      //apply FASTSTIM correction where needed
+      SF *= GetbJetFastsimSF("value",flavor,pt);
+
+      // now, skip the extra uncertainties for high pT/eta and Fastsim
+
+      tageff = SF * h_ltageff->GetBinContent( h_ltageff->FindBin( pt )); 
+      // cout<<"jet flavor, pt, SF = "<<abs(flavor)<<" "<<pt<<" "<<SF<<endl;
+
+    } // if light flavor
+
+      //    } //if BTV-11-004 prescription
+    //  else {      //no longer support old prescriptions
+    //  assert(0);
+    //    }
+    
+  }
+
+
+  if (tageff<0) tageff=0;
+  if (tageff>1) tageff=1;
+
+  return tageff;
+}
+
+double EventHandler::GetbJetFastsimSF(const TString & what, const int flavor, const double pt) const {
+  assert( what == "value" || what=="stat" || what=="syst");
+  //stat will be an absolute error
+  //syst will be a fractional error
+
+  double returnVal = 0;
+
+  //first check if we're in a FASTSIM model
+  if(sampleName.find("FSIM")==std::string::npos) return 1.;
+
+  if ( abs(flavor) == 5) {
+    //table 2 applies to any FASTSIM sample
+    if (what=="value")   returnVal = Get_AN_12_175_Table2_Value(pt);
+    else assert(0);
+  } //end b-tag
+    //new code for other flavors, from Pawandeep
+  else if ( abs(flavor) == 4) { //correction for c-tag 
+    //table 10 applies to any FASTSIM sample
+    if (what=="value")   returnVal = Get_AN_12_175_Table10_Value(pt);
+    else assert(0);
+  } //end c-tag
+  else  { //correction for udsg-tag 
+    //table 18 applies to any FASTSIM sample
+    if (what=="value") returnVal = Get_AN_12_175_Table18_Value(pt);
+    else assert(0);
+  } //end udsg-tag   
+  
+  //cout<<what<<" "<<flavor<<" "<<pt<<"\t"<<returnVal<<endl;
+  return returnVal;
+}
+
+int EventHandler::GetPtBinIndex(const float pt) const {
+  //binning in AN-12-175
+
+  const int n=15; double bins[]={30.,40.,50.,60.,70.,80.,100.,120.,160.,210.,260.,320.,400.,500.,1e9}; //15 values
+  //real max is 670, but use last bin value for jets about 670
+
+  if (pt<bins[0] || pt>bins[n-1]) return -1;
+
+  int jj=0; //highest value of jj in loop is 13
+  for ( ; jj<n-1; ++jj) if (pt >= bins[jj] && pt<bins[jj+1]) break;
+
+  return jj;  
+}
+
+double EventHandler::Get_AN_12_175_Table2_Value(const double pt) const {
+
+  int bin = GetPtBinIndex(pt);
+
+  if (bin<0) return 1;
+
+  double values[]={0.982,0.981,0.992,0.994,0.997,0.9998,1.001,1.000,0.992,0.979,0.947,0.928,0.87,0.84};
+
+  return values[bin];
+}
+
+double EventHandler::Get_AN_12_175_Table10_Value(const double pt) const {
+
+  int bin = GetPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  double values[]={0.989,0.982,1.009,1.016,1.028,1.022,1.026,1.019,0.99,0.96,0.94,0.92,0.94,1.1};
+
+  return values[bin];
+}
+
+double EventHandler::Get_AN_12_175_Table18_Value(const double pt) const {
+
+  int bin = GetPtBinIndex(pt);
+  if (bin<0) return 1;
+
+  double values[]={1.32,1.37,1.49,1.48,1.54,1.64,1.62,1.79,1.78,1.93,2.17,2.48,3.0,3.9};
+
+  return values[bin];
+}
+
 bool EventHandler::PassesJSONCut() const{
   if(sampleName.find("Run2012")!=std::string::npos){
     if(sampleName.find("PromptReco")!=std::string::npos
@@ -273,7 +731,10 @@ void EventHandler::GetSortedBJets() const{
     sortedBJetCache.clear();
     for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
       if(isGoodJet(i,true,20.)){ //lower pt cut
-	sortedBJetCache.push_back(BJet(TLorentzVector(jets_AKPF_px->at(i),jets_AKPF_py->at(i),jets_AKPF_pz->at(i),jets_AKPF_energy->at(i)),jets_AKPF_btag_secVertexCombined->at(i),i,static_cast<unsigned int>(jets_AKPF_parton_Id->at(i)),static_cast<unsigned int>(jets_AKPF_parton_motherId->at(i))));
+	double btag_disc(0.);
+	if (cfAVersion<77) btag_disc=jets_AKPF_btag_secVertexCombined->at(i);
+	else btag_disc=jets_AKPF_btag_inc_secVertexCombined->at(i); 
+	sortedBJetCache.push_back(BJet(TLorentzVector(jets_AKPF_px->at(i),jets_AKPF_py->at(i),jets_AKPF_pz->at(i),jets_AKPF_energy->at(i)),btag_disc,i,static_cast<unsigned int>(jets_AKPF_parton_Id->at(i)),static_cast<unsigned int>(jets_AKPF_parton_motherId->at(i))));
       }
     }
     std::sort(sortedBJetCache.begin(),sortedBJetCache.end(), std::greater<BJet>());
@@ -293,7 +754,7 @@ void EventHandler::ClusterFatJets() const{
       // 	  || is_nan(jets_AKPF_pz->at(jet)) || is_nan(jets_AKPF_energy->at(jet))) continue;
       const PseudoJet this_pj(jets_AKPF_px->at(jet), jets_AKPF_py->at(jet),
 			      jets_AKPF_pz->at(jet), jets_AKPF_energy->at(jet));
-      if(this_pj.pt()>30.0) skinny_jets_pt30.push_back(this_pj);
+      if(this_pj.pt()>30.0&&this_pj.eta()>5.0) skinny_jets_pt30.push_back(this_pj);
     }
     //  cout << "Found " << skinny_jets_pt30.size() << " skinny jets." << endl;
     // Define clustering parameters
@@ -314,12 +775,12 @@ void EventHandler::ClusterFatJets() const{
 void EventHandler::GetSortedFatJets() const{
   if(!FatJetsUpToDate){
     sortedFatJetCache.clear();
-    if (cfAVersion>=74) {
+    if (cfAVersion>=77) {
       //  cout << "Load sortedFatJetCache..." << endl;
-      for(unsigned int i(0); i<fastjets_AKPF_R1p2_R0p5pT30_px->size(); ++i){
-	//	if (TMath::Sqrt(fastjets_AKPF_R1p2_R0p5pT30_px->at(i)*fastjets_AKPF_R1p2_R0p5pT30_px->at(i)+fastjets_AKPF_R1p2_R0p5pT30_py->at(i)*fastjets_AKPF_R1p2_R0p5pT30_py->at(i))>50) {
-	sortedFatJetCache.push_back(FatJet(TLorentzVector(fastjets_AKPF_R1p2_R0p5pT30_px->at(i),fastjets_AKPF_R1p2_R0p5pT30_py->at(i),fastjets_AKPF_R1p2_R0p5pT30_pz->at(i),fastjets_AKPF_R1p2_R0p5pT30_energy->at(i)),fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(i),i));
-	//	}
+      for(unsigned int i(0); i<fjets30_pt->size(); ++i){
+	TLorentzVector TLV;
+	TLV.SetPtEtaPhiE(fjets30_pt->at(i), fjets30_eta->at(i), fjets30_phi->at(i), fjets30_energy->at(i));
+	if (fjets30_pt->at(i)>50) sortedFatJetCache.push_back(FatJet(TLV, 0, i));
       }
       std::sort(sortedFatJetCache.begin(),sortedFatJetCache.end(), std::greater<FatJet>());
       //   cout << "Found " << sortedFatJetCache.size() << " fat jets." << endl;
@@ -436,9 +897,10 @@ double EventHandler::GetJetXCSV(unsigned int pos) const{
 
 double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
   std::vector<double> csvs(0);
-  for(unsigned int jet(0); jet<jets_AKPF_btag_secVertexCombined->size(); ++jet){
+  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
     if(isGoodJet(jet,true,20.)){
-      csvs.push_back(jets_AKPF_btag_secVertexCombined->at(jet));
+      if (cfAVersion<77) csvs.push_back(jets_AKPF_btag_secVertexCombined->at(jet));
+      else csvs.push_back(jets_AKPF_btag_inc_secVertexCombined->at(jet));
     }
   }
   std::sort(csvs.begin(), csvs.end(), std::greater<double>());
@@ -531,18 +993,18 @@ void EventHandler::GetBeta(const std::string which) const{
     int totjet = 0;
     int matches = 0;
     for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
-      const float pt = jets_AKPF_pt->at(ijet);
-      const float eta = fabs(jets_AKPF_eta->at(ijet));
+      const double pt = jets_AKPF_pt->at(ijet);
+      const double eta = fabs(jets_AKPF_eta->at(ijet));
       
       int i = 0;
       totjet++;
       for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionBeta->begin(); itr != puJet_rejectionBeta->end(); ++itr, ++i) {
         int j = 0;
-        float mypt = 0;
-        float myeta = 0;
-        float mybeta = 0;
-        float result = 0;
-        float tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
+        double mypt = 0;
+        double myeta = 0;
+        double mybeta = 0;
+        double result = 0;
+        double tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
         for ( std::vector<float>::const_iterator it = itr->begin(); it != itr->end(); ++it, ++j) {
           
           if ( (j%6)==0 ) mypt = *it;  
@@ -770,17 +1232,17 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
   if( jetid && !jetPassLooseID(ijet) ) return false;
   // if(!betaUpToDate) GetBeta();
   //  if(beta.at(ijet)<0.2 && doBeta) return false;
-  if (cfAVersion>=75) { // overlap removal
+  if (cfAVersion>=75&&cfAVersion<=76) { // overlap removal
     if (jetHasEMu(ijet)) return false;
   }
   return true;
 }
 
 bool EventHandler::isCleanJet(const unsigned int ijet, const int pdgId) const{ // remove overlap, based on pfcand hypothesis
-  float jet_eta(jets_AKPF_eta->at(ijet)), jet_phi(jets_AKPF_phi->at(ijet));
+  double jet_eta(jets_AKPF_eta->at(ijet)), jet_phi(jets_AKPF_phi->at(ijet));
   for (unsigned int it = 0; it<pfcand_pt->size(); it++) {
     if (static_cast<int>(fabs(pfcand_pdgId->at(it)))!=pdgId) continue;
-    float dR = Math::GetDeltaR(jet_phi, jet_eta, pfcand_phi->at(it), pfcand_eta->at(it));
+    double dR = Math::GetDeltaR(jet_phi, jet_eta, pfcand_phi->at(it), pfcand_eta->at(it));
     if (dR<=0.5) return false;
   }
   return true;
@@ -2174,236 +2636,51 @@ bool EventHandler::IsMC(){
   return (sampleName.find("Run201") == std::string::npos);
 }
 
-double EventHandler::GetFatJetPt(const unsigned int index, const unsigned int pt_cut) const{
+double EventHandler::GetFatJetPt(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   double px(0.), py(0.);
-  if (cfAVersion>=74) {
-    switch(pt_cut){
-    case 10:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT10_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT10_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(index);
-      break;
-    case 15:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT15_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT15_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(index);
-      break;
-    case 20:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT20_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT20_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(index);
-      break;
-    case 25:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT25_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT25_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(index);
-      break;
-    case 30:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index);
-      break;
-    default:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index);
-      break;
-    }
-  }
-  else {
-    px = sortedFatJetCache[index].GetLorentzVector().Px();
-    py = sortedFatJetCache[index].GetLorentzVector().Py();
-  }
+  if (index>sortedFatJetCache.size()) return -1;
+  px = sortedFatJetCache[index].GetLorentzVector().Px();
+  py = sortedFatJetCache[index].GetLorentzVector().Py();
   return TMath::Sqrt(px*px+py*py);
 }
 
-int EventHandler::GetFatJetnConst(const unsigned int index, const unsigned int pt_cut) const{
+int EventHandler::GetFatJetnConst(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
-  int nConst;
-  if (cfAVersion>=74) {
-    switch(pt_cut){
-    case 10:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->at(index);
-      break;
-    case 15:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->at(index);
-      break;
-    case 20:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->at(index);
-      break;
-    case 25:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->at(index);
-      break;
-    case 30:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(index);
-      break;
-    default:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size()) return -1;
-      nConst=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->at(index);
-      break;
-    }
-  } else nConst=sortedFatJetCache[index].GetNConst();
-  return nConst; 
+  if (index>sortedFatJetCache.size()) return -1;
+  return sortedFatJetCache[index].GetNConst();
 }
 
-double EventHandler::GetFatJetmJ(const unsigned int index, const unsigned int pt_cut) const{
+double EventHandler::GetFatJetmJ(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   double px(0.), py(0.), pz(0.), energy(0.);
-  if (cfAVersion>=74) {
-    switch(pt_cut){
-    case 10:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT10_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT10_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(index);
-      break;
-    case 15:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT15_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT15_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(index);
-      break;
-    case 20:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT20_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT20_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(index);
-      break;
-    case 25:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT25_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT25_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(index);
-      break;
-    case 30:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(index);
-      break;
-    default:
-      if (index>=fastjets_AKPF_R1p2_R0p5pT30_px->size()) return -9999.;
-      px=fastjets_AKPF_R1p2_R0p5pT30_px->at(index), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(index), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(index), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(index);
-      break;
-    }
-  }
-  else {
-    px = sortedFatJetCache[index].GetLorentzVector().Px();
-    py = sortedFatJetCache[index].GetLorentzVector().Py();
-    pz = sortedFatJetCache[index].GetLorentzVector().Pz();
-    energy = sortedFatJetCache[index].GetLorentzVector().E();
-  }
+  if (index>sortedFatJetCache.size()) return -1;
+  
+  px = sortedFatJetCache[index].GetLorentzVector().Px();
+  py = sortedFatJetCache[index].GetLorentzVector().Py();
+  pz = sortedFatJetCache[index].GetLorentzVector().Pz();
+  energy = sortedFatJetCache[index].GetLorentzVector().E();
+  
   TLorentzVector TLV(px, py, pz, energy);
   return TLV.M();
 }
 
-int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const double fat_jet_eta_cut, const unsigned int skinny_jet_pt_cut) const{
+int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const double fat_jet_eta_cut/* , const unsigned int skinny_jet_pt_cut*/) const{
   GetSortedFatJets();
   uint nJ(0);
-  uint vSize(0);
-  if (cfAVersion>=74) {
-    switch(skinny_jet_pt_cut){
-    case 10:
-      vSize=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size();
-      break;
-    case 15:
-      vSize=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size();
-      break;
-    case 20:
-      vSize=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size();
-      break;
-    case 25:
-      vSize=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size();
-      break;
-    case 30:
-      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
-      break;
-    default:
-      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
-      break;
-    }
-    for (uint ifj(0); ifj<vSize; ifj++) {
-      double px(0.), py(0.), pz(0.), energy(0.);
-      switch(skinny_jet_pt_cut){
-      case 10:
-	px=fastjets_AKPF_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(ifj);
-	break;
-      case 15:
-	px=fastjets_AKPF_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(ifj);
-	break;
-      case 20:
-	px=fastjets_AKPF_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(ifj);
-	break;
-      case 25:
-	px=fastjets_AKPF_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(ifj);
-	break;
-      case 30:
-	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
-	break;
-      default:
-	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
-	break;
-      }
-      TLorentzVector TLV(px, py, pz, energy);
-      double pt(TLV.Pt()), eta(TLV.Eta());
-      if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) nJ++;
-    }
-  }
-  else {
-    for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
-      if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut) nJ++;
-    }
+  for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
+    if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut) nJ++;
   }
   return nJ;
 }
 
-double EventHandler::GetMJ(const double fat_jet_pt_cut, const double fat_jet_eta_cut, const unsigned int skinny_jet_pt_cut) const{
+double EventHandler::GetMJ(const double fat_jet_pt_cut, const double fat_jet_eta_cut/* , const unsigned int skinny_jet_pt_cut*/) const{
   GetSortedFatJets();
   double MJ(0.);
-  uint vSize(0);
-  if (cfAVersion>=74) {
-    switch(skinny_jet_pt_cut){
-    case 10:
-      vSize=fastjets_AKPF_R1p2_R0p5pT10_nconstituents->size();
-      break;
-    case 15:
-      vSize=fastjets_AKPF_R1p2_R0p5pT15_nconstituents->size();
-      break;
-    case 20:
-      vSize=fastjets_AKPF_R1p2_R0p5pT20_nconstituents->size();
-      break;
-    case 25:
-      vSize=fastjets_AKPF_R1p2_R0p5pT25_nconstituents->size();
-      break;
-    case 30:
-      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
-      break;
-    default:
-      vSize=fastjets_AKPF_R1p2_R0p5pT30_nconstituents->size();
-      break;
-    }
-    for (uint ifj(0); ifj<vSize; ifj++) {
-      double px(0.), py(0.), pz(0.), energy(0.);
-      switch(skinny_jet_pt_cut){
-      case 10:
-	px=fastjets_AKPF_R1p2_R0p5pT10_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT10_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT10_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT10_energy->at(ifj);
-	break;
-      case 15:
-	px=fastjets_AKPF_R1p2_R0p5pT15_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT15_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT15_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT15_energy->at(ifj);
-	break;
-      case 20:
-	px=fastjets_AKPF_R1p2_R0p5pT20_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT20_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT20_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT20_energy->at(ifj);
-	break;
-      case 25:
-	px=fastjets_AKPF_R1p2_R0p5pT25_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT25_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT25_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT25_energy->at(ifj);
-	break;
-      case 30:
-	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
-	break;
-      default:
-	px=fastjets_AKPF_R1p2_R0p5pT30_px->at(ifj), py=fastjets_AKPF_R1p2_R0p5pT30_py->at(ifj), pz=fastjets_AKPF_R1p2_R0p5pT30_pz->at(ifj), energy=fastjets_AKPF_R1p2_R0p5pT30_energy->at(ifj);
-	break;
-      }
-      TLorentzVector TLV(px, py, pz, energy);
-      double pt(TLV.Pt()), eta(TLV.Eta());
-      if (pt>fat_jet_pt_cut&&fabs(eta)<fat_jet_eta_cut) MJ+=GetFatJetmJ(ifj, skinny_jet_pt_cut);
-    }
-  }
-  else {
-    for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
-      if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut)
-	MJ+=sortedFatJetCache[ifj].GetLorentzVector().M();
-    }
+  for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
+    //  cout << "Fat jet " << ifj << ": mass = " << sortedFatJetCache[ifj].GetLorentzVector().M() << endl;
+    if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut)
+      MJ+=sortedFatJetCache[ifj].GetLorentzVector().M();
   }
   return MJ;
 }
@@ -2449,6 +2726,36 @@ unsigned int EventHandler::GetNumTruthMatchedBJets(const double pt, const bool g
     if (fabs(static_cast<int>(jets_AKPF_partonFlavour->at(i)))==5) numBJets++;
   }
   return numBJets;
+}
+
+unsigned int EventHandler::GetNumIncCSVTJets(const double pt_cut) const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVTCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
+}
+
+unsigned int EventHandler::GetNumIncCSVMJets(const double pt_cut) const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVMCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
+}
+
+unsigned int EventHandler::GetNumIncCSVLJets(const double pt_cut) const{
+  int numPassing(0);
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVLCut){
+      ++numPassing;
+    }
+  }
+  return numPassing;
 }
 
 unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
@@ -2608,7 +2915,7 @@ int EventHandler::GetNumIsoTracks(const double ptThresh, const bool mT_cut) cons
   for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
     if ( (isotk_pt->at(itrack) >= ptThresh) &&
 	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
-	 ( fabs(isotk_dzpv->at(itrack)) <0.1) && //important to apply this; was not applied at ntuple creation
+	 ( fabs(isotk_dzpv->at(itrack)) <0.05) &&
 	 ( !mT_cut || GetMTW(isotk_pt->at(itrack),pfTypeImets_et->at(0),isotk_phi->at(itrack),pfTypeImets_phi->at(0))<100 ) &&
 	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
 	 ){
@@ -2618,40 +2925,107 @@ int EventHandler::GetNumIsoTracks(const double ptThresh, const bool mT_cut) cons
   return nisotracks;
 }
 
-double EventHandler::GetTransverseMass() const{
+double EventHandler::GetTransverseMassMu() const{
   //Find leading lepton
-  if (!recoMuonsUpToDate) {
-    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
-    else recoMuonCache=GetRA2bMuons(true);
-    recoMuonsUpToDate=true;
+  vector<int> reco_veto_muons;
+  if (cfAVersion>=75) reco_veto_muons=GetRecoMuons(true);
+  else reco_veto_muons=GetRA2bMuons(true);
+  
+  double lep_pt(-1.), lep_phi(-1.);
+  if (reco_veto_muons.size()<1) return -999.;
+  if (cfAVersion>=75) {
+    lep_pt=mus_pt->at(reco_veto_muons[0]);
+    lep_phi=mus_phi->at(reco_veto_muons[0]);
   }
-  if (!recoElectronsUpToDate) {
-    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
-    else recoElectronCache=GetRA2bElectrons(true);
-    recoElectronsUpToDate=true;
+  else {
+    lep_pt=pf_mus_pt->at(reco_veto_muons[0]);
+    lep_phi=pf_mus_phi->at(reco_veto_muons[0]);
   }
-  double lep_pt(-1.), lep_phi(-1);
-  if (recoMuonCache.size()>0) {
-    if (cfAVersion>=75) {
-      lep_pt=mus_pt->at(recoMuonCache[0]);
-      lep_pt=mus_phi->at(recoMuonCache[0]);
-    }
-    else {
-      lep_pt=pf_mus_pt->at(recoMuonCache[0]);
-      lep_pt=pf_mus_phi->at(recoMuonCache[0]);
-    }
-  }
-  if (recoElectronCache.size()>0) {
-    if (cfAVersion>=75&&els_pt->at(recoElectronCache[0])>lep_pt) {
-      lep_pt=els_pt->at(recoElectronCache[0]);
-      lep_pt=els_phi->at(recoElectronCache[0]);
-    }
-    else if ((cfAVersion<=71||cfAVersion==74)&&pf_els_pt->at(recoElectronCache[0])>lep_pt) {
-      lep_pt=pf_els_pt->at(recoElectronCache[0]);
-      lep_pt=pf_els_phi->at(recoElectronCache[0]);
-    }
-  }
-  if (lep_pt<0.) return -1.;
   return GetMTW(lep_pt,pfTypeImets_et->at(0),lep_phi,pfTypeImets_phi->at(0));
 }
 
+double EventHandler::GetTransverseMassEl() const{
+  //Find leading lepton
+  vector<int> reco_veto_electrons;
+  if (cfAVersion>=75) reco_veto_electrons=GetRecoElectrons(true);
+  else reco_veto_electrons=GetRA2bElectrons(true);
+  double lep_pt(-1.), lep_phi(-1.);
+  if (reco_veto_electrons.size()<1) return -999.;
+  if (cfAVersion>=75) {
+    lep_pt=els_pt->at(reco_veto_electrons[0]);
+    lep_phi=els_phi->at(reco_veto_electrons[0]);
+  }
+  else {
+    lep_pt=pf_els_pt->at(reco_veto_electrons[0]);
+    lep_phi=pf_els_phi->at(reco_veto_electrons[0]);
+  }
+  return GetMTW(lep_pt,pfTypeImets_et->at(0),lep_phi,pfTypeImets_phi->at(0));
+}
+
+double EventHandler::GetDeltaThetaT(const double lep_pt, const double lep_phi) const {
+    
+    //Code from an email from Kristen
+    TLorentzVector WInLab(0.,0.,0.,0.);
+    TLorentzVector LeptonInLab(0.,0.,0.,0.);
+    TLorentzVector LeptonInWCM(0.,0.,0.,0.);
+
+    double pfmet_0 = pfTypeImets_et->at(0);
+    double pfmet_x = pfmet_0 * cos(pfTypeImets_phi->at(0));
+    double pfmet_y = pfmet_0 * sin(pfTypeImets_phi->at(0));
+    double lep_px = lep_pt*cos(lep_phi);
+    double lep_py = lep_pt*sin(lep_phi);
+    
+    double mtw = GetMTW(lep_pt,pfTypeImets_et->at(0),lep_phi,pfTypeImets_phi->at(0));
+    double energyw = TMath::Sqrt( mtw*mtw + (lep_px+pfmet_x)*(lep_px+pfmet_x)
+				  + (lep_py+pfmet_y)*(lep_py+pfmet_y) );
+    
+    WInLab.SetXYZT( lep_px+pfmet_x, lep_py+pfmet_y, 0, energyw+0.0001 );
+    LeptonInLab.SetXYZT( lep_px, lep_py, 0, lep_pt+0.0001 );
+
+    TVector3 bstToW(WInLab.BoostVector());
+    LeptonInLab.Boost(-bstToW);
+    LeptonInWCM = LeptonInLab;
+    
+    double lep_px_wframe = LeptonInWCM.Px();
+    double lep_py_wframe = LeptonInWCM.Py();
+    
+    double w_phi_labframe = TMath::ATan2( (lep_py+pfmet_y),(lep_px+pfmet_x) );
+    double lep_phi_wframe = TMath::ATan2( lep_py_wframe,lep_px_wframe );
+
+    return Math::GetDeltaPhi(lep_phi_wframe, w_phi_labframe);
+
+}
+
+double EventHandler::GetWpT(const double lep_pt, const double lep_phi) const {
+
+    double pfmet_0 = pfTypeImets_et->at(0);
+    double pfmet_x = pfmet_0 * cos(pfTypeImets_phi->at(0));
+    double pfmet_y = pfmet_0 * sin(pfTypeImets_phi->at(0));
+    double lep_px = lep_pt*cos(lep_phi);
+    double lep_py = lep_pt*sin(lep_phi);
+    
+    TVector2 W(pfmet_x+lep_px,pfmet_y+lep_py);
+    return W.Mod();
+
+}
+
+int EventHandler::GetNumTaus( const bool againstEMu, const bool mT_cut) const {
+  // PHYS14 POG ID
+  if (cfAVersion<77) return -1;
+  int ntaus(0);
+  // cout << "Found " << taus_byDecayModeFinding->size() << " taus." << endl;
+  for (uint itau(0); itau<taus_byDecayModeFinding->size(); itau++) {
+    if (PassPhys14TauID(itau, againstEMu, mT_cut)) ntaus++;
+  }
+  return ntaus;
+}
+
+bool EventHandler::PassPhys14TauID(const int itau, const bool againstEMu, const bool mT_cut) const {
+  if (taus_pt->at(itau) < 20.) return false;
+  if (fabs(taus_eta->at(itau)) > 2.3) return false;
+  if (!taus_byDecayModeFinding->at(itau)) return false;
+  if (taus_chargedIsoPtSum->at(itau) > 1.) return false;
+  if (againstEMu && (!taus_againstMuonLoose3->at(itau) || !taus_againstElectronLooseMVA5->at(itau))) return false;
+  if (mT_cut && GetMTW(taus_pt->at(itau), pfTypeImets_et->at(0), taus_phi->at(itau), pfTypeImets_phi->at(0))>100) return false;
+  return true;
+}

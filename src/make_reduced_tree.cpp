@@ -60,7 +60,10 @@ int main(int argc, char *argv[]){
     std::cout << inFilename << "\n" << baseName << "\n" << outFilename << "\n";
   }
 
-  if (gSystem->AccessPathName(dirName.c_str())) gSystem->mkdir(dirName.c_str());
+  if (gSystem->AccessPathName(dirName.c_str())) {
+    std::cout << "Making directory " << dirName << std::endl;
+    gSystem->mkdir(dirName.c_str());
+  }
 
   WeightCalculator w(19399,Nentries);
   ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries);

@@ -4,6 +4,7 @@
 #include <set>
 #include "timer.hpp"
 #include "event_handler.hpp"
+#include "event_number.hpp"
 #include "math.hpp"
 
 
@@ -100,7 +101,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // unsigned short num_iso_tracks(0);
   
  
-  float top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0);
+  float top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0), trigger_eff_weight, btag_weight, btag_pid_weight;
+  double Prob0, ProbGEQ1, Prob1, ProbGEQ2, Prob2, ProbGEQ3, Prob3, ProbGEQ4;
+  // double qcd_pt_0b(1.66), qcd_pt_1b(1.23), qcd_pt_2b(0.82), qcd_pt_3b(1.03), qcd_pt_4b(1.03);
+  // double qcd_ht_0b(1.9), qcd_ht_1b(1.54), qcd_ht_2b(1.13), qcd_ht_3b(1.3), qcd_ht_4b(1.3);
 
   unsigned short num_gen_electrons(0), num_gen_muons(0), num_gen_taus(0);
   // num_gen_taus(0), num_gen_nus(0);
@@ -113,7 +117,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_iso2D(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
   int num_reco_electrons(0), num_reco_veto_electrons(0), num_reco_veto_electrons_iso2D(0), num_reco_veto_electrons_mT100(0), num_reco_veto_electrons_mT100_orth(0);
-  int num_ra2b_veto_taus(0), num_ra2b_veto_taus_noIso(0);
+  int num_taus_POG_phys14_ID(0), num_taus_POG_phys14_ID_againstEMu(0), num_taus_POG_phys14_ID_mT100(0), num_taus_POG_phys14_ID_againstEMu_mT100(0);
+  float tau_pt, tau_chargedIsoPtSum, tau_mT;
+
+  float iso_track_pt, iso_track_iso, iso_track_mT;
+  
 
   // int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
 
@@ -141,40 +149,42 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   float min_delta_phi_met, min_delta_phi_met_loose_jets;
   float min_delta_phi_met_N, min_delta_phi_met_N_loose_jets;
+  float min_delta_phi_met_N_2012;
   float jet1_DeltaPhiMETN, jet2_DeltaPhiMETN, jet3_DeltaPhiMETN;
 
   // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
-  int num_iso_tracks;
+  int num_iso_tracks_pt10, num_iso_tracks_pt10_mT, num_iso_tracks_pt15, num_iso_tracks_pt15_mT;
 
-  float mT;
+  float mT_mu, mT_el;
+  float deltaThetaT, W_pT;
   bool SL_control_sample, QCD_control_sample;
   bool ht_bin1, ht_bin2, ht_bin3, ht_bin4;
   bool met_bin1, met_bin2, met_bin3, met_bin4;
   bool nb_bin1, nb_bin2, nb_bin3;
 
-  double fatpT10_jet1_pt(-9999.), fatpT10_jet2_pt(-9999.), fatpT10_jet3_pt(-9999.), fatpT10_jet4_pt(-9999.);
-  int fatpT10_jet1_nConst(-1), fatpT10_jet2_nConst(-1), fatpT10_jet3_nConst(-1), fatpT10_jet4_nConst(-1);
-  double fatpT10_jet1_mJ(-9999.), fatpT10_jet2_mJ(-9999.), fatpT10_jet3_mJ(-9999.), fatpT10_jet4_mJ(-9999.);
-  int num_fatpT10_jets(-1), num_fatpT10_jets_pt100(-1), num_fatpT10_jets_pt150(-1), num_fatpT10_jets_pt200(-1),  num_fatpT10_jets_pt300(-1);
-  double fatpT10_MJ(-9999.), fatpT10_MJ_pt100(-9999.), fatpT10_MJ_pt150(-9999.), fatpT10_MJ_pt200(-9999.), fatpT10_MJ_pt300(-9999.);
+  // double fatpT10_jet1_pt(-9999.), fatpT10_jet2_pt(-9999.), fatpT10_jet3_pt(-9999.), fatpT10_jet4_pt(-9999.);
+  // int fatpT10_jet1_nConst(-1), fatpT10_jet2_nConst(-1), fatpT10_jet3_nConst(-1), fatpT10_jet4_nConst(-1);
+  // double fatpT10_jet1_mJ(-9999.), fatpT10_jet2_mJ(-9999.), fatpT10_jet3_mJ(-9999.), fatpT10_jet4_mJ(-9999.);
+  // int num_fatpT10_jets(-1), num_fatpT10_jets_pt100(-1), num_fatpT10_jets_pt150(-1), num_fatpT10_jets_pt200(-1),  num_fatpT10_jets_pt300(-1);
+  // double fatpT10_MJ(-9999.), fatpT10_MJ_pt100(-9999.), fatpT10_MJ_pt150(-9999.), fatpT10_MJ_pt200(-9999.), fatpT10_MJ_pt300(-9999.);
 
-  double fatpT15_jet1_pt(-9999.), fatpT15_jet2_pt(-9999.), fatpT15_jet3_pt(-9999.), fatpT15_jet4_pt(-9999.);
-  int fatpT15_jet1_nConst(-1), fatpT15_jet2_nConst(-1), fatpT15_jet3_nConst(-1), fatpT15_jet4_nConst(-1);
-  double fatpT15_jet1_mJ(-9999.), fatpT15_jet2_mJ(-9999.), fatpT15_jet3_mJ(-9999.), fatpT15_jet4_mJ(-9999.);
-  int num_fatpT15_jets(-1), num_fatpT15_jets_pt100(-1), num_fatpT15_jets_pt150(-1), num_fatpT15_jets_pt200(-1),  num_fatpT15_jets_pt300(-1);
-  double fatpT15_MJ(-9999.), fatpT15_MJ_pt100(-9999.), fatpT15_MJ_pt150(-9999.), fatpT15_MJ_pt200(-9999.), fatpT15_MJ_pt300(-9999.);
+  // double fatpT15_jet1_pt(-9999.), fatpT15_jet2_pt(-9999.), fatpT15_jet3_pt(-9999.), fatpT15_jet4_pt(-9999.);
+  // int fatpT15_jet1_nConst(-1), fatpT15_jet2_nConst(-1), fatpT15_jet3_nConst(-1), fatpT15_jet4_nConst(-1);
+  // double fatpT15_jet1_mJ(-9999.), fatpT15_jet2_mJ(-9999.), fatpT15_jet3_mJ(-9999.), fatpT15_jet4_mJ(-9999.);
+  // int num_fatpT15_jets(-1), num_fatpT15_jets_pt100(-1), num_fatpT15_jets_pt150(-1), num_fatpT15_jets_pt200(-1),  num_fatpT15_jets_pt300(-1);
+  // double fatpT15_MJ(-9999.), fatpT15_MJ_pt100(-9999.), fatpT15_MJ_pt150(-9999.), fatpT15_MJ_pt200(-9999.), fatpT15_MJ_pt300(-9999.);
 
-  double fatpT20_jet1_pt(-9999.), fatpT20_jet2_pt(-9999.), fatpT20_jet3_pt(-9999.), fatpT20_jet4_pt(-9999.);
-  int fatpT20_jet1_nConst(-1), fatpT20_jet2_nConst(-1), fatpT20_jet3_nConst(-1), fatpT20_jet4_nConst(-1);
-  double fatpT20_jet1_mJ(-9999.), fatpT20_jet2_mJ(-9999.), fatpT20_jet3_mJ(-9999.), fatpT20_jet4_mJ(-9999.);
-  int num_fatpT20_jets(-1), num_fatpT20_jets_pt100(-1), num_fatpT20_jets_pt150(-1), num_fatpT20_jets_pt200(-1),  num_fatpT20_jets_pt300(-1);
-  double fatpT20_MJ(-9999.), fatpT20_MJ_pt100(-9999.), fatpT20_MJ_pt150(-9999.), fatpT20_MJ_pt200(-9999.), fatpT20_MJ_pt300(-9999.);
+  // double fatpT20_jet1_pt(-9999.), fatpT20_jet2_pt(-9999.), fatpT20_jet3_pt(-9999.), fatpT20_jet4_pt(-9999.);
+  // int fatpT20_jet1_nConst(-1), fatpT20_jet2_nConst(-1), fatpT20_jet3_nConst(-1), fatpT20_jet4_nConst(-1);
+  // double fatpT20_jet1_mJ(-9999.), fatpT20_jet2_mJ(-9999.), fatpT20_jet3_mJ(-9999.), fatpT20_jet4_mJ(-9999.);
+  // int num_fatpT20_jets(-1), num_fatpT20_jets_pt100(-1), num_fatpT20_jets_pt150(-1), num_fatpT20_jets_pt200(-1),  num_fatpT20_jets_pt300(-1);
+  // double fatpT20_MJ(-9999.), fatpT20_MJ_pt100(-9999.), fatpT20_MJ_pt150(-9999.), fatpT20_MJ_pt200(-9999.), fatpT20_MJ_pt300(-9999.);
 
-  double fatpT25_jet1_pt(-9999.), fatpT25_jet2_pt(-9999.), fatpT25_jet3_pt(-9999.), fatpT25_jet4_pt(-9999.);
-  int fatpT25_jet1_nConst(-1), fatpT25_jet2_nConst(-1), fatpT25_jet3_nConst(-1), fatpT25_jet4_nConst(-1);
-  double fatpT25_jet1_mJ(-9999.), fatpT25_jet2_mJ(-9999.), fatpT25_jet3_mJ(-9999.), fatpT25_jet4_mJ(-9999.);
-  int num_fatpT25_jets(-1), num_fatpT25_jets_pt100(-1), num_fatpT25_jets_pt150(-1), num_fatpT25_jets_pt200(-1),  num_fatpT25_jets_pt300(-1);
-  double fatpT25_MJ(-9999.), fatpT25_MJ_pt100(-9999.), fatpT25_MJ_pt150(-9999.), fatpT25_MJ_pt200(-9999.), fatpT25_MJ_pt300(-9999.);
+  // double fatpT25_jet1_pt(-9999.), fatpT25_jet2_pt(-9999.), fatpT25_jet3_pt(-9999.), fatpT25_jet4_pt(-9999.);
+  // int fatpT25_jet1_nConst(-1), fatpT25_jet2_nConst(-1), fatpT25_jet3_nConst(-1), fatpT25_jet4_nConst(-1);
+  // double fatpT25_jet1_mJ(-9999.), fatpT25_jet2_mJ(-9999.), fatpT25_jet3_mJ(-9999.), fatpT25_jet4_mJ(-9999.);
+  // int num_fatpT25_jets(-1), num_fatpT25_jets_pt100(-1), num_fatpT25_jets_pt150(-1), num_fatpT25_jets_pt200(-1),  num_fatpT25_jets_pt300(-1);
+  // double fatpT25_MJ(-9999.), fatpT25_MJ_pt100(-9999.), fatpT25_MJ_pt150(-9999.), fatpT25_MJ_pt200(-9999.), fatpT25_MJ_pt300(-9999.);
 
   double fatpT30_jet1_pt(-9999.), fatpT30_jet2_pt(-9999.), fatpT30_jet3_pt(-9999.), fatpT30_jet4_pt(-9999.);
   int fatpT30_jet1_nConst(-1), fatpT30_jet2_nConst(-1), fatpT30_jet3_nConst(-1), fatpT30_jet4_nConst(-1);
@@ -235,6 +245,17 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("pu_weight", &pu_weight);
   reduced_tree.Branch("top_pt_weight", &top_pt_weight);
   reduced_tree.Branch("top_pt_weight_official", &top_pt_weight_official);
+  reduced_tree.Branch("trigger_eff_weight", &trigger_eff_weight);
+  reduced_tree.Branch("btag_weight", &btag_weight);
+  reduced_tree.Branch("btag_pid_weight", &btag_pid_weight);
+  reduced_tree.Branch("Prob0", &Prob0);
+  reduced_tree.Branch("ProbGEQ1", &ProbGEQ1);
+  reduced_tree.Branch("Prob1", &Prob1);
+  reduced_tree.Branch("ProbGEQ2", &ProbGEQ2);
+  reduced_tree.Branch("Prob2", &Prob2);
+  reduced_tree.Branch("ProbGEQ3", &ProbGEQ3);
+  reduced_tree.Branch("Prob3", &Prob3);
+  reduced_tree.Branch("ProbGEQ4", &ProbGEQ4);
  
   reduced_tree.Branch("run", &run);
   reduced_tree.Branch("event", &event);
@@ -411,8 +432,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_reco_veto_electrons_mT100", &num_reco_veto_electrons_mT100);
   reduced_tree.Branch("num_reco_veto_electrons_mT100_orth", &num_reco_veto_electrons_mT100_orth);
   reduced_tree.Branch("num_reco_electrons", &num_reco_electrons);
-  reduced_tree.Branch("num_ra2b_veto_taus", &num_ra2b_veto_taus);
-  reduced_tree.Branch("num_ra2b_veto_taus_noIso", &num_ra2b_veto_taus_noIso);
 
   // reduced_tree.Branch("electron_gen_mother_id", &electron_gen_mother_id);
   // reduced_tree.Branch("electron_gen_pt", &electron_gen_pt);
@@ -455,6 +474,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // reduced_tree.Branch("lep2", &lep2);
 
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
+  reduced_tree.Branch("min_delta_phi_met_N_2012", &min_delta_phi_met_N_2012);
   reduced_tree.Branch("min_delta_phi_met_N_loose_jets", &min_delta_phi_met_N_loose_jets);
   reduced_tree.Branch("min_delta_phi_met", &min_delta_phi_met);
   reduced_tree.Branch("min_delta_phi_met_loose_jets", &min_delta_phi_met_loose_jets);
@@ -465,8 +485,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // reduced_tree.Branch("deltaPhiN_2", &deltaPhiN_2);
   // reduced_tree.Branch("deltaPhiN_3", &deltaPhiN_3);
 
-  reduced_tree.Branch("num_iso_tracks", &num_iso_tracks);
-  reduced_tree.Branch("mT", &mT);
+
+  reduced_tree.Branch("mT_mu", &mT_mu);
+  reduced_tree.Branch("mT_el", &mT_el);
+  reduced_tree.Branch("deltaThetaT", &deltaThetaT);
+  reduced_tree.Branch("W_pT", &W_pT);
 
   reduced_tree.Branch("SL_control_sample", &SL_control_sample);
   reduced_tree.Branch("QCD_control_sample", &QCD_control_sample);
@@ -483,99 +506,99 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("nb_bin2", &nb_bin2);
   reduced_tree.Branch("nb_bin3", &nb_bin3);
 
-  if (cfAVersion>=74) {
-    reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
-    reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
-    reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
-    reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
-    reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
-    reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
-    reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
-    reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
-    reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
-    reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
-    reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
-    reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
-    reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
-    reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
-    reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
-    reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
-    reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
-    reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
-    reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
-    reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
-    reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
-    reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
+  // if (cfAVersion>=74) {
+  //   reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
+  //   reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
+  //   reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
+  //   reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
+  //   reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
+  //   reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
+  //   reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
+  //   reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
+  //   reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
+  //   reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
+  //   reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
+  //   reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
+  //   reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
+  //   reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
+  //   reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
+  //   reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
+  //   reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
+  //   reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
+  //   reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
+  //   reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
+  //   reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
+  //   reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
 
-    reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
-    reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
-    reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
-    reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
-    reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
-    reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
-    reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
-    reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
-    reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
-    reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
-    reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
-    reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
-    reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
-    reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
-    reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
-    reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
-    reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
-    reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
-    reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
-    reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
-    reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
-    reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
+  //   reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
+  //   reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
+  //   reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
+  //   reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
+  //   reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
+  //   reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
+  //   reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
+  //   reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
+  //   reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
+  //   reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
+  //   reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
+  //   reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
+  //   reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
+  //   reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
+  //   reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
+  //   reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
+  //   reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
+  //   reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
+  //   reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
+  //   reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
+  //   reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
+  //   reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
 
-    reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
-    reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
-    reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
-    reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
-    reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
-    reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
-    reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
-    reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
-    reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
-    reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
-    reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
-    reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
-    reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
-    reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
-    reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
-    reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
-    reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
-    reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
-    reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
-    reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
-    reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
-    reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
+  //   reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
+  //   reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
+  //   reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
+  //   reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
+  //   reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
+  //   reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
+  //   reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
+  //   reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
+  //   reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
+  //   reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
+  //   reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
+  //   reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
+  //   reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
+  //   reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
+  //   reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
+  //   reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
+  //   reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
+  //   reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
+  //   reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
+  //   reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
+  //   reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
+  //   reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
 
-    reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
-    reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
-    reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
-    reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
-    reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
-    reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
-    reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
-    reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
-    reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
-    reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
-    reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
-    reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
-    reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
-    reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
-    reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
-    reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
-    reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
-    reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
-    reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
-    reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
-    reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
-    reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
-  }
+  //   reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
+  //   reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
+  //   reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
+  //   reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
+  //   reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
+  //   reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
+  //   reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
+  //   reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
+  //   reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
+  //   reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
+  //   reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
+  //   reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
+  //   reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
+  //   reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
+  //   reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
+  //   reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
+  //   reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
+  //   reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
+  //   reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
+  //   reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
+  //   reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
+  //   reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
+  // }
 
   reduced_tree.Branch("fatpT30_jet1_pt", &fatpT30_jet1_pt);
   reduced_tree.Branch("fatpT30_jet2_pt", &fatpT30_jet2_pt);
@@ -625,6 +648,23 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("gluino1_pt", &gluino1_pt);
   reduced_tree.Branch("gluino2_pt", &gluino2_pt);
 
+  reduced_tree.Branch("num_taus_POG_phys14_ID", &num_taus_POG_phys14_ID);
+  reduced_tree.Branch("num_taus_POG_phys14_ID_againstEMu", &num_taus_POG_phys14_ID_againstEMu);
+  reduced_tree.Branch("num_taus_POG_phys14_ID_mT100", &num_taus_POG_phys14_ID_mT100);
+  reduced_tree.Branch("num_taus_POG_phys14_ID_againstEMu_mT100", &num_taus_POG_phys14_ID_againstEMu_mT100);  
+  reduced_tree.Branch("tau_pt", &tau_pt);
+  reduced_tree.Branch("tau_chargedIsoPtSum", &tau_chargedIsoPtSum);
+  reduced_tree.Branch("tau_mT", &tau_mT);
+
+  reduced_tree.Branch("num_iso_tracks_pt10", &num_iso_tracks_pt10);
+  reduced_tree.Branch("num_iso_tracks_pt10_mT", &num_iso_tracks_pt10_mT);
+  reduced_tree.Branch("num_iso_tracks_pt15", &num_iso_tracks_pt15);
+  reduced_tree.Branch("num_iso_tracks_pt15_mT", &num_iso_tracks_pt15_mT);
+  reduced_tree.Branch("iso_track_pt", &iso_track_pt);
+  reduced_tree.Branch("iso_track_iso", &iso_track_iso);
+  reduced_tree.Branch("iso_track_mT", &iso_track_mT);
+
+
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
   Timer timer(n_to_process);
@@ -638,7 +678,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     GetEntry(i);
     entry=i;
    
-    // cout << "*****Event " << i << "*****" << endl;
+    //  cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
@@ -673,7 +713,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     eoot_pu=GetEarlyOutOfTimePU(1);
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
-    // cout << "JERR1" << endl;
+     // cout << "JERR1" << endl;
 
     highest_csv=GetHighestJetCSV(1);
     second_highest_csv=GetHighestJetCSV(2);
@@ -681,6 +721,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     fourth_highest_csv=GetHighestJetCSV(4);
     fifth_highest_csv=GetHighestJetCSV(5);
     sixth_highest_csv=GetHighestJetCSV(6);
+     // cout << "JERR2" << endl;
 
     jet1_pt=GetHighestJetPt(1);
     jet2_pt=GetHighestJetPt(2);
@@ -720,7 +761,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     jet6_motherId=GetJetXMotherId(6);
     met=pfTypeImets_et->at(0);
     met_phi=pfTypeImets_phi->at(0);
-    //     cout << "JERR2" << endl;
+
     ht20=GetHT(20.);
     ht30=GetHT(30.);
     ht40=GetHT(40.);
@@ -741,6 +782,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_jets_pt100=GetNumGoodJets(100);
     num_jets_pt150=GetNumGoodJets(150);
     // cout << "num_jets=" << num_jets_pt50 << endl;
+    if (cfAVersion<77) {
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
     num_csvl_jets=GetNumCSVLJets();
@@ -753,7 +795,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_csvt_jets40=GetNumCSVTJets(40.);
     num_csvm_jets40=GetNumCSVMJets(40.);
     num_csvl_jets40=GetNumCSVLJets(40.);
-
+    } else {
+    num_csvt_jets=GetNumIncCSVTJets();
+    num_csvm_jets=GetNumIncCSVMJets();
+    num_csvl_jets=GetNumIncCSVLJets();
+    num_csvt_jets20=GetNumIncCSVTJets(20.);
+    num_csvm_jets20=GetNumIncCSVMJets(20.);
+    num_csvl_jets20=GetNumIncCSVLJets(20.);
+    num_csvt_jets30=GetNumIncCSVTJets(30.);
+    num_csvm_jets30=GetNumIncCSVMJets(30.);
+    num_csvl_jets30=GetNumIncCSVLJets(30.);
+    num_csvt_jets40=GetNumIncCSVTJets(40.);
+    num_csvm_jets40=GetNumIncCSVMJets(40.);
+    num_csvl_jets40=GetNumIncCSVLJets(40.);
+    }
     num_truth_matched_b_jets=GetNumTruthMatchedBJets();
     num_good_truth_matched_b_jets=GetNumTruthMatchedBJets(0.,true);
 
@@ -799,10 +854,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     if (ht80>0) met_over_sqrt_ht80=met/TMath::Sqrt(ht80);
     else met_over_sqrt_ht80=-1.;
 
-    num_ra2b_veto_taus=GetNumRA2bTaus(0);
-    num_ra2b_veto_taus_noIso=GetNumRA2bTaus(0, false);
-
-    
 
     double this_scale_factor(scaleFactor);
     pu_weight=isRealData?1.0:GetPUWeight(lumiWeights);
@@ -810,11 +861,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     top_pt_weight_official=isttbar?GetTopPtWeightOfficial():1.0;
     weightppb=this_scale_factor*pu_weight*top_pt_weight_official;
 
+    trigger_eff_weight=GetTriggerEffWeight();
+    if (cfAVersion<=71) {
+    btag_weight=GetBtagWeight();
+    btag_pid_weight=GetPIDBtagWeight();
+
+
+    CalculateTagProbs(Prob0, ProbGEQ1, Prob1, ProbGEQ2, Prob2, ProbGEQ3, Prob3, ProbGEQ4);
+    }
+
     num_gen_taus=GetNGenParticles(15);
     num_gen_muons=GetNGenParticles(13);
     num_gen_electrons=GetNGenParticles(11);
 
-   
+
 
     vector<int> reco_muons, reco_veto_muons;
     vector<int> reco_veto_muons_iso2D, reco_veto_muons_mT, reco_veto_muons_mT_orth;
@@ -855,7 +915,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_reco_veto_electrons_mT100 = reco_veto_electrons_mT.size();
     num_reco_veto_electrons_mT100_orth = reco_veto_electrons_mT_orth.size();
 
- 
+
 
     // muon_gen_mother_id=-999;
     // muon_gen_pt=-999.;
@@ -904,7 +964,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     muon_mT=-1.;
     muon_dphi_met=-999.;
 
-    if (cfAVersion>=73&&cfAVersion!=74) {
+    if (cfAVersion>=73&&cfAVersion<=76) {
       if (mus_pt->size()>0) {
 	muon_signal=isRecoMuon(muon_index,1);
 	muon_veto=isRecoMuon(muon_index,0);
@@ -930,8 +990,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
 	muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
       }
-    } else if (pf_mus_pt->size()>0) {
-      //	cout << "JERR3" << endl;
+    } else if (cfAVersion<=71&&pf_mus_pt->size()>0) {
       muon_signal=isRA2bMuon(muon_index,1);
       //	cout << "JERR4" << endl;
       muon_veto=isRA2bMuon(muon_index,0);
@@ -1044,7 +1103,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     electron_mT=-1.;
     electron_dphi_met=-999.;
 
-    if (cfAVersion>=73&&cfAVersion!=74) {
+    if (cfAVersion>=73&&cfAVersion<=76) {
       if (els_pt->size()>0) {
 	electron_signal=isRecoElectron(electron_index,1);
 	electron_veto=isRecoElectron(electron_index,0);
@@ -1068,7 +1127,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
 	electron_dphi_met=fabs(Math::GetDeltaPhi(electron_phi,met_phi));
       }
-    } else{
+    } else if (cfAVersion<=71){
       if (pf_els_pt->size()>0) {
 	electron_signal=isRA2bElectron(electron_index,1);
 	electron_veto=isRA2bElectron(electron_index,0);
@@ -1085,7 +1144,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       }
     }
 
-  
+
 
     // if (genElectronCache.size()>=1) {
     //   // cout << "Gen electrons..." << endl;
@@ -1139,18 +1198,47 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     min_delta_phi_met=GetMinDeltaPhiMET(3,30.);
     min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
     min_delta_phi_met_N=getMinDeltaPhiMETN(3,30.,2.4,true,30.,2.4,true,true);
-    if (min_delta_phi_met_N>10e7&&num_jets_pt50>2) cout << "Funky event " << event << endl;
+    min_delta_phi_met_N_2012=getMinDeltaPhiMETN(3,50.,2.4,true,30.,2.4,true,true);
     min_delta_phi_met_N_loose_jets=getMinDeltaPhiMETN(3,20.,5.,true,20.,5.,false,true);
     jet1_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(1));
     jet2_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(2));
     jet3_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(3));
 
-    if (cfAVersion==71||cfAVersion==74||cfAVersion>=76) num_iso_tracks=GetNumIsoTracks();
-    else num_iso_tracks=-1;
+    if (cfAVersion==71||cfAVersion==74||cfAVersion>=76) {
+      num_iso_tracks_pt10=GetNumIsoTracks(10, false);
+      num_iso_tracks_pt10_mT=GetNumIsoTracks(10, true);
+      num_iso_tracks_pt15=GetNumIsoTracks(15, false);
+      num_iso_tracks_pt15_mT=GetNumIsoTracks(15, true);
+    } else {
+      num_iso_tracks_pt10=-1;
+      num_iso_tracks_pt10_mT=-1;
+      num_iso_tracks_pt15=-1;
+      num_iso_tracks_pt15_mT=-1;
+    }
+
+    iso_track_pt=-1;
+    iso_track_iso=-1;
+    iso_track_mT=-1;
+    if (isotk_pt->size()>0) {
+      iso_track_pt=isotk_pt->at(0);
+      iso_track_iso=isotk_iso->at(0);
+      iso_track_mT=GetMTW(iso_track_pt, met, isotk_phi->at(0), met_phi);
+    }
 
     // cout << "mT..." << endl;
-    mT=GetTransverseMass();
-    SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT<100.);
+    mT_mu=GetTransverseMassMu();    
+    mT_el=GetTransverseMassEl();
+    if (num_reco_veto_electrons+num_reco_veto_muons!=1) {
+      deltaThetaT=-999.;
+      W_pT=-999.;
+    } else if (num_reco_veto_electrons==1&&num_reco_veto_muons==0) {
+      deltaThetaT=GetDeltaThetaT(electron_pt, electron_phi);
+      W_pT=GetWpT(electron_pt, electron_phi);
+    } else if (num_reco_veto_muons==1&&num_reco_veto_electrons==0) {
+      deltaThetaT=GetDeltaThetaT(muon_pt, muon_phi);
+      W_pT=GetWpT(muon_pt, muon_phi);
+    }
+    SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT_el<100.||mT_mu<100.);
     QCD_control_sample=(min_delta_phi_met_N<4.);
 
     ht_bin1=(ht50>400&&ht50<500);
@@ -1172,131 +1260,133 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     gluino2_pt=GetGluinoPt(2);
 
     // cout << "Fat jets..." << endl;
-    if (cfAVersion>=74) {
-      fatpT10_jet1_pt=GetFatJetPt(0,10);    
-      fatpT10_jet2_pt=GetFatJetPt(1,10);
-      fatpT10_jet3_pt=GetFatJetPt(2,10);
-      fatpT10_jet4_pt=GetFatJetPt(3,10);
-      fatpT10_jet1_nConst=GetFatJetnConst(0,10);
-      fatpT10_jet2_nConst=GetFatJetnConst(1,10);
-      fatpT10_jet3_nConst=GetFatJetnConst(2,10);
-      fatpT10_jet4_nConst=GetFatJetnConst(3,10);
-      fatpT10_jet1_mJ=GetFatJetmJ(0,10);
-      fatpT10_jet2_mJ=GetFatJetmJ(1,10);
-      fatpT10_jet3_mJ=GetFatJetmJ(2,10);
-      fatpT10_jet4_mJ=GetFatJetmJ(3,10);
-      num_fatpT10_jets=GetNFatJets(50.,10);
-      num_fatpT10_jets_pt100=GetNFatJets(100.,10);
-      num_fatpT10_jets_pt150=GetNFatJets(150.,10);
-      num_fatpT10_jets_pt200=GetNFatJets(200.,10);
-      num_fatpT10_jets_pt300=GetNFatJets(300.,10);
-      fatpT10_MJ=GetMJ(50.,10);
-      fatpT10_MJ_pt100=GetMJ(100.,10);
-      fatpT10_MJ_pt150=GetMJ(150.,10);
-      fatpT10_MJ_pt200=GetMJ(200.,10);
-      fatpT10_MJ_pt300=GetMJ(300.,10);
+    // if (cfAVersion>=74&&cfAVersion<=76) {
+    //   fatpT10_jet1_pt=GetFatJetPt(0,10);    
+    //   fatpT10_jet2_pt=GetFatJetPt(1,10);
+    //   fatpT10_jet3_pt=GetFatJetPt(2,10);
+    //   fatpT10_jet4_pt=GetFatJetPt(3,10);
+    //   fatpT10_jet1_nConst=GetFatJetnConst(0,10);
+    //   fatpT10_jet2_nConst=GetFatJetnConst(1,10);
+    //   fatpT10_jet3_nConst=GetFatJetnConst(2,10);
+    //   fatpT10_jet4_nConst=GetFatJetnConst(3,10);
+    //   fatpT10_jet1_mJ=GetFatJetmJ(0,10);
+    //   fatpT10_jet2_mJ=GetFatJetmJ(1,10);
+    //   fatpT10_jet3_mJ=GetFatJetmJ(2,10);
+    //   fatpT10_jet4_mJ=GetFatJetmJ(3,10);
+    //   num_fatpT10_jets=GetNFatJets(50.,10);
+    //   num_fatpT10_jets_pt100=GetNFatJets(100.,10);
+    //   num_fatpT10_jets_pt150=GetNFatJets(150.,10);
+    //   num_fatpT10_jets_pt200=GetNFatJets(200.,10);
+    //   num_fatpT10_jets_pt300=GetNFatJets(300.,10);
+    //   fatpT10_MJ=GetMJ(50.,10);
+    //   fatpT10_MJ_pt100=GetMJ(100.,10);
+    //   fatpT10_MJ_pt150=GetMJ(150.,10);
+    //   fatpT10_MJ_pt200=GetMJ(200.,10);
+    //   fatpT10_MJ_pt300=GetMJ(300.,10);
 
-      fatpT15_jet1_pt=GetFatJetPt(0,15);    
-      fatpT15_jet2_pt=GetFatJetPt(1,15);
-      fatpT15_jet3_pt=GetFatJetPt(2,15);
-      fatpT15_jet4_pt=GetFatJetPt(3,15);
-      fatpT15_jet1_nConst=GetFatJetnConst(0,15);
-      fatpT15_jet2_nConst=GetFatJetnConst(1,15);
-      fatpT15_jet3_nConst=GetFatJetnConst(2,15);
-      fatpT15_jet4_nConst=GetFatJetnConst(3,15);
-      fatpT15_jet1_mJ=GetFatJetmJ(0,15);
-      fatpT15_jet2_mJ=GetFatJetmJ(1,15);
-      fatpT15_jet3_mJ=GetFatJetmJ(2,15);
-      fatpT15_jet4_mJ=GetFatJetmJ(3,15);
-      num_fatpT15_jets=GetNFatJets(50.,15);
-      num_fatpT15_jets_pt100=GetNFatJets(100.,15);
-      num_fatpT15_jets_pt150=GetNFatJets(150.,15);
-      num_fatpT15_jets_pt200=GetNFatJets(200.,15);
-      num_fatpT15_jets_pt300=GetNFatJets(300.,15);
-      fatpT15_MJ=GetMJ(50.,15);
-      fatpT15_MJ_pt100=GetMJ(100.,15);
-      fatpT15_MJ_pt150=GetMJ(150.,15);
-      fatpT15_MJ_pt200=GetMJ(200.,15);
-      fatpT15_MJ_pt300=GetMJ(300.,15);
+    //   fatpT15_jet1_pt=GetFatJetPt(0,15);    
+    //   fatpT15_jet2_pt=GetFatJetPt(1,15);
+    //   fatpT15_jet3_pt=GetFatJetPt(2,15);
+    //   fatpT15_jet4_pt=GetFatJetPt(3,15);
+    //   fatpT15_jet1_nConst=GetFatJetnConst(0,15);
+    //   fatpT15_jet2_nConst=GetFatJetnConst(1,15);
+    //   fatpT15_jet3_nConst=GetFatJetnConst(2,15);
+    //   fatpT15_jet4_nConst=GetFatJetnConst(3,15);
+    //   fatpT15_jet1_mJ=GetFatJetmJ(0,15);
+    //   fatpT15_jet2_mJ=GetFatJetmJ(1,15);
+    //   fatpT15_jet3_mJ=GetFatJetmJ(2,15);
+    //   fatpT15_jet4_mJ=GetFatJetmJ(3,15);
+    //   num_fatpT15_jets=GetNFatJets(50.,15);
+    //   num_fatpT15_jets_pt100=GetNFatJets(100.,15);
+    //   num_fatpT15_jets_pt150=GetNFatJets(150.,15);
+    //   num_fatpT15_jets_pt200=GetNFatJets(200.,15);
+    //   num_fatpT15_jets_pt300=GetNFatJets(300.,15);
+    //   fatpT15_MJ=GetMJ(50.,15);
+    //   fatpT15_MJ_pt100=GetMJ(100.,15);
+    //   fatpT15_MJ_pt150=GetMJ(150.,15);
+    //   fatpT15_MJ_pt200=GetMJ(200.,15);
+    //   fatpT15_MJ_pt300=GetMJ(300.,15);
 
-      fatpT20_jet1_pt=GetFatJetPt(0,20);    
-      fatpT20_jet2_pt=GetFatJetPt(1,20);
-      fatpT20_jet3_pt=GetFatJetPt(2,20);
-      fatpT20_jet4_pt=GetFatJetPt(3,20);
-      fatpT20_jet1_nConst=GetFatJetnConst(0,20);
-      fatpT20_jet2_nConst=GetFatJetnConst(1,20);
-      fatpT20_jet3_nConst=GetFatJetnConst(2,20);
-      fatpT20_jet4_nConst=GetFatJetnConst(3,20);
-      fatpT20_jet1_mJ=GetFatJetmJ(0,20);
-      fatpT20_jet2_mJ=GetFatJetmJ(1,20);
-      fatpT20_jet3_mJ=GetFatJetmJ(2,20);
-      fatpT20_jet4_mJ=GetFatJetmJ(3,20);
-      num_fatpT20_jets=GetNFatJets(50.,20);
-      num_fatpT20_jets_pt100=GetNFatJets(100.,20);
-      num_fatpT20_jets_pt150=GetNFatJets(150.,20);
-      num_fatpT20_jets_pt200=GetNFatJets(200.,20);
-      num_fatpT20_jets_pt300=GetNFatJets(300.,20);
-      fatpT20_MJ=GetMJ(50.,20);
-      fatpT20_MJ_pt100=GetMJ(100.,20);
-      fatpT20_MJ_pt150=GetMJ(150.,20);
-      fatpT20_MJ_pt200=GetMJ(200.,20);
-      fatpT20_MJ_pt300=GetMJ(300.,20);
+    //   fatpT20_jet1_pt=GetFatJetPt(0,20);    
+    //   fatpT20_jet2_pt=GetFatJetPt(1,20);
+    //   fatpT20_jet3_pt=GetFatJetPt(2,20);
+    //   fatpT20_jet4_pt=GetFatJetPt(3,20);
+    //   fatpT20_jet1_nConst=GetFatJetnConst(0,20);
+    //   fatpT20_jet2_nConst=GetFatJetnConst(1,20);
+    //   fatpT20_jet3_nConst=GetFatJetnConst(2,20);
+    //   fatpT20_jet4_nConst=GetFatJetnConst(3,20);
+    //   fatpT20_jet1_mJ=GetFatJetmJ(0,20);
+    //   fatpT20_jet2_mJ=GetFatJetmJ(1,20);
+    //   fatpT20_jet3_mJ=GetFatJetmJ(2,20);
+    //   fatpT20_jet4_mJ=GetFatJetmJ(3,20);
+    //   num_fatpT20_jets=GetNFatJets(50.,20);
+    //   num_fatpT20_jets_pt100=GetNFatJets(100.,20);
+    //   num_fatpT20_jets_pt150=GetNFatJets(150.,20);
+    //   num_fatpT20_jets_pt200=GetNFatJets(200.,20);
+    //   num_fatpT20_jets_pt300=GetNFatJets(300.,20);
+    //   fatpT20_MJ=GetMJ(50.,20);
+    //   fatpT20_MJ_pt100=GetMJ(100.,20);
+    //   fatpT20_MJ_pt150=GetMJ(150.,20);
+    //   fatpT20_MJ_pt200=GetMJ(200.,20);
+    //   fatpT20_MJ_pt300=GetMJ(300.,20);
 
-      fatpT25_jet1_pt=GetFatJetPt(0,25);    
-      fatpT25_jet2_pt=GetFatJetPt(1,25);
-      fatpT25_jet3_pt=GetFatJetPt(2,25);
-      fatpT25_jet4_pt=GetFatJetPt(3,25);
-      fatpT25_jet1_nConst=GetFatJetnConst(0,25);
-      fatpT25_jet2_nConst=GetFatJetnConst(1,25);
-      fatpT25_jet3_nConst=GetFatJetnConst(2,25);
-      fatpT25_jet4_nConst=GetFatJetnConst(3,25);
-      fatpT25_jet1_mJ=GetFatJetmJ(0,25);
-      fatpT25_jet2_mJ=GetFatJetmJ(1,25);
-      fatpT25_jet3_mJ=GetFatJetmJ(2,25);
-      fatpT25_jet4_mJ=GetFatJetmJ(3,25);
-      num_fatpT25_jets=GetNFatJets(50.,25);
-      num_fatpT25_jets_pt100=GetNFatJets(100.,25);
-      num_fatpT25_jets_pt150=GetNFatJets(150.,25);
-      num_fatpT25_jets_pt200=GetNFatJets(200.,25);
-      num_fatpT25_jets_pt300=GetNFatJets(300.,25);
-      fatpT25_MJ=GetMJ(50.,25);
-      fatpT25_MJ_pt100=GetMJ(100.,25);
-      fatpT25_MJ_pt150=GetMJ(150.,25);
-      fatpT25_MJ_pt200=GetMJ(200.,25);
-      fatpT25_MJ_pt300=GetMJ(300.,25);
-    }
-    fatpT30_jet1_pt=GetFatJetPt(0,30);    
-    fatpT30_jet2_pt=GetFatJetPt(1,30);
-    fatpT30_jet3_pt=GetFatJetPt(2,30);
-    fatpT30_jet4_pt=GetFatJetPt(3,30);
-    fatpT30_jet1_nConst=GetFatJetnConst(0,30);
-    fatpT30_jet2_nConst=GetFatJetnConst(1,30);
-    fatpT30_jet3_nConst=GetFatJetnConst(2,30);
-    fatpT30_jet4_nConst=GetFatJetnConst(3,30);
-    fatpT30_jet1_mJ=GetFatJetmJ(0,30);
-    fatpT30_jet2_mJ=GetFatJetmJ(1,30);
-    fatpT30_jet3_mJ=GetFatJetmJ(2,30);
-    fatpT30_jet4_mJ=GetFatJetmJ(3,30);
-    num_fatpT30_jets=GetNFatJets(50.,30);
-    num_fatpT30_jets_pt100=GetNFatJets(100.,30);
-    num_fatpT30_jets_pt150=GetNFatJets(150.,30);
-    num_fatpT30_jets_pt200=GetNFatJets(200.,30);
-    num_fatpT30_jets_pt300=GetNFatJets(300.,30);
-    fatpT30_MJ=GetMJ(50.,30);
-    fatpT30_MJ_pt100=GetMJ(100.,30);
-    fatpT30_MJ_pt150=GetMJ(150.,30);
-    fatpT30_MJ_pt200=GetMJ(200.,30);
-    fatpT30_MJ_pt300=GetMJ(300.,30);
-    num_fatpT30central_jets=GetNFatJets(50.,1.5,30);
-    num_fatpT30central_jets_pt100=GetNFatJets(100.,1.5,30);
-    num_fatpT30central_jets_pt150=GetNFatJets(150.,1.5,30);
-    num_fatpT30central_jets_pt200=GetNFatJets(200.,1.5,30);
-    num_fatpT30central_jets_pt300=GetNFatJets(300.,1.5,30);
-    fatpT30central_MJ=GetMJ(50.,1.5,30);
-    fatpT30central_MJ_pt100=GetMJ(100.,1.5,30);
-    fatpT30central_MJ_pt150=GetMJ(150.,1.5,30);
-    fatpT30central_MJ_pt200=GetMJ(200.,1.5,30);
-    fatpT30central_MJ_pt300=GetMJ(300.,1.5,30);
+    //   fatpT25_jet1_pt=GetFatJetPt(0,25);    
+    //   fatpT25_jet2_pt=GetFatJetPt(1,25);
+    //   fatpT25_jet3_pt=GetFatJetPt(2,25);
+    //   fatpT25_jet4_pt=GetFatJetPt(3,25);
+    //   fatpT25_jet1_nConst=GetFatJetnConst(0,25);
+    //   fatpT25_jet2_nConst=GetFatJetnConst(1,25);
+    //   fatpT25_jet3_nConst=GetFatJetnConst(2,25);
+    //   fatpT25_jet4_nConst=GetFatJetnConst(3,25);
+    //   fatpT25_jet1_mJ=GetFatJetmJ(0,25);
+    //   fatpT25_jet2_mJ=GetFatJetmJ(1,25);
+    //   fatpT25_jet3_mJ=GetFatJetmJ(2,25);
+    //   fatpT25_jet4_mJ=GetFatJetmJ(3,25);
+    //   num_fatpT25_jets=GetNFatJets(50.,25);
+    //   num_fatpT25_jets_pt100=GetNFatJets(100.,25);
+    //   num_fatpT25_jets_pt150=GetNFatJets(150.,25);
+    //   num_fatpT25_jets_pt200=GetNFatJets(200.,25);
+    //   num_fatpT25_jets_pt300=GetNFatJets(300.,25);
+    //   fatpT25_MJ=GetMJ(50.,25);
+    //   fatpT25_MJ_pt100=GetMJ(100.,25);
+    //   fatpT25_MJ_pt150=GetMJ(150.,25);
+    //   fatpT25_MJ_pt200=GetMJ(200.,25);
+    //   fatpT25_MJ_pt300=GetMJ(300.,25);
+    // }
+    fatpT30_jet1_pt=GetFatJetPt(0);    
+    fatpT30_jet2_pt=GetFatJetPt(1);
+    fatpT30_jet3_pt=GetFatJetPt(2);
+    fatpT30_jet4_pt=GetFatJetPt(3);
+    //      	cout << "JERR4" << endl;
+
+    fatpT30_jet1_nConst=GetFatJetnConst(0);
+    fatpT30_jet2_nConst=GetFatJetnConst(1);
+    fatpT30_jet3_nConst=GetFatJetnConst(2);
+    fatpT30_jet4_nConst=GetFatJetnConst(3);
+    fatpT30_jet1_mJ=GetFatJetmJ(0);
+    fatpT30_jet2_mJ=GetFatJetmJ(1);
+    fatpT30_jet3_mJ=GetFatJetmJ(2);
+    fatpT30_jet4_mJ=GetFatJetmJ(3);
+    num_fatpT30_jets=GetNFatJets(50.);
+    num_fatpT30_jets_pt100=GetNFatJets(100.);
+    num_fatpT30_jets_pt150=GetNFatJets(150.);
+    num_fatpT30_jets_pt200=GetNFatJets(200.);
+    num_fatpT30_jets_pt300=GetNFatJets(300.);
+    fatpT30_MJ=GetMJ(50.);
+    fatpT30_MJ_pt100=GetMJ(100.);
+    fatpT30_MJ_pt150=GetMJ(150.);
+    fatpT30_MJ_pt200=GetMJ(200.);
+    fatpT30_MJ_pt300=GetMJ(300.);
+    num_fatpT30central_jets=GetNFatJets(50.,1.5);
+    num_fatpT30central_jets_pt100=GetNFatJets(100.,1.5);
+    num_fatpT30central_jets_pt150=GetNFatJets(150.,1.5);
+    num_fatpT30central_jets_pt200=GetNFatJets(200.,1.5);
+    num_fatpT30central_jets_pt300=GetNFatJets(300.,1.5);
+    fatpT30central_MJ=GetMJ(50.,1.5);
+    fatpT30central_MJ_pt100=GetMJ(100.,1.5);
+    fatpT30central_MJ_pt150=GetMJ(150.,1.5);
+    fatpT30central_MJ_pt200=GetMJ(200.,1.5);
+    fatpT30central_MJ_pt300=GetMJ(300.,1.5);
 
     highest_mJ=GetHighestFatJetmJ(1);
     scnd_highest_mJ=GetHighestFatJetmJ(2);
@@ -1304,17 +1394,34 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     frth_highest_mJ=GetHighestFatJetmJ(4);
     
 
-    min_mTWB=GetMinMTWb();
-    min_mTWB_Wmass=GetMinMTWb(30., 0.679, true);
+    min_mTWB=GetMinMTWb(30., 0.814, false);
+    min_mTWB_Wmass=GetMinMTWb(30., 0.814, true);
     mTWB_2nd=Get2ndMTWb();
 
     min_delta_phi_b_met=GetMinDeltaPhibMET();
+
+    num_taus_POG_phys14_ID = GetNumTaus();
+    num_taus_POG_phys14_ID_againstEMu = GetNumTaus(true);
+    num_taus_POG_phys14_ID_mT100 = GetNumTaus(false, true);
+    num_taus_POG_phys14_ID_againstEMu_mT100 = GetNumTaus(true, true);
+
+    tau_pt=-1;
+    tau_chargedIsoPtSum=-1;
+    tau_mT=-1;
+    if (taus_pt->size()>0)
+      {
+	tau_pt=taus_pt->at(0);
+	tau_chargedIsoPtSum=taus_pt->at(0);
+	tau_mT=GetMTW(tau_pt,met,taus_phi->at(0),met_phi);
+      }
 
     reduced_tree.Fill(); 
     //  if (i==20) break;
 
   }
 
+  // Tau ID
+  
   reduced_tree.Write();
   file.Close();
 }

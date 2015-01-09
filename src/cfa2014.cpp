@@ -135,6 +135,24 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   isotk_iso(0),
   isotk_dzpv(0),
   isotk_charge(0),
+  taus_CombinedIsolationDeltaBetaCorrRaw3Hits(0),
+  taus_byLooseCombinedIsolationDeltaBetaCorr3Hits(0),
+  taus_byMediumCombinedIsolationDeltaBetaCorr3Hits(0),
+  taus_byTightCombinedIsolationDeltaBetaCorr3Hits(0),
+  taus_n_pfcands(0),
+  taus_decayMode(0),
+  taus_byDecayModeFinding(0),
+  taus_byDecayModeFindingNewDMs(0),
+  taus_chargedIsoPtSum(0),
+  taus_neutralIsoPtSum(0),
+  taus_puCorrPtSum(0),
+  taus_againstMuonLoose3(0),
+  taus_againstElectronLooseMVA5(0),
+  fjets30_pt(0),
+  fjets30_eta(0),
+  fjets30_phi(0),
+  fjets30_energy(0),
+  fjets30_m(0),
   els_isPF(0),
   mus_isPF(0),
   els_jet_ind(0),
@@ -263,6 +281,24 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_isotk_iso(),
   b_isotk_dzpv(),
   b_isotk_charge(),
+  b_taus_CombinedIsolationDeltaBetaCorrRaw3Hits(),
+  b_taus_byLooseCombinedIsolationDeltaBetaCorr3Hits(),
+  b_taus_byMediumCombinedIsolationDeltaBetaCorr3Hits(),
+  b_taus_byTightCombinedIsolationDeltaBetaCorr3Hits(),
+  b_taus_n_pfcands(),
+  b_taus_decayMode(),
+  b_taus_byDecayModeFinding(),
+  b_taus_byDecayModeFindingNewDMs(),
+  b_taus_chargedIsoPtSum(),
+  b_taus_neutralIsoPtSum(),
+  b_taus_puCorrPtSum(),
+  b_taus_againstMuonLoose3(),
+  b_taus_againstElectronLooseMVA5(),
+  b_fjets30_pt(),
+  b_fjets30_eta(),
+  b_fjets30_phi(),
+  b_fjets30_energy(),
+  b_fjets30_m(),
   b_els_isPF(),
   b_mus_isPF(),
   b_els_jet_ind(),
@@ -451,6 +487,9 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   jets_AKPF_btag_secVertexHighPur(0),
   jets_AKPF_btag_secVertexHighEff(0),
   jets_AKPF_btag_secVertexCombined(0),
+  jets_AKPF_btag_inc_secVertexCombined(0),
+  jets_AKPF_btag_pf_secVertexCombined(0),
+  jets_AKPF_btag_MVA(0),
   jets_AKPF_jetCharge(0),
   jets_AKPF_chgEmE(0),
   jets_AKPF_chgHadE(0),
@@ -1843,6 +1882,9 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_jets_AKPF_btag_secVertexHighPur(),
   b_jets_AKPF_btag_secVertexHighEff(),
   b_jets_AKPF_btag_secVertexCombined(),
+  b_jets_AKPF_btag_inc_secVertexCombined(),
+  b_jets_AKPF_btag_pf_secVertexCombined(),
+  b_jets_AKPF_btag_MVA(),
   b_jets_AKPF_jetCharge(),
   b_jets_AKPF_chgEmE(),
   b_jets_AKPF_chgHadE(),
@@ -3097,13 +3139,23 @@ void cfA::AddFiles(const std::string& fileIn, const bool isList){
     std::ifstream infile(fileIn.c_str());
     std::string file("");
     while(infile >> file){
-      chainA.Add((file+"/configurableAnalysis/eventA").c_str());
-      chainB.Add((file+"/configurableAnalysis/eventB").c_str());
+      if (cfAVersion<77) {
+	chainA.Add((file+"/configurableAnalysis/eventA").c_str());
+	chainB.Add((file+"/configurableAnalysis/eventB").c_str());
+      } else {
+	chainA.Add((file+"/cfA/eventA").c_str());
+	chainB.Add((file+"/cfA/eventB").c_str());      
+      }
     }
     infile.close();
   }else{
-    chainA.Add((fileIn+"/configurableAnalysis/eventA").c_str());
-    chainB.Add((fileIn+"/configurableAnalysis/eventB").c_str());
+    if (cfAVersion<77) {
+      chainA.Add((fileIn+"/configurableAnalysis/eventA").c_str());
+      chainB.Add((fileIn+"/configurableAnalysis/eventB").c_str());
+    } else {
+      chainA.Add((fileIn+"/cfA/eventA").c_str());
+      chainB.Add((fileIn+"/cfA/eventB").c_str());      
+    }
   }
 }
 
@@ -3265,6 +3317,24 @@ void cfA::InitializeA(){
   isotk_iso=0;
   isotk_dzpv=0;
   isotk_charge=0;
+  taus_CombinedIsolationDeltaBetaCorrRaw3Hits=0;
+  taus_byLooseCombinedIsolationDeltaBetaCorr3Hits=0;
+  taus_byMediumCombinedIsolationDeltaBetaCorr3Hits=0;
+  taus_byTightCombinedIsolationDeltaBetaCorr3Hits=0;
+  taus_n_pfcands=0;
+  taus_decayMode=0;
+  taus_byDecayModeFinding=0;
+  taus_byDecayModeFindingNewDMs=0;
+  taus_chargedIsoPtSum=0;
+  taus_neutralIsoPtSum=0;
+  taus_puCorrPtSum=0;
+  taus_againstMuonLoose3=0;
+  taus_againstElectronLooseMVA5=0;
+  fjets30_pt=0;
+  fjets30_eta=0;
+  fjets30_phi=0;
+  fjets30_energy=0;
+  fjets30_m=0;
   els_isPF=0;
   mus_isPF=0;
   els_jet_ind=0;
@@ -3362,7 +3432,7 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("passprescaleHT350filter_decision", &passprescaleHT350filter_decision, &b_passprescaleHT350filter_decision);
     chainA.SetBranchAddress("passprescaleHT400filter_decision", &passprescaleHT400filter_decision, &b_passprescaleHT400filter_decision);
     chainA.SetBranchAddress("passprescaleHT450filter_decision", &passprescaleHT450filter_decision, &b_passprescaleHT450filter_decision);
-     if (cfAVersion==71||cfAVersion==74) chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
+    if (cfAVersion==71||cfAVersion==74) chainA.SetBranchAddress("passprescaleJet30MET80filter_decision", &passprescaleJet30MET80filter_decision, &b_passprescaleJet30MET80filter_decision);
     chainA.SetBranchAddress("MPT", &MPT, &b_MPT);
     chainA.SetBranchAddress("genHT", &genHT, &b_genHT);
     chainA.SetBranchAddress("jets_AK5PFclean_corrL2L3", &jets_AK5PFclean_corrL2L3, &b_jets_AK5PFclean_corrL2L3);
@@ -3378,27 +3448,27 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("pfmets_fullSignifCov00", &pfmets_fullSignifCov00, &b_pfmets_fullSignifCov00);
     chainA.SetBranchAddress("pfmets_fullSignifCov10", &pfmets_fullSignifCov10, &b_pfmets_fullSignifCov10);
     chainA.SetBranchAddress("pfmets_fullSignifCov11", &pfmets_fullSignifCov11, &b_pfmets_fullSignifCov11); 
-   if (cfAVersion==71||cfAVersion==74) {
-    chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
-    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
-    chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
-    chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
-    chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
-    chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
+    if (cfAVersion==71||cfAVersion==74) {
+      chainA.SetBranchAddress("pfmets_fullSignif_2012", &pfmets_fullSignif_2012, &b_pfmets_fullSignif_2012);
+      chainA.SetBranchAddress("pfmets_fullSignifCov00_2012", &pfmets_fullSignifCov00_2012, &b_pfmets_fullSignifCov00_2012);
+      chainA.SetBranchAddress("pfmets_fullSignifCov10_2012", &pfmets_fullSignifCov10_2012, &b_pfmets_fullSignifCov10_2012);
+      chainA.SetBranchAddress("pfmets_fullSignifCov11_2012", &pfmets_fullSignifCov11_2012, &b_pfmets_fullSignifCov11_2012);
+      chainA.SetBranchAddress("pfmets_fullSignif_2012_dataRes", &pfmets_fullSignif_2012_dataRes, &b_pfmets_fullSignif_2012_dataRes);
+      chainA.SetBranchAddress("pfmets_fullSignifCov00_2012_dataRes", &pfmets_fullSignifCov00_2012_dataRes, &b_pfmets_fullSignifCov00_2012_dataRes);
+      chainA.SetBranchAddress("pfmets_fullSignifCov10_2012_dataRes", &pfmets_fullSignifCov10_2012_dataRes, &b_pfmets_fullSignifCov10_2012_dataRes);
+      chainA.SetBranchAddress("pfmets_fullSignifCov11_2012_dataRes", &pfmets_fullSignifCov11_2012_dataRes, &b_pfmets_fullSignifCov11_2012_dataRes);
+      chainA.SetBranchAddress("puJet_rejectionBeta", &puJet_rejectionBeta, &b_puJet_rejectionBeta);
+      chainA.SetBranchAddress("puJet_rejectionMVA", &puJet_rejectionMVA, &b_puJet_rejectionMVA);
+      chainA.SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
+      chainA.SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
+      chainA.SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
+      chainA.SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
     }
     chainA.SetBranchAddress("softjetUp_dMEx", &softjetUp_dMEx, &b_softjetUp_dMEx);
     chainA.SetBranchAddress("softjetUp_dMEy", &softjetUp_dMEy, &b_softjetUp_dMEy);
-    chainA.SetBranchAddress("pdfweights_cteq", &pdfweights_cteq, &b_pdfweights_cteq);
-    chainA.SetBranchAddress("pdfweights_mstw", &pdfweights_mstw, &b_pdfweights_mstw);
-    chainA.SetBranchAddress("pdfweights_nnpdf", &pdfweights_nnpdf, &b_pdfweights_nnpdf);
     chainA.SetBranchAddress("photon_chIsoValues", &photon_chIsoValues, &b_photon_chIsoValues);
     chainA.SetBranchAddress("photon_phIsoValues", &photon_phIsoValues, &b_photon_phIsoValues);
     chainA.SetBranchAddress("photon_nhIsoValues", &photon_nhIsoValues, &b_photon_nhIsoValues);
-    chainA.SetBranchAddress("photon_passElectronVeto", &photon_passElectronVeto, &b_photon_passElectronVeto);
   }
   else {
     chainA.SetBranchAddress("els_isPF", &els_isPF, &b_els_isPF);
@@ -3414,6 +3484,26 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("isotk_iso", &isotk_iso, &b_isotk_iso);
     chainA.SetBranchAddress("isotk_dzpv", &isotk_dzpv, &b_isotk_dzpv);
     chainA.SetBranchAddress("isotk_charge", &isotk_charge, &b_isotk_charge);
+  }
+  if (cfAVersion>=77) {
+    chainA.SetBranchAddress("taus_n_pfcands",&taus_n_pfcands, &b_taus_n_pfcands);
+    chainA.SetBranchAddress("taus_decayMode",&taus_decayMode, &b_taus_decayMode);
+    chainA.SetBranchAddress("taus_CombinedIsolationDeltaBetaCorrRaw3Hits",&taus_CombinedIsolationDeltaBetaCorrRaw3Hits, &b_taus_CombinedIsolationDeltaBetaCorrRaw3Hits);
+    chainA.SetBranchAddress("taus_byLooseCombinedIsolationDeltaBetaCorr3Hits",&taus_byLooseCombinedIsolationDeltaBetaCorr3Hits, &b_taus_byLooseCombinedIsolationDeltaBetaCorr3Hits);
+    chainA.SetBranchAddress("taus_byMediumCombinedIsolationDeltaBetaCorr3Hits",&taus_byMediumCombinedIsolationDeltaBetaCorr3Hits, &b_taus_byMediumCombinedIsolationDeltaBetaCorr3Hits);
+    chainA.SetBranchAddress("taus_byTightCombinedIsolationDeltaBetaCorr3Hits",&taus_byTightCombinedIsolationDeltaBetaCorr3Hits, &b_taus_byTightCombinedIsolationDeltaBetaCorr3Hits);
+    chainA.SetBranchAddress("taus_byDecayModeFinding", &taus_byDecayModeFinding, &b_taus_byDecayModeFinding);
+    chainA.SetBranchAddress("taus_byDecayModeFindingNewDMs", &taus_byDecayModeFindingNewDMs, &b_taus_byDecayModeFindingNewDMs);
+    chainA.SetBranchAddress("taus_chargedIsoPtSum", &taus_chargedIsoPtSum, &b_taus_chargedIsoPtSum);
+    chainA.SetBranchAddress("taus_neutralIsoPtSum", &taus_neutralIsoPtSum, &b_taus_neutralIsoPtSum);
+    chainA.SetBranchAddress("taus_puCorrPtSum", &taus_puCorrPtSum, &b_taus_puCorrPtSum);
+    chainA.SetBranchAddress("taus_againstMuonLoose3", &taus_againstMuonLoose3, &b_taus_againstMuonLoose3);
+    chainA.SetBranchAddress("taus_againstElectronLooseMVA5", &taus_againstElectronLooseMVA5, &b_taus_againstElectronLooseMVA5);
+    chainA.SetBranchAddress("fjets30_pt", &fjets30_pt, &b_fjets30_pt);
+    chainA.SetBranchAddress("fjets30_eta", &fjets30_eta, &b_fjets30_eta);
+    chainA.SetBranchAddress("fjets30_phi", &fjets30_phi, &b_fjets30_phi);
+    chainA.SetBranchAddress("fjets30_energy",&fjets30_energy, &b_fjets30_energy);
+    chainA.SetBranchAddress("fjets30_m",&fjets30_m, &b_fjets30_m);
   }
 }
 
@@ -3603,6 +3693,9 @@ void cfA::InitializeB(){
   jets_AKPF_btag_secVertexHighPur=0;
   jets_AKPF_btag_secVertexHighEff=0;
   jets_AKPF_btag_secVertexCombined=0;
+  jets_AKPF_btag_inc_secVertexCombined=0;
+  jets_AKPF_btag_pf_secVertexCombined=0;
+  jets_AKPF_btag_MVA=0;
   jets_AKPF_jetCharge=0;
   jets_AKPF_chgEmE=0;
   jets_AKPF_chgHadE=0;
@@ -4849,41 +4942,41 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("els_pfIsolationR03_sumPUPt", &els_pfIsolationR03_sumPUPt, &b_els_pfIsolationR03_sumPUPt);
     chainB.SetBranchAddress("els_full5x5_sigmaIetaIeta", &els_full5x5_sigmaIetaIeta, &b_els_full5x5_sigmaIetaIeta);
   }
-  chainB.SetBranchAddress("els_gen_id", &els_gen_id, &b_els_gen_id);
-  chainB.SetBranchAddress("els_gen_phi", &els_gen_phi, &b_els_gen_phi);
-  chainB.SetBranchAddress("els_gen_pt", &els_gen_pt, &b_els_gen_pt);
-  chainB.SetBranchAddress("els_gen_pz", &els_gen_pz, &b_els_gen_pz);
-  chainB.SetBranchAddress("els_gen_px", &els_gen_px, &b_els_gen_px);
-  chainB.SetBranchAddress("els_gen_py", &els_gen_py, &b_els_gen_py);
-  chainB.SetBranchAddress("els_gen_eta", &els_gen_eta, &b_els_gen_eta);
-  chainB.SetBranchAddress("els_gen_theta", &els_gen_theta, &b_els_gen_theta);
-  chainB.SetBranchAddress("els_gen_et", &els_gen_et, &b_els_gen_et);
-  chainB.SetBranchAddress("els_gen_mother_id", &els_gen_mother_id, &b_els_gen_mother_id);
-  chainB.SetBranchAddress("els_gen_mother_phi", &els_gen_mother_phi, &b_els_gen_mother_phi);
-  chainB.SetBranchAddress("els_gen_mother_pt", &els_gen_mother_pt, &b_els_gen_mother_pt);
-  chainB.SetBranchAddress("els_gen_mother_pz", &els_gen_mother_pz, &b_els_gen_mother_pz);
-  chainB.SetBranchAddress("els_gen_mother_px", &els_gen_mother_px, &b_els_gen_mother_px);
-  chainB.SetBranchAddress("els_gen_mother_py", &els_gen_mother_py, &b_els_gen_mother_py);
-  chainB.SetBranchAddress("els_gen_mother_eta", &els_gen_mother_eta, &b_els_gen_mother_eta);
-  chainB.SetBranchAddress("els_gen_mother_theta", &els_gen_mother_theta, &b_els_gen_mother_theta);
-  chainB.SetBranchAddress("els_gen_mother_et", &els_gen_mother_et, &b_els_gen_mother_et);
+  // chainB.SetBranchAddress("els_gen_id", &els_gen_id, &b_els_gen_id);
+  // chainB.SetBranchAddress("els_gen_phi", &els_gen_phi, &b_els_gen_phi);
+  // chainB.SetBranchAddress("els_gen_pt", &els_gen_pt, &b_els_gen_pt);
+  // chainB.SetBranchAddress("els_gen_pz", &els_gen_pz, &b_els_gen_pz);
+  // chainB.SetBranchAddress("els_gen_px", &els_gen_px, &b_els_gen_px);
+  // chainB.SetBranchAddress("els_gen_py", &els_gen_py, &b_els_gen_py);
+  // chainB.SetBranchAddress("els_gen_eta", &els_gen_eta, &b_els_gen_eta);
+  // chainB.SetBranchAddress("els_gen_theta", &els_gen_theta, &b_els_gen_theta);
+  // chainB.SetBranchAddress("els_gen_et", &els_gen_et, &b_els_gen_et);
+  // chainB.SetBranchAddress("els_gen_mother_id", &els_gen_mother_id, &b_els_gen_mother_id);
+  // chainB.SetBranchAddress("els_gen_mother_phi", &els_gen_mother_phi, &b_els_gen_mother_phi);
+  // chainB.SetBranchAddress("els_gen_mother_pt", &els_gen_mother_pt, &b_els_gen_mother_pt);
+  // chainB.SetBranchAddress("els_gen_mother_pz", &els_gen_mother_pz, &b_els_gen_mother_pz);
+  // chainB.SetBranchAddress("els_gen_mother_px", &els_gen_mother_px, &b_els_gen_mother_px);
+  // chainB.SetBranchAddress("els_gen_mother_py", &els_gen_mother_py, &b_els_gen_mother_py);
+  // chainB.SetBranchAddress("els_gen_mother_eta", &els_gen_mother_eta, &b_els_gen_mother_eta);
+  // chainB.SetBranchAddress("els_gen_mother_theta", &els_gen_mother_theta, &b_els_gen_mother_theta);
+  // chainB.SetBranchAddress("els_gen_mother_et", &els_gen_mother_et, &b_els_gen_mother_et);
   chainB.SetBranchAddress("els_tightId", &els_tightId, &b_els_tightId);
   chainB.SetBranchAddress("els_looseId", &els_looseId, &b_els_looseId);
   chainB.SetBranchAddress("els_robustTightId", &els_robustTightId, &b_els_robustTightId);
   chainB.SetBranchAddress("els_robustLooseId", &els_robustLooseId, &b_els_robustLooseId);
   chainB.SetBranchAddress("els_robustHighEnergyId", &els_robustHighEnergyId, &b_els_robustHighEnergyId);
-  chainB.SetBranchAddress("els_simpleEleId95relIso", &els_simpleEleId95relIso, &b_els_simpleEleId95relIso);
-  chainB.SetBranchAddress("els_simpleEleId90relIso", &els_simpleEleId90relIso, &b_els_simpleEleId90relIso);
-  chainB.SetBranchAddress("els_simpleEleId85relIso", &els_simpleEleId85relIso, &b_els_simpleEleId85relIso);
-  chainB.SetBranchAddress("els_simpleEleId80relIso", &els_simpleEleId80relIso, &b_els_simpleEleId80relIso);
-  chainB.SetBranchAddress("els_simpleEleId70relIso", &els_simpleEleId70relIso, &b_els_simpleEleId70relIso);
-  chainB.SetBranchAddress("els_simpleEleId60relIso", &els_simpleEleId60relIso, &b_els_simpleEleId60relIso);
-  chainB.SetBranchAddress("els_simpleEleId95cIso", &els_simpleEleId95cIso, &b_els_simpleEleId95cIso);
-  chainB.SetBranchAddress("els_simpleEleId90cIso", &els_simpleEleId90cIso, &b_els_simpleEleId90cIso);
-  chainB.SetBranchAddress("els_simpleEleId85cIso", &els_simpleEleId85cIso, &b_els_simpleEleId85cIso);
-  chainB.SetBranchAddress("els_simpleEleId80cIso", &els_simpleEleId80cIso, &b_els_simpleEleId80cIso);
-  chainB.SetBranchAddress("els_simpleEleId70cIso", &els_simpleEleId70cIso, &b_els_simpleEleId70cIso);
-  chainB.SetBranchAddress("els_simpleEleId60cIso", &els_simpleEleId60cIso, &b_els_simpleEleId60cIso);
+  // chainB.SetBranchAddress("els_simpleEleId95relIso", &els_simpleEleId95relIso, &b_els_simpleEleId95relIso);
+  // chainB.SetBranchAddress("els_simpleEleId90relIso", &els_simpleEleId90relIso, &b_els_simpleEleId90relIso);
+  // chainB.SetBranchAddress("els_simpleEleId85relIso", &els_simpleEleId85relIso, &b_els_simpleEleId85relIso);
+  // chainB.SetBranchAddress("els_simpleEleId80relIso", &els_simpleEleId80relIso, &b_els_simpleEleId80relIso);
+  // chainB.SetBranchAddress("els_simpleEleId70relIso", &els_simpleEleId70relIso, &b_els_simpleEleId70relIso);
+  // chainB.SetBranchAddress("els_simpleEleId60relIso", &els_simpleEleId60relIso, &b_els_simpleEleId60relIso);
+  // chainB.SetBranchAddress("els_simpleEleId95cIso", &els_simpleEleId95cIso, &b_els_simpleEleId95cIso);
+  // chainB.SetBranchAddress("els_simpleEleId90cIso", &els_simpleEleId90cIso, &b_els_simpleEleId90cIso);
+  // chainB.SetBranchAddress("els_simpleEleId85cIso", &els_simpleEleId85cIso, &b_els_simpleEleId85cIso);
+  // chainB.SetBranchAddress("els_simpleEleId80cIso", &els_simpleEleId80cIso, &b_els_simpleEleId80cIso);
+  // chainB.SetBranchAddress("els_simpleEleId70cIso", &els_simpleEleId70cIso, &b_els_simpleEleId70cIso);
+  // chainB.SetBranchAddress("els_simpleEleId60cIso", &els_simpleEleId60cIso, &b_els_simpleEleId60cIso);
   chainB.SetBranchAddress("els_cIso", &els_cIso, &b_els_cIso);
   chainB.SetBranchAddress("els_tIso", &els_tIso, &b_els_tIso);
   chainB.SetBranchAddress("els_ecalIso", &els_ecalIso, &b_els_ecalIso);
@@ -4933,8 +5026,8 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("els_phiError", &els_phiError, &b_els_phiError);
   chainB.SetBranchAddress("els_tk_charge", &els_tk_charge, &b_els_tk_charge);
   chainB.SetBranchAddress("els_core_ecalDrivenSeed", &els_core_ecalDrivenSeed, &b_els_core_ecalDrivenSeed);
-  chainB.SetBranchAddress("els_n_inner_layer", &els_n_inner_layer, &b_els_n_inner_layer);
-  chainB.SetBranchAddress("els_n_outer_layer", &els_n_outer_layer, &b_els_n_outer_layer);
+  // chainB.SetBranchAddress("els_n_inner_layer", &els_n_inner_layer, &b_els_n_inner_layer);
+  // chainB.SetBranchAddress("els_n_outer_layer", &els_n_outer_layer, &b_els_n_outer_layer);
   chainB.SetBranchAddress("els_ctf_tk_id", &els_ctf_tk_id, &b_els_ctf_tk_id);
   chainB.SetBranchAddress("els_ctf_tk_charge", &els_ctf_tk_charge, &b_els_ctf_tk_charge);
   chainB.SetBranchAddress("els_ctf_tk_eta", &els_ctf_tk_eta, &b_els_ctf_tk_eta);
@@ -4980,25 +5073,30 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("jets_AK4_parton_eta", &jets_AKPF_parton_eta, &b_jets_AKPF_parton_eta);
     chainB.SetBranchAddress("jets_AK4_parton_Energy", &jets_AKPF_parton_Energy, &b_jets_AKPF_parton_Energy);
     chainB.SetBranchAddress("jets_AK4_parton_mass", &jets_AKPF_parton_mass, &b_jets_AKPF_parton_mass);
-    chainB.SetBranchAddress("jets_AK4_gen_et", &jets_AKPF_gen_et, &b_jets_AKPF_gen_et);
-    chainB.SetBranchAddress("jets_AK4_gen_pt", &jets_AKPF_gen_pt, &b_jets_AKPF_gen_pt);
-    chainB.SetBranchAddress("jets_AK4_gen_eta", &jets_AKPF_gen_eta, &b_jets_AKPF_gen_eta);
-    chainB.SetBranchAddress("jets_AK4_gen_phi", &jets_AKPF_gen_phi, &b_jets_AKPF_gen_phi);
-    chainB.SetBranchAddress("jets_AK4_gen_mass", &jets_AKPF_gen_mass, &b_jets_AKPF_gen_mass);
-    chainB.SetBranchAddress("jets_AK4_gen_Energy", &jets_AKPF_gen_Energy, &b_jets_AKPF_gen_Energy);
-    chainB.SetBranchAddress("jets_AK4_gen_Id", &jets_AKPF_gen_Id, &b_jets_AKPF_gen_Id);
-    chainB.SetBranchAddress("jets_AK4_gen_motherID", &jets_AKPF_gen_motherID, &b_jets_AKPF_gen_motherID);
-    chainB.SetBranchAddress("jets_AK4_gen_threeCharge", &jets_AKPF_gen_threeCharge, &b_jets_AKPF_gen_threeCharge);
+    // chainB.SetBranchAddress("jets_AK4_gen_et", &jets_AKPF_gen_et, &b_jets_AKPF_gen_et);
+    // chainB.SetBranchAddress("jets_AK4_gen_pt", &jets_AKPF_gen_pt, &b_jets_AKPF_gen_pt);
+    // chainB.SetBranchAddress("jets_AK4_gen_eta", &jets_AKPF_gen_eta, &b_jets_AKPF_gen_eta);
+    // chainB.SetBranchAddress("jets_AK4_gen_phi", &jets_AKPF_gen_phi, &b_jets_AKPF_gen_phi);
+    // chainB.SetBranchAddress("jets_AK4_gen_mass", &jets_AKPF_gen_mass, &b_jets_AKPF_gen_mass);
+    // chainB.SetBranchAddress("jets_AK4_gen_Energy", &jets_AKPF_gen_Energy, &b_jets_AKPF_gen_Energy);
+    // chainB.SetBranchAddress("jets_AK4_gen_Id", &jets_AKPF_gen_Id, &b_jets_AKPF_gen_Id);
+    // chainB.SetBranchAddress("jets_AK4_gen_motherID", &jets_AKPF_gen_motherID, &b_jets_AKPF_gen_motherID);
+    // chainB.SetBranchAddress("jets_AK4_gen_threeCharge", &jets_AKPF_gen_threeCharge, &b_jets_AKPF_gen_threeCharge);
     chainB.SetBranchAddress("jets_AK4_partonFlavour", &jets_AKPF_partonFlavour, &b_jets_AKPF_partonFlavour);
     chainB.SetBranchAddress("jets_AK4_btag_TC_highPur", &jets_AKPF_btag_TC_highPur, &b_jets_AKPF_btag_TC_highPur);
     chainB.SetBranchAddress("jets_AK4_btag_TC_highEff", &jets_AKPF_btag_TC_highEff, &b_jets_AKPF_btag_TC_highEff);
     chainB.SetBranchAddress("jets_AK4_btag_jetProb", &jets_AKPF_btag_jetProb, &b_jets_AKPF_btag_jetProb);
     chainB.SetBranchAddress("jets_AK4_btag_jetBProb", &jets_AKPF_btag_jetBProb, &b_jets_AKPF_btag_jetBProb);
-    chainB.SetBranchAddress("jets_AK4_btag_softEle", &jets_AKPF_btag_softEle, &b_jets_AKPF_btag_softEle);
-    chainB.SetBranchAddress("jets_AK4_btag_softMuon", &jets_AKPF_btag_softMuon, &b_jets_AKPF_btag_softMuon);
+    // chainB.SetBranchAddress("jets_AK4_btag_softEle", &jets_AKPF_btag_softEle, &b_jets_AKPF_btag_softEle);
+    // chainB.SetBranchAddress("jets_AK4_btag_softMuon", &jets_AKPF_btag_softMuon, &b_jets_AKPF_btag_softMuon);
     chainB.SetBranchAddress("jets_AK4_btag_secVertexHighPur", &jets_AKPF_btag_secVertexHighPur, &b_jets_AKPF_btag_secVertexHighPur);
     chainB.SetBranchAddress("jets_AK4_btag_secVertexHighEff", &jets_AKPF_btag_secVertexHighEff, &b_jets_AKPF_btag_secVertexHighEff);
-    chainB.SetBranchAddress("jets_AK4_btag_secVertexCombined", &jets_AKPF_btag_secVertexCombined, &b_jets_AKPF_btag_secVertexCombined);
+    if (cfAVersion<77) chainB.SetBranchAddress("jets_AK4_btag_secVertexCombined", &jets_AKPF_btag_secVertexCombined, &b_jets_AKPF_btag_secVertexCombined);
+    else {
+      chainB.SetBranchAddress("jets_AK4_btag_inc_secVertexCombined", &jets_AKPF_btag_inc_secVertexCombined, &b_jets_AKPF_btag_inc_secVertexCombined);
+      chainB.SetBranchAddress("jets_AK4_btag_pf_secVertexCombined", &jets_AKPF_btag_pf_secVertexCombined, &b_jets_AKPF_btag_pf_secVertexCombined);
+      chainB.SetBranchAddress("jets_AK4_btag_MVA", &jets_AKPF_btag_MVA, &b_jets_AKPF_btag_MVA);
+    }
     chainB.SetBranchAddress("jets_AK4_jetCharge", &jets_AKPF_jetCharge, &b_jets_AKPF_jetCharge);
     chainB.SetBranchAddress("jets_AK4_chgEmE", &jets_AKPF_chgEmE, &b_jets_AKPF_chgEmE);
     chainB.SetBranchAddress("jets_AK4_chgHadE", &jets_AKPF_chgHadE, &b_jets_AKPF_chgHadE);
@@ -5016,16 +5114,16 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("jets_AK4_etaetaMoment", &jets_AKPF_etaetaMoment, &b_jets_AKPF_etaetaMoment);
     chainB.SetBranchAddress("jets_AK4_etaphiMoment", &jets_AKPF_etaphiMoment, &b_jets_AKPF_etaphiMoment);
     chainB.SetBranchAddress("jets_AK4_phiphiMoment", &jets_AKPF_phiphiMoment, &b_jets_AKPF_phiphiMoment);
-    chainB.SetBranchAddress("jets_AK4_n90Hits", &jets_AKPF_n90Hits, &b_jets_AKPF_n90Hits);
-    chainB.SetBranchAddress("jets_AK4_fHPD", &jets_AKPF_fHPD, &b_jets_AKPF_fHPD);
-    chainB.SetBranchAddress("jets_AK4_fRBX", &jets_AKPF_fRBX, &b_jets_AKPF_fRBX);
-    chainB.SetBranchAddress("jets_AK4_hitsInN90", &jets_AKPF_hitsInN90, &b_jets_AKPF_hitsInN90);
-    chainB.SetBranchAddress("jets_AK4_nECALTowers", &jets_AKPF_nECALTowers, &b_jets_AKPF_nECALTowers);
-    chainB.SetBranchAddress("jets_AK4_nHCALTowers", &jets_AKPF_nHCALTowers, &b_jets_AKPF_nHCALTowers);
-    chainB.SetBranchAddress("jets_AK4_fSubDetector1", &jets_AKPF_fSubDetector1, &b_jets_AKPF_fSubDetector1);
-    chainB.SetBranchAddress("jets_AK4_fSubDetector2", &jets_AKPF_fSubDetector2, &b_jets_AKPF_fSubDetector2);
-    chainB.SetBranchAddress("jets_AK4_fSubDetector3", &jets_AKPF_fSubDetector3, &b_jets_AKPF_fSubDetector3);
-    chainB.SetBranchAddress("jets_AK4_fSubDetector4", &jets_AKPF_fSubDetector4, &b_jets_AKPF_fSubDetector4);
+    // chainB.SetBranchAddress("jets_AK4_n90Hits", &jets_AKPF_n90Hits, &b_jets_AKPF_n90Hits);
+    // chainB.SetBranchAddress("jets_AK4_fHPD", &jets_AKPF_fHPD, &b_jets_AKPF_fHPD);
+    // chainB.SetBranchAddress("jets_AK4_fRBX", &jets_AKPF_fRBX, &b_jets_AKPF_fRBX);
+    // chainB.SetBranchAddress("jets_AK4_hitsInN90", &jets_AKPF_hitsInN90, &b_jets_AKPF_hitsInN90);
+    // chainB.SetBranchAddress("jets_AK4_nECALTowers", &jets_AKPF_nECALTowers, &b_jets_AKPF_nECALTowers);
+    // chainB.SetBranchAddress("jets_AK4_nHCALTowers", &jets_AKPF_nHCALTowers, &b_jets_AKPF_nHCALTowers);
+    // chainB.SetBranchAddress("jets_AK4_fSubDetector1", &jets_AKPF_fSubDetector1, &b_jets_AKPF_fSubDetector1);
+    // chainB.SetBranchAddress("jets_AK4_fSubDetector2", &jets_AKPF_fSubDetector2, &b_jets_AKPF_fSubDetector2);
+    // chainB.SetBranchAddress("jets_AK4_fSubDetector3", &jets_AKPF_fSubDetector3, &b_jets_AKPF_fSubDetector3);
+    // chainB.SetBranchAddress("jets_AK4_fSubDetector4", &jets_AKPF_fSubDetector4, &b_jets_AKPF_fSubDetector4);
     chainB.SetBranchAddress("jets_AK4_area", &jets_AKPF_area, &b_jets_AKPF_area);
     chainB.SetBranchAddress("jets_AK4_corrFactorRaw", &jets_AKPF_corrFactorRaw, &b_jets_AKPF_corrFactorRaw);
     chainB.SetBranchAddress("jets_AK4_rawPt", &jets_AKPF_rawPt, &b_jets_AKPF_rawPt);
@@ -5060,14 +5158,6 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("jets_AK5PF_gen_motherID", &jets_AKPF_gen_motherID, &b_jets_AKPF_gen_motherID);
     chainB.SetBranchAddress("jets_AK5PF_gen_threeCharge", &jets_AKPF_gen_threeCharge, &b_jets_AKPF_gen_threeCharge);
     chainB.SetBranchAddress("jets_AK5PF_partonFlavour", &jets_AKPF_partonFlavour, &b_jets_AKPF_partonFlavour);
-    chainB.SetBranchAddress("jets_AK5PF_btag_TC_highPur", &jets_AKPF_btag_TC_highPur, &b_jets_AKPF_btag_TC_highPur);
-    chainB.SetBranchAddress("jets_AK5PF_btag_TC_highEff", &jets_AKPF_btag_TC_highEff, &b_jets_AKPF_btag_TC_highEff);
-    chainB.SetBranchAddress("jets_AK5PF_btag_jetProb", &jets_AKPF_btag_jetProb, &b_jets_AKPF_btag_jetProb);
-    chainB.SetBranchAddress("jets_AK5PF_btag_jetBProb", &jets_AKPF_btag_jetBProb, &b_jets_AKPF_btag_jetBProb);
-    chainB.SetBranchAddress("jets_AK5PF_btag_softEle", &jets_AKPF_btag_softEle, &b_jets_AKPF_btag_softEle);
-    chainB.SetBranchAddress("jets_AK5PF_btag_softMuon", &jets_AKPF_btag_softMuon, &b_jets_AKPF_btag_softMuon);
-    chainB.SetBranchAddress("jets_AK5PF_btag_secVertexHighPur", &jets_AKPF_btag_secVertexHighPur, &b_jets_AKPF_btag_secVertexHighPur);
-    chainB.SetBranchAddress("jets_AK5PF_btag_secVertexHighEff", &jets_AKPF_btag_secVertexHighEff, &b_jets_AKPF_btag_secVertexHighEff);
     chainB.SetBranchAddress("jets_AK5PF_btag_secVertexCombined", &jets_AKPF_btag_secVertexCombined, &b_jets_AKPF_btag_secVertexCombined);
     chainB.SetBranchAddress("jets_AK5PF_jetCharge", &jets_AKPF_jetCharge, &b_jets_AKPF_jetCharge);
     chainB.SetBranchAddress("jets_AK5PF_chgEmE", &jets_AKPF_chgEmE, &b_jets_AKPF_chgEmE);
@@ -5175,7 +5265,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_pz", &mc_doc_pz, &b_mc_doc_pz);
   chainB.SetBranchAddress("mc_doc_eta", &mc_doc_eta, &b_mc_doc_eta);
   chainB.SetBranchAddress("mc_doc_phi", &mc_doc_phi, &b_mc_doc_phi);
-  chainB.SetBranchAddress("mc_doc_theta", &mc_doc_theta, &b_mc_doc_theta);
+  // chainB.SetBranchAddress("mc_doc_theta", &mc_doc_theta, &b_mc_doc_theta);
   chainB.SetBranchAddress("mc_doc_energy", &mc_doc_energy, &b_mc_doc_energy);
   chainB.SetBranchAddress("mc_doc_status", &mc_doc_status, &b_mc_doc_status);
   chainB.SetBranchAddress("mc_doc_charge", &mc_doc_charge, &b_mc_doc_charge);
@@ -5193,26 +5283,27 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
-    chainB.SetBranchAddress("mc_final_px", &mc_final_px, &b_mc_final_px);
-    chainB.SetBranchAddress("mc_final_py", &mc_final_py, &b_mc_final_py);
-    chainB.SetBranchAddress("mc_final_pz", &mc_final_pz, &b_mc_final_pz);
+    // chainB.SetBranchAddress("mc_final_px", &mc_final_px, &b_mc_final_px);
+    // chainB.SetBranchAddress("mc_final_py", &mc_final_py, &b_mc_final_py);
+    // chainB.SetBranchAddress("mc_final_pz", &mc_final_pz, &b_mc_final_pz);
     chainB.SetBranchAddress("mc_final_eta", &mc_final_eta, &b_mc_final_eta);
     chainB.SetBranchAddress("mc_final_phi", &mc_final_phi, &b_mc_final_phi);
-    chainB.SetBranchAddress("mc_final_theta", &mc_final_theta, &b_mc_final_theta);
+    // chainB.SetBranchAddress("mc_final_theta", &mc_final_theta, &b_mc_final_theta);
     chainB.SetBranchAddress("mc_final_energy", &mc_final_energy, &b_mc_final_energy);
-    chainB.SetBranchAddress("mc_final_status", &mc_final_status, &b_mc_final_status);
+    // chainB.SetBranchAddress("mc_final_status", &mc_final_status, &b_mc_final_status);
     chainB.SetBranchAddress("mc_final_charge", &mc_final_charge, &b_mc_final_charge);
     chainB.SetBranchAddress("mc_final_mother_id", &mc_final_mother_id, &b_mc_final_mother_id);
     chainB.SetBranchAddress("mc_final_grandmother_id", &mc_final_grandmother_id, &b_mc_final_grandmother_id);
     chainB.SetBranchAddress("mc_final_ggrandmother_id", &mc_final_ggrandmother_id, &b_mc_final_ggrandmother_id);
-    chainB.SetBranchAddress("mc_final_mother_pt", &mc_final_mother_pt, &b_mc_final_mother_pt);
-    chainB.SetBranchAddress("mc_final_vertex_x", &mc_final_vertex_x, &b_mc_final_vertex_x);
-    chainB.SetBranchAddress("mc_final_vertex_y", &mc_final_vertex_y, &b_mc_final_vertex_y);
-    chainB.SetBranchAddress("mc_final_vertex_z", &mc_final_vertex_z, &b_mc_final_vertex_z);
-    chainB.SetBranchAddress("mc_final_mass", &mc_final_mass, &b_mc_final_mass);
-    chainB.SetBranchAddress("mc_final_numOfDaughters", &mc_final_numOfDaughters, &b_mc_final_numOfDaughters);
+    //  chainB.SetBranchAddress("mc_final_mother_pt", &mc_final_mother_pt, &b_mc_final_mother_pt);
+    // chainB.SetBranchAddress("mc_final_vertex_x", &mc_final_vertex_x, &b_mc_final_vertex_x);
+    // chainB.SetBranchAddress("mc_final_vertex_y", &mc_final_vertex_y, &b_mc_final_vertex_y);
+    // chainB.SetBranchAddress("mc_final_vertex_z", &mc_final_vertex_z, &b_mc_final_vertex_z);
+    // chainB.SetBranchAddress("mc_final_mass", &mc_final_mass, &b_mc_final_mass);
+    // chainB.SetBranchAddress("mc_final_numOfDaughters", &mc_final_numOfDaughters, &b_mc_final_numOfDaughters);
     chainB.SetBranchAddress("mc_final_numOfMothers", &mc_final_numOfMothers, &b_mc_final_numOfMothers);
   }
+  if (cfAVersion<77) {
   chainB.SetBranchAddress("Nmc_electrons", &Nmc_electrons, &b_Nmc_electrons);
   chainB.SetBranchAddress("mc_electrons_id", &mc_electrons_id, &b_mc_electrons_id);
   chainB.SetBranchAddress("mc_electrons_pt", &mc_electrons_pt, &b_mc_electrons_pt);
@@ -5318,7 +5409,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_nutaus_vertex_z", &mc_nutaus_vertex_z, &b_mc_nutaus_vertex_z);
   chainB.SetBranchAddress("mc_nutaus_mass", &mc_nutaus_mass, &b_mc_nutaus_mass);
   chainB.SetBranchAddress("mc_nutaus_numOfDaughters", &mc_nutaus_numOfDaughters, &b_mc_nutaus_numOfDaughters);
-  if (cfAVersion<=71||cfAVersion==74) {
+  if (cfAVersion==71||cfAVersion==74) {
     chainB.SetBranchAddress("Nmc_pdf", &Nmc_pdf, &b_Nmc_pdf);
     chainB.SetBranchAddress("mc_pdf_x1", &mc_pdf_x1, &b_mc_pdf_x1);
     chainB.SetBranchAddress("mc_pdf_x2", &mc_pdf_x2, &b_mc_pdf_x2);
@@ -5368,6 +5459,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_taus_vertex_z", &mc_taus_vertex_z, &b_mc_taus_vertex_z);
   chainB.SetBranchAddress("mc_taus_mass", &mc_taus_mass, &b_mc_taus_mass);
   chainB.SetBranchAddress("mc_taus_numOfDaughters", &mc_taus_numOfDaughters, &b_mc_taus_numOfDaughters);
+  }
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("NmetsHO", &NmetsHO, &b_NmetsHO);
     chainB.SetBranchAddress("metsHO_et", &metsHO_et, &b_metsHO_et);
@@ -5398,24 +5490,24 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mus_pz", &mus_pz, &b_mus_pz);
   chainB.SetBranchAddress("mus_status", &mus_status, &b_mus_status);
   chainB.SetBranchAddress("mus_theta", &mus_theta, &b_mus_theta);
-  chainB.SetBranchAddress("mus_gen_id", &mus_gen_id, &b_mus_gen_id);
-  chainB.SetBranchAddress("mus_gen_phi", &mus_gen_phi, &b_mus_gen_phi);
-  chainB.SetBranchAddress("mus_gen_pt", &mus_gen_pt, &b_mus_gen_pt);
-  chainB.SetBranchAddress("mus_gen_pz", &mus_gen_pz, &b_mus_gen_pz);
-  chainB.SetBranchAddress("mus_gen_px", &mus_gen_px, &b_mus_gen_px);
-  chainB.SetBranchAddress("mus_gen_py", &mus_gen_py, &b_mus_gen_py);
-  chainB.SetBranchAddress("mus_gen_eta", &mus_gen_eta, &b_mus_gen_eta);
-  chainB.SetBranchAddress("mus_gen_theta", &mus_gen_theta, &b_mus_gen_theta);
-  chainB.SetBranchAddress("mus_gen_et", &mus_gen_et, &b_mus_gen_et);
-  chainB.SetBranchAddress("mus_gen_mother_id", &mus_gen_mother_id, &b_mus_gen_mother_id);
-  chainB.SetBranchAddress("mus_gen_mother_phi", &mus_gen_mother_phi, &b_mus_gen_mother_phi);
-  chainB.SetBranchAddress("mus_gen_mother_pt", &mus_gen_mother_pt, &b_mus_gen_mother_pt);
-  chainB.SetBranchAddress("mus_gen_mother_pz", &mus_gen_mother_pz, &b_mus_gen_mother_pz);
-  chainB.SetBranchAddress("mus_gen_mother_px", &mus_gen_mother_px, &b_mus_gen_mother_px);
-  chainB.SetBranchAddress("mus_gen_mother_py", &mus_gen_mother_py, &b_mus_gen_mother_py);
-  chainB.SetBranchAddress("mus_gen_mother_eta", &mus_gen_mother_eta, &b_mus_gen_mother_eta);
-  chainB.SetBranchAddress("mus_gen_mother_theta", &mus_gen_mother_theta, &b_mus_gen_mother_theta);
-  chainB.SetBranchAddress("mus_gen_mother_et", &mus_gen_mother_et, &b_mus_gen_mother_et);
+  // chainB.SetBranchAddress("mus_gen_id", &mus_gen_id, &b_mus_gen_id);
+  // chainB.SetBranchAddress("mus_gen_phi", &mus_gen_phi, &b_mus_gen_phi);
+  // chainB.SetBranchAddress("mus_gen_pt", &mus_gen_pt, &b_mus_gen_pt);
+  // chainB.SetBranchAddress("mus_gen_pz", &mus_gen_pz, &b_mus_gen_pz);
+  // chainB.SetBranchAddress("mus_gen_px", &mus_gen_px, &b_mus_gen_px);
+  // chainB.SetBranchAddress("mus_gen_py", &mus_gen_py, &b_mus_gen_py);
+  // chainB.SetBranchAddress("mus_gen_eta", &mus_gen_eta, &b_mus_gen_eta);
+  // chainB.SetBranchAddress("mus_gen_theta", &mus_gen_theta, &b_mus_gen_theta);
+  // chainB.SetBranchAddress("mus_gen_et", &mus_gen_et, &b_mus_gen_et);
+  // chainB.SetBranchAddress("mus_gen_mother_id", &mus_gen_mother_id, &b_mus_gen_mother_id);
+  // chainB.SetBranchAddress("mus_gen_mother_phi", &mus_gen_mother_phi, &b_mus_gen_mother_phi);
+  // chainB.SetBranchAddress("mus_gen_mother_pt", &mus_gen_mother_pt, &b_mus_gen_mother_pt);
+  // chainB.SetBranchAddress("mus_gen_mother_pz", &mus_gen_mother_pz, &b_mus_gen_mother_pz);
+  // chainB.SetBranchAddress("mus_gen_mother_px", &mus_gen_mother_px, &b_mus_gen_mother_px);
+  // chainB.SetBranchAddress("mus_gen_mother_py", &mus_gen_mother_py, &b_mus_gen_mother_py);
+  // chainB.SetBranchAddress("mus_gen_mother_eta", &mus_gen_mother_eta, &b_mus_gen_mother_eta);
+  // chainB.SetBranchAddress("mus_gen_mother_theta", &mus_gen_mother_theta, &b_mus_gen_mother_theta);
+  // chainB.SetBranchAddress("mus_gen_mother_et", &mus_gen_mother_et, &b_mus_gen_mother_et);
   chainB.SetBranchAddress("mus_tkHits", &mus_tkHits, &b_mus_tkHits);
   chainB.SetBranchAddress("mus_cIso", &mus_cIso, &b_mus_cIso);
   chainB.SetBranchAddress("mus_tIso", &mus_tIso, &b_mus_tIso);
@@ -5530,11 +5622,11 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mus_isPFMuon", &mus_isPFMuon, &b_mus_isPFMuon);
   chainB.SetBranchAddress("mus_isTrackerMuon", &mus_isTrackerMuon, &b_mus_isTrackerMuon);
   chainB.SetBranchAddress("mus_isStandAloneMuon", &mus_isStandAloneMuon, &b_mus_isStandAloneMuon);
-  chainB.SetBranchAddress("mus_isCaloMuon", &mus_isCaloMuon, &b_mus_isCaloMuon);
+  // chainB.SetBranchAddress("mus_isCaloMuon", &mus_isCaloMuon, &b_mus_isCaloMuon);
   chainB.SetBranchAddress("mus_isGlobalMuon", &mus_isGlobalMuon, &b_mus_isGlobalMuon);
-  chainB.SetBranchAddress("mus_isElectron", &mus_isElectron, &b_mus_isElectron);
-  chainB.SetBranchAddress("mus_isConvertedPhoton", &mus_isConvertedPhoton, &b_mus_isConvertedPhoton);
-  chainB.SetBranchAddress("mus_isPhoton", &mus_isPhoton, &b_mus_isPhoton);
+  // chainB.SetBranchAddress("mus_isElectron", &mus_isElectron, &b_mus_isElectron);
+  // chainB.SetBranchAddress("mus_isConvertedPhoton", &mus_isConvertedPhoton, &b_mus_isConvertedPhoton);
+  // chainB.SetBranchAddress("mus_isPhoton", &mus_isPhoton, &b_mus_isPhoton);
   chainB.SetBranchAddress("mus_id_All", &mus_id_All, &b_mus_id_All);
   chainB.SetBranchAddress("mus_id_AllGlobalMuons", &mus_id_AllGlobalMuons, &b_mus_id_AllGlobalMuons);
   chainB.SetBranchAddress("mus_id_AllStandAloneMuons", &mus_id_AllStandAloneMuons, &b_mus_id_AllStandAloneMuons);
@@ -5554,74 +5646,74 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mus_tk_PixelLayersWithMeasurement", &mus_tk_PixelLayersWithMeasurement, &b_mus_tk_PixelLayersWithMeasurement);
   chainB.SetBranchAddress("mus_tk_ValidStripLayersWithMonoAndStereoHit", &mus_tk_ValidStripLayersWithMonoAndStereoHit, &b_mus_tk_ValidStripLayersWithMonoAndStereoHit);
   chainB.SetBranchAddress("mus_tk_LayersWithoutMeasurement", &mus_tk_LayersWithoutMeasurement, &b_mus_tk_LayersWithoutMeasurement);
-  chainB.SetBranchAddress("mus_tk_ExpectedHitsInner", &mus_tk_ExpectedHitsInner, &b_mus_tk_ExpectedHitsInner);
-  chainB.SetBranchAddress("mus_tk_ExpectedHitsOuter", &mus_tk_ExpectedHitsOuter, &b_mus_tk_ExpectedHitsOuter);
-  chainB.SetBranchAddress("mus_cm_LayersWithMeasurement", &mus_cm_LayersWithMeasurement, &b_mus_cm_LayersWithMeasurement);
-  chainB.SetBranchAddress("mus_cm_PixelLayersWithMeasurement", &mus_cm_PixelLayersWithMeasurement, &b_mus_cm_PixelLayersWithMeasurement);
-  chainB.SetBranchAddress("mus_cm_ValidStripLayersWithMonoAndStereoHit", &mus_cm_ValidStripLayersWithMonoAndStereoHit, &b_mus_cm_ValidStripLayersWithMonoAndStereoHit);
-  chainB.SetBranchAddress("mus_cm_LayersWithoutMeasurement", &mus_cm_LayersWithoutMeasurement, &b_mus_cm_LayersWithoutMeasurement);
-  chainB.SetBranchAddress("mus_cm_ExpectedHitsInner", &mus_cm_ExpectedHitsInner, &b_mus_cm_ExpectedHitsInner);
-  chainB.SetBranchAddress("mus_cm_ExpectedHitsOuter", &mus_cm_ExpectedHitsOuter, &b_mus_cm_ExpectedHitsOuter);
-  chainB.SetBranchAddress("mus_picky_LayersWithMeasurement", &mus_picky_LayersWithMeasurement, &b_mus_picky_LayersWithMeasurement);
-  chainB.SetBranchAddress("mus_picky_PixelLayersWithMeasurement", &mus_picky_PixelLayersWithMeasurement, &b_mus_picky_PixelLayersWithMeasurement);
-  chainB.SetBranchAddress("mus_picky_ValidStripLayersWithMonoAndStereoHit", &mus_picky_ValidStripLayersWithMonoAndStereoHit, &b_mus_picky_ValidStripLayersWithMonoAndStereoHit);
-  chainB.SetBranchAddress("mus_picky_LayersWithoutMeasurement", &mus_picky_LayersWithoutMeasurement, &b_mus_picky_LayersWithoutMeasurement);
-  chainB.SetBranchAddress("mus_picky_ExpectedHitsInner", &mus_picky_ExpectedHitsInner, &b_mus_picky_ExpectedHitsInner);
-  chainB.SetBranchAddress("mus_picky_ExpectedHitsOuter", &mus_picky_ExpectedHitsOuter, &b_mus_picky_ExpectedHitsOuter);
-  chainB.SetBranchAddress("mus_tpfms_LayersWithMeasurement", &mus_tpfms_LayersWithMeasurement, &b_mus_tpfms_LayersWithMeasurement);
-  chainB.SetBranchAddress("mus_tpfms_PixelLayersWithMeasurement", &mus_tpfms_PixelLayersWithMeasurement, &b_mus_tpfms_PixelLayersWithMeasurement);
-  chainB.SetBranchAddress("mus_tpfms_ValidStripLayersWithMonoAndStereoHit", &mus_tpfms_ValidStripLayersWithMonoAndStereoHit, &b_mus_tpfms_ValidStripLayersWithMonoAndStereoHit);
-  chainB.SetBranchAddress("mus_tpfms_LayersWithoutMeasurement", &mus_tpfms_LayersWithoutMeasurement, &b_mus_tpfms_LayersWithoutMeasurement);
-  chainB.SetBranchAddress("mus_tpfms_ExpectedHitsInner", &mus_tpfms_ExpectedHitsInner, &b_mus_tpfms_ExpectedHitsInner);
-  chainB.SetBranchAddress("mus_tpfms_ExpectedHitsOuter", &mus_tpfms_ExpectedHitsOuter, &b_mus_tpfms_ExpectedHitsOuter);
-  chainB.SetBranchAddress("mus_picky_id", &mus_picky_id, &b_mus_picky_id);
-  chainB.SetBranchAddress("mus_picky_chi2", &mus_picky_chi2, &b_mus_picky_chi2);
-  chainB.SetBranchAddress("mus_picky_ndof", &mus_picky_ndof, &b_mus_picky_ndof);
-  chainB.SetBranchAddress("mus_picky_chg", &mus_picky_chg, &b_mus_picky_chg);
-  chainB.SetBranchAddress("mus_picky_pt", &mus_picky_pt, &b_mus_picky_pt);
-  chainB.SetBranchAddress("mus_picky_px", &mus_picky_px, &b_mus_picky_px);
-  chainB.SetBranchAddress("mus_picky_py", &mus_picky_py, &b_mus_picky_py);
-  chainB.SetBranchAddress("mus_picky_pz", &mus_picky_pz, &b_mus_picky_pz);
-  chainB.SetBranchAddress("mus_picky_eta", &mus_picky_eta, &b_mus_picky_eta);
-  chainB.SetBranchAddress("mus_picky_phi", &mus_picky_phi, &b_mus_picky_phi);
-  chainB.SetBranchAddress("mus_picky_theta", &mus_picky_theta, &b_mus_picky_theta);
-  chainB.SetBranchAddress("mus_picky_d0dum", &mus_picky_d0dum, &b_mus_picky_d0dum);
-  chainB.SetBranchAddress("mus_picky_dz", &mus_picky_dz, &b_mus_picky_dz);
-  chainB.SetBranchAddress("mus_picky_vx", &mus_picky_vx, &b_mus_picky_vx);
-  chainB.SetBranchAddress("mus_picky_vy", &mus_picky_vy, &b_mus_picky_vy);
-  chainB.SetBranchAddress("mus_picky_vz", &mus_picky_vz, &b_mus_picky_vz);
-  chainB.SetBranchAddress("mus_picky_numvalhits", &mus_picky_numvalhits, &b_mus_picky_numvalhits);
-  chainB.SetBranchAddress("mus_picky_numlosthits", &mus_picky_numlosthits, &b_mus_picky_numlosthits);
-  chainB.SetBranchAddress("mus_picky_d0dumErr", &mus_picky_d0dumErr, &b_mus_picky_d0dumErr);
-  chainB.SetBranchAddress("mus_picky_dzErr", &mus_picky_dzErr, &b_mus_picky_dzErr);
-  chainB.SetBranchAddress("mus_picky_ptErr", &mus_picky_ptErr, &b_mus_picky_ptErr);
-  chainB.SetBranchAddress("mus_picky_etaErr", &mus_picky_etaErr, &b_mus_picky_etaErr);
-  chainB.SetBranchAddress("mus_picky_phiErr", &mus_picky_phiErr, &b_mus_picky_phiErr);
-  chainB.SetBranchAddress("mus_picky_numvalPixelhits", &mus_picky_numvalPixelhits, &b_mus_picky_numvalPixelhits);
-  chainB.SetBranchAddress("mus_tpfms_id", &mus_tpfms_id, &b_mus_tpfms_id);
-  chainB.SetBranchAddress("mus_tpfms_chi2", &mus_tpfms_chi2, &b_mus_tpfms_chi2);
-  chainB.SetBranchAddress("mus_tpfms_ndof", &mus_tpfms_ndof, &b_mus_tpfms_ndof);
-  chainB.SetBranchAddress("mus_tpfms_chg", &mus_tpfms_chg, &b_mus_tpfms_chg);
-  chainB.SetBranchAddress("mus_tpfms_pt", &mus_tpfms_pt, &b_mus_tpfms_pt);
-  chainB.SetBranchAddress("mus_tpfms_px", &mus_tpfms_px, &b_mus_tpfms_px);
-  chainB.SetBranchAddress("mus_tpfms_py", &mus_tpfms_py, &b_mus_tpfms_py);
-  chainB.SetBranchAddress("mus_tpfms_pz", &mus_tpfms_pz, &b_mus_tpfms_pz);
-  chainB.SetBranchAddress("mus_tpfms_eta", &mus_tpfms_eta, &b_mus_tpfms_eta);
-  chainB.SetBranchAddress("mus_tpfms_phi", &mus_tpfms_phi, &b_mus_tpfms_phi);
-  chainB.SetBranchAddress("mus_tpfms_theta", &mus_tpfms_theta, &b_mus_tpfms_theta);
-  chainB.SetBranchAddress("mus_tpfms_d0dum", &mus_tpfms_d0dum, &b_mus_tpfms_d0dum);
-  chainB.SetBranchAddress("mus_tpfms_dz", &mus_tpfms_dz, &b_mus_tpfms_dz);
-  chainB.SetBranchAddress("mus_tpfms_vx", &mus_tpfms_vx, &b_mus_tpfms_vx);
-  chainB.SetBranchAddress("mus_tpfms_vy", &mus_tpfms_vy, &b_mus_tpfms_vy);
-  chainB.SetBranchAddress("mus_tpfms_vz", &mus_tpfms_vz, &b_mus_tpfms_vz);
-  chainB.SetBranchAddress("mus_tpfms_numvalhits", &mus_tpfms_numvalhits, &b_mus_tpfms_numvalhits);
-  chainB.SetBranchAddress("mus_tpfms_numlosthits", &mus_tpfms_numlosthits, &b_mus_tpfms_numlosthits);
-  chainB.SetBranchAddress("mus_tpfms_d0dumErr", &mus_tpfms_d0dumErr, &b_mus_tpfms_d0dumErr);
-  chainB.SetBranchAddress("mus_tpfms_dzErr", &mus_tpfms_dzErr, &b_mus_tpfms_dzErr);
-  chainB.SetBranchAddress("mus_tpfms_ptErr", &mus_tpfms_ptErr, &b_mus_tpfms_ptErr);
-  chainB.SetBranchAddress("mus_tpfms_etaErr", &mus_tpfms_etaErr, &b_mus_tpfms_etaErr);
-  chainB.SetBranchAddress("mus_tpfms_phiErr", &mus_tpfms_phiErr, &b_mus_tpfms_phiErr);
-  chainB.SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
+  // chainB.SetBranchAddress("mus_tk_ExpectedHitsInner", &mus_tk_ExpectedHitsInner, &b_mus_tk_ExpectedHitsInner);
+  // chainB.SetBranchAddress("mus_tk_ExpectedHitsOuter", &mus_tk_ExpectedHitsOuter, &b_mus_tk_ExpectedHitsOuter);
+  // chainB.SetBranchAddress("mus_cm_LayersWithMeasurement", &mus_cm_LayersWithMeasurement, &b_mus_cm_LayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_cm_PixelLayersWithMeasurement", &mus_cm_PixelLayersWithMeasurement, &b_mus_cm_PixelLayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_cm_ValidStripLayersWithMonoAndStereoHit", &mus_cm_ValidStripLayersWithMonoAndStereoHit, &b_mus_cm_ValidStripLayersWithMonoAndStereoHit);
+  // chainB.SetBranchAddress("mus_cm_LayersWithoutMeasurement", &mus_cm_LayersWithoutMeasurement, &b_mus_cm_LayersWithoutMeasurement);
+  // chainB.SetBranchAddress("mus_cm_ExpectedHitsInner", &mus_cm_ExpectedHitsInner, &b_mus_cm_ExpectedHitsInner);
+  // chainB.SetBranchAddress("mus_cm_ExpectedHitsOuter", &mus_cm_ExpectedHitsOuter, &b_mus_cm_ExpectedHitsOuter);
+  // // chainB.SetBranchAddress("mus_picky_LayersWithMeasurement", &mus_picky_LayersWithMeasurement, &b_mus_picky_LayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_picky_PixelLayersWithMeasurement", &mus_picky_PixelLayersWithMeasurement, &b_mus_picky_PixelLayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_picky_ValidStripLayersWithMonoAndStereoHit", &mus_picky_ValidStripLayersWithMonoAndStereoHit, &b_mus_picky_ValidStripLayersWithMonoAndStereoHit);
+  // chainB.SetBranchAddress("mus_picky_LayersWithoutMeasurement", &mus_picky_LayersWithoutMeasurement, &b_mus_picky_LayersWithoutMeasurement);
+  // chainB.SetBranchAddress("mus_picky_ExpectedHitsInner", &mus_picky_ExpectedHitsInner, &b_mus_picky_ExpectedHitsInner);
+  // chainB.SetBranchAddress("mus_picky_ExpectedHitsOuter", &mus_picky_ExpectedHitsOuter, &b_mus_picky_ExpectedHitsOuter);
+  // chainB.SetBranchAddress("mus_tpfms_LayersWithMeasurement", &mus_tpfms_LayersWithMeasurement, &b_mus_tpfms_LayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_tpfms_PixelLayersWithMeasurement", &mus_tpfms_PixelLayersWithMeasurement, &b_mus_tpfms_PixelLayersWithMeasurement);
+  // chainB.SetBranchAddress("mus_tpfms_ValidStripLayersWithMonoAndStereoHit", &mus_tpfms_ValidStripLayersWithMonoAndStereoHit, &b_mus_tpfms_ValidStripLayersWithMonoAndStereoHit);
+  // chainB.SetBranchAddress("mus_tpfms_LayersWithoutMeasurement", &mus_tpfms_LayersWithoutMeasurement, &b_mus_tpfms_LayersWithoutMeasurement);
+  // chainB.SetBranchAddress("mus_tpfms_ExpectedHitsInner", &mus_tpfms_ExpectedHitsInner, &b_mus_tpfms_ExpectedHitsInner);
+  // chainB.SetBranchAddress("mus_tpfms_ExpectedHitsOuter", &mus_tpfms_ExpectedHitsOuter, &b_mus_tpfms_ExpectedHitsOuter);
+  // chainB.SetBranchAddress("mus_picky_id", &mus_picky_id, &b_mus_picky_id);
+  // chainB.SetBranchAddress("mus_picky_chi2", &mus_picky_chi2, &b_mus_picky_chi2);
+  // chainB.SetBranchAddress("mus_picky_ndof", &mus_picky_ndof, &b_mus_picky_ndof);
+  // chainB.SetBranchAddress("mus_picky_chg", &mus_picky_chg, &b_mus_picky_chg);
+  // chainB.SetBranchAddress("mus_picky_pt", &mus_picky_pt, &b_mus_picky_pt);
+  // chainB.SetBranchAddress("mus_picky_px", &mus_picky_px, &b_mus_picky_px);
+  // chainB.SetBranchAddress("mus_picky_py", &mus_picky_py, &b_mus_picky_py);
+  // chainB.SetBranchAddress("mus_picky_pz", &mus_picky_pz, &b_mus_picky_pz);
+  // chainB.SetBranchAddress("mus_picky_eta", &mus_picky_eta, &b_mus_picky_eta);
+  // chainB.SetBranchAddress("mus_picky_phi", &mus_picky_phi, &b_mus_picky_phi);
+  // chainB.SetBranchAddress("mus_picky_theta", &mus_picky_theta, &b_mus_picky_theta);
+  // chainB.SetBranchAddress("mus_picky_d0dum", &mus_picky_d0dum, &b_mus_picky_d0dum);
+  // chainB.SetBranchAddress("mus_picky_dz", &mus_picky_dz, &b_mus_picky_dz);
+  // chainB.SetBranchAddress("mus_picky_vx", &mus_picky_vx, &b_mus_picky_vx);
+  // chainB.SetBranchAddress("mus_picky_vy", &mus_picky_vy, &b_mus_picky_vy);
+  // chainB.SetBranchAddress("mus_picky_vz", &mus_picky_vz, &b_mus_picky_vz);
+  // chainB.SetBranchAddress("mus_picky_numvalhits", &mus_picky_numvalhits, &b_mus_picky_numvalhits);
+  // chainB.SetBranchAddress("mus_picky_numlosthits", &mus_picky_numlosthits, &b_mus_picky_numlosthits);
+  // chainB.SetBranchAddress("mus_picky_d0dumErr", &mus_picky_d0dumErr, &b_mus_picky_d0dumErr);
+  // chainB.SetBranchAddress("mus_picky_dzErr", &mus_picky_dzErr, &b_mus_picky_dzErr);
+  // chainB.SetBranchAddress("mus_picky_ptErr", &mus_picky_ptErr, &b_mus_picky_ptErr);
+  // chainB.SetBranchAddress("mus_picky_etaErr", &mus_picky_etaErr, &b_mus_picky_etaErr);
+  // chainB.SetBranchAddress("mus_picky_phiErr", &mus_picky_phiErr, &b_mus_picky_phiErr);
+  // chainB.SetBranchAddress("mus_picky_numvalPixelhits", &mus_picky_numvalPixelhits, &b_mus_picky_numvalPixelhits);
+  // chainB.SetBranchAddress("mus_tpfms_id", &mus_tpfms_id, &b_mus_tpfms_id);
+  // chainB.SetBranchAddress("mus_tpfms_chi2", &mus_tpfms_chi2, &b_mus_tpfms_chi2);
+  // chainB.SetBranchAddress("mus_tpfms_ndof", &mus_tpfms_ndof, &b_mus_tpfms_ndof);
+  // chainB.SetBranchAddress("mus_tpfms_chg", &mus_tpfms_chg, &b_mus_tpfms_chg);
+  // chainB.SetBranchAddress("mus_tpfms_pt", &mus_tpfms_pt, &b_mus_tpfms_pt);
+  // chainB.SetBranchAddress("mus_tpfms_px", &mus_tpfms_px, &b_mus_tpfms_px);
+  // chainB.SetBranchAddress("mus_tpfms_py", &mus_tpfms_py, &b_mus_tpfms_py);
+  // chainB.SetBranchAddress("mus_tpfms_pz", &mus_tpfms_pz, &b_mus_tpfms_pz);
+  // chainB.SetBranchAddress("mus_tpfms_eta", &mus_tpfms_eta, &b_mus_tpfms_eta);
+  // chainB.SetBranchAddress("mus_tpfms_phi", &mus_tpfms_phi, &b_mus_tpfms_phi);
+  // chainB.SetBranchAddress("mus_tpfms_theta", &mus_tpfms_theta, &b_mus_tpfms_theta);
+  // chainB.SetBranchAddress("mus_tpfms_d0dum", &mus_tpfms_d0dum, &b_mus_tpfms_d0dum);
+  // chainB.SetBranchAddress("mus_tpfms_dz", &mus_tpfms_dz, &b_mus_tpfms_dz);
+  // chainB.SetBranchAddress("mus_tpfms_vx", &mus_tpfms_vx, &b_mus_tpfms_vx);
+  // chainB.SetBranchAddress("mus_tpfms_vy", &mus_tpfms_vy, &b_mus_tpfms_vy);
+  // chainB.SetBranchAddress("mus_tpfms_vz", &mus_tpfms_vz, &b_mus_tpfms_vz);
+  // chainB.SetBranchAddress("mus_tpfms_numvalhits", &mus_tpfms_numvalhits, &b_mus_tpfms_numvalhits);
+  // chainB.SetBranchAddress("mus_tpfms_numlosthits", &mus_tpfms_numlosthits, &b_mus_tpfms_numlosthits);
+  // chainB.SetBranchAddress("mus_tpfms_d0dumErr", &mus_tpfms_d0dumErr, &b_mus_tpfms_d0dumErr);
+  // chainB.SetBranchAddress("mus_tpfms_dzErr", &mus_tpfms_dzErr, &b_mus_tpfms_dzErr);
+  // chainB.SetBranchAddress("mus_tpfms_ptErr", &mus_tpfms_ptErr, &b_mus_tpfms_ptErr);
+  // chainB.SetBranchAddress("mus_tpfms_etaErr", &mus_tpfms_etaErr, &b_mus_tpfms_etaErr);
+  // chainB.SetBranchAddress("mus_tpfms_phiErr", &mus_tpfms_phiErr, &b_mus_tpfms_phiErr);
+  // chainB.SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
   chainB.SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
   chainB.SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
   if (cfAVersion<=71||cfAVersion==74) {
@@ -5658,7 +5750,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("pfTypeImets_sumEt", &pfTypeImets_sumEt, &b_pfTypeImets_sumEt);
     chainB.SetBranchAddress("pfTypeImets_unCPhi", &pfTypeImets_unCPhi, &b_pfTypeImets_unCPhi);
     chainB.SetBranchAddress("pfTypeImets_unCPt", &pfTypeImets_unCPt, &b_pfTypeImets_unCPt);
-  } else {
+  } else if (cfAVersion>=75&&cfAVersion<=76) {
     std::cout << "Linking pfTypeImets to mets..." << std::endl;
     chainB.SetBranchAddress("Nmets", &NpfTypeImets, &b_NpfTypeImets);
     chainB.SetBranchAddress("mets_et", &pfTypeImets_et, &b_pfTypeImets_et);
@@ -5671,6 +5763,15 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("mets_sumEt", &pfTypeImets_sumEt, &b_pfTypeImets_sumEt);
     chainB.SetBranchAddress("mets_unCPhi", &pfTypeImets_unCPhi, &b_pfTypeImets_unCPhi);
     chainB.SetBranchAddress("mets_unCPt", &pfTypeImets_unCPt, &b_pfTypeImets_unCPt);
+  } else if (cfAVersion>=77) {
+    chainB.SetBranchAddress("NpfType1mets", &NpfTypeImets, &b_NpfTypeImets);
+    chainB.SetBranchAddress("pfType1mets_et", &pfTypeImets_et, &b_pfTypeImets_et);
+    chainB.SetBranchAddress("pfType1mets_phi", &pfTypeImets_phi, &b_pfTypeImets_phi);
+    chainB.SetBranchAddress("pfType1mets_ex", &pfTypeImets_ex, &b_pfTypeImets_ex);
+    chainB.SetBranchAddress("pfType1mets_ey", &pfTypeImets_ey, &b_pfTypeImets_ey);
+    chainB.SetBranchAddress("pfType1mets_sumEt", &pfTypeImets_sumEt, &b_pfTypeImets_sumEt);
+    chainB.SetBranchAddress("pfType1mets_unCPhi", &pfTypeImets_unCPhi, &b_pfTypeImets_unCPhi);
+    chainB.SetBranchAddress("pfType1mets_unCPt", &pfTypeImets_unCPt, &b_pfTypeImets_unCPt);
   }
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("Npf_els", &Npf_els, &b_Npf_els);
@@ -6037,56 +6138,58 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("pf_mus_dB", &pf_mus_dB, &b_pf_mus_dB);
     chainB.SetBranchAddress("pf_mus_numberOfMatchedStations", &pf_mus_numberOfMatchedStations, &b_pf_mus_numberOfMatchedStations);
     chainB.SetBranchAddress("pf_mus_isPFMuon", &pf_mus_isPFMuon, &b_pf_mus_isPFMuon);
-    chainB.SetBranchAddress("Npf_photons", &Npf_photons, &b_Npf_photons);
-    chainB.SetBranchAddress("pf_photons_energy", &pf_photons_energy, &b_pf_photons_energy);
-    chainB.SetBranchAddress("pf_photons_et", &pf_photons_et, &b_pf_photons_et);
-    chainB.SetBranchAddress("pf_photons_eta", &pf_photons_eta, &b_pf_photons_eta);
-    chainB.SetBranchAddress("pf_photons_phi", &pf_photons_phi, &b_pf_photons_phi);
-    chainB.SetBranchAddress("pf_photons_pt", &pf_photons_pt, &b_pf_photons_pt);
-    chainB.SetBranchAddress("pf_photons_px", &pf_photons_px, &b_pf_photons_px);
-    chainB.SetBranchAddress("pf_photons_py", &pf_photons_py, &b_pf_photons_py);
-    chainB.SetBranchAddress("pf_photons_pz", &pf_photons_pz, &b_pf_photons_pz);
-    chainB.SetBranchAddress("pf_photons_status", &pf_photons_status, &b_pf_photons_status);
-    chainB.SetBranchAddress("pf_photons_theta", &pf_photons_theta, &b_pf_photons_theta);
-    chainB.SetBranchAddress("pf_photons_hadOverEM", &pf_photons_hadOverEM, &b_pf_photons_hadOverEM);
-    chainB.SetBranchAddress("pf_photons_hadTowOverEM", &pf_photons_hadTowOverEM, &b_pf_photons_hadTowOverEM);
-    chainB.SetBranchAddress("pf_photons_scEnergy", &pf_photons_scEnergy, &b_pf_photons_scEnergy);
-    chainB.SetBranchAddress("pf_photons_scRawEnergy", &pf_photons_scRawEnergy, &b_pf_photons_scRawEnergy);
-    chainB.SetBranchAddress("pf_photons_scEta", &pf_photons_scEta, &b_pf_photons_scEta);
-    chainB.SetBranchAddress("pf_photons_scPhi", &pf_photons_scPhi, &b_pf_photons_scPhi);
-    chainB.SetBranchAddress("pf_photons_scEtaWidth", &pf_photons_scEtaWidth, &b_pf_photons_scEtaWidth);
-    chainB.SetBranchAddress("pf_photons_scPhiWidth", &pf_photons_scPhiWidth, &b_pf_photons_scPhiWidth);
-    chainB.SetBranchAddress("pf_photons_isAlsoElectron", &pf_photons_isAlsoElectron, &b_pf_photons_isAlsoElectron);
-    chainB.SetBranchAddress("pf_photons_hasPixelSeed", &pf_photons_hasPixelSeed, &b_pf_photons_hasPixelSeed);
-    chainB.SetBranchAddress("pf_photons_isConverted", &pf_photons_isConverted, &b_pf_photons_isConverted);
-    chainB.SetBranchAddress("pf_photons_isEBGap", &pf_photons_isEBGap, &b_pf_photons_isEBGap);
-    chainB.SetBranchAddress("pf_photons_isEEGap", &pf_photons_isEEGap, &b_pf_photons_isEEGap);
-    chainB.SetBranchAddress("pf_photons_isEBEEGap", &pf_photons_isEBEEGap, &b_pf_photons_isEBEEGap);
-    chainB.SetBranchAddress("pf_photons_isEBPho", &pf_photons_isEBPho, &b_pf_photons_isEBPho);
-    chainB.SetBranchAddress("pf_photons_isEEPho", &pf_photons_isEEPho, &b_pf_photons_isEEPho);
-    chainB.SetBranchAddress("pf_photons_maxEnergyXtal", &pf_photons_maxEnergyXtal, &b_pf_photons_maxEnergyXtal);
-    chainB.SetBranchAddress("pf_photons_e1x5", &pf_photons_e1x5, &b_pf_photons_e1x5);
-    chainB.SetBranchAddress("pf_photons_e2x5", &pf_photons_e2x5, &b_pf_photons_e2x5);
-    chainB.SetBranchAddress("pf_photons_e3x3", &pf_photons_e3x3, &b_pf_photons_e3x3);
-    chainB.SetBranchAddress("pf_photons_e5x5", &pf_photons_e5x5, &b_pf_photons_e5x5);
-    chainB.SetBranchAddress("pf_photons_sigmaEtaEta", &pf_photons_sigmaEtaEta, &b_pf_photons_sigmaEtaEta);
-    chainB.SetBranchAddress("pf_photons_sigmaIetaIeta", &pf_photons_sigmaIetaIeta, &b_pf_photons_sigmaIetaIeta);
-    chainB.SetBranchAddress("pf_photons_r9", &pf_photons_r9, &b_pf_photons_r9);
-    chainB.SetBranchAddress("pf_photons_chIso", &pf_photons_chIso, &b_pf_photons_chIso);
-    chainB.SetBranchAddress("pf_photons_nhIso", &pf_photons_nhIso, &b_pf_photons_nhIso);
-    chainB.SetBranchAddress("pf_photons_phIso", &pf_photons_phIso, &b_pf_photons_phIso);
+    if (cfAVersion==71||cfAVersion==74) {
+      chainB.SetBranchAddress("Npf_photons", &Npf_photons, &b_Npf_photons);
+      chainB.SetBranchAddress("pf_photons_energy", &pf_photons_energy, &b_pf_photons_energy);
+      chainB.SetBranchAddress("pf_photons_et", &pf_photons_et, &b_pf_photons_et);
+      chainB.SetBranchAddress("pf_photons_eta", &pf_photons_eta, &b_pf_photons_eta);
+      chainB.SetBranchAddress("pf_photons_phi", &pf_photons_phi, &b_pf_photons_phi);
+      chainB.SetBranchAddress("pf_photons_pt", &pf_photons_pt, &b_pf_photons_pt);
+      chainB.SetBranchAddress("pf_photons_px", &pf_photons_px, &b_pf_photons_px);
+      chainB.SetBranchAddress("pf_photons_py", &pf_photons_py, &b_pf_photons_py);
+      chainB.SetBranchAddress("pf_photons_pz", &pf_photons_pz, &b_pf_photons_pz);
+      chainB.SetBranchAddress("pf_photons_status", &pf_photons_status, &b_pf_photons_status);
+      chainB.SetBranchAddress("pf_photons_theta", &pf_photons_theta, &b_pf_photons_theta);
+      chainB.SetBranchAddress("pf_photons_hadOverEM", &pf_photons_hadOverEM, &b_pf_photons_hadOverEM);
+      chainB.SetBranchAddress("pf_photons_hadTowOverEM", &pf_photons_hadTowOverEM, &b_pf_photons_hadTowOverEM);
+      chainB.SetBranchAddress("pf_photons_scEnergy", &pf_photons_scEnergy, &b_pf_photons_scEnergy);
+      chainB.SetBranchAddress("pf_photons_scRawEnergy", &pf_photons_scRawEnergy, &b_pf_photons_scRawEnergy);
+      chainB.SetBranchAddress("pf_photons_scEta", &pf_photons_scEta, &b_pf_photons_scEta);
+      chainB.SetBranchAddress("pf_photons_scPhi", &pf_photons_scPhi, &b_pf_photons_scPhi);
+      chainB.SetBranchAddress("pf_photons_scEtaWidth", &pf_photons_scEtaWidth, &b_pf_photons_scEtaWidth);
+      chainB.SetBranchAddress("pf_photons_scPhiWidth", &pf_photons_scPhiWidth, &b_pf_photons_scPhiWidth);
+      chainB.SetBranchAddress("pf_photons_isAlsoElectron", &pf_photons_isAlsoElectron, &b_pf_photons_isAlsoElectron);
+      chainB.SetBranchAddress("pf_photons_hasPixelSeed", &pf_photons_hasPixelSeed, &b_pf_photons_hasPixelSeed);
+      chainB.SetBranchAddress("pf_photons_isConverted", &pf_photons_isConverted, &b_pf_photons_isConverted);
+      chainB.SetBranchAddress("pf_photons_isEBGap", &pf_photons_isEBGap, &b_pf_photons_isEBGap);
+      chainB.SetBranchAddress("pf_photons_isEEGap", &pf_photons_isEEGap, &b_pf_photons_isEEGap);
+      chainB.SetBranchAddress("pf_photons_isEBEEGap", &pf_photons_isEBEEGap, &b_pf_photons_isEBEEGap);
+      chainB.SetBranchAddress("pf_photons_isEBPho", &pf_photons_isEBPho, &b_pf_photons_isEBPho);
+      chainB.SetBranchAddress("pf_photons_isEEPho", &pf_photons_isEEPho, &b_pf_photons_isEEPho);
+      chainB.SetBranchAddress("pf_photons_maxEnergyXtal", &pf_photons_maxEnergyXtal, &b_pf_photons_maxEnergyXtal);
+      chainB.SetBranchAddress("pf_photons_e1x5", &pf_photons_e1x5, &b_pf_photons_e1x5);
+      chainB.SetBranchAddress("pf_photons_e2x5", &pf_photons_e2x5, &b_pf_photons_e2x5);
+      chainB.SetBranchAddress("pf_photons_e3x3", &pf_photons_e3x3, &b_pf_photons_e3x3);
+      chainB.SetBranchAddress("pf_photons_e5x5", &pf_photons_e5x5, &b_pf_photons_e5x5);
+      chainB.SetBranchAddress("pf_photons_sigmaEtaEta", &pf_photons_sigmaEtaEta, &b_pf_photons_sigmaEtaEta);
+      chainB.SetBranchAddress("pf_photons_sigmaIetaIeta", &pf_photons_sigmaIetaIeta, &b_pf_photons_sigmaIetaIeta);
+      chainB.SetBranchAddress("pf_photons_r9", &pf_photons_r9, &b_pf_photons_r9);
+      chainB.SetBranchAddress("pf_photons_chIso", &pf_photons_chIso, &b_pf_photons_chIso);
+      chainB.SetBranchAddress("pf_photons_nhIso", &pf_photons_nhIso, &b_pf_photons_nhIso);
+      chainB.SetBranchAddress("pf_photons_phIso", &pf_photons_phIso, &b_pf_photons_phIso);
+    }
   }
   if (sampleName.find("lite")==std::string::npos) {
     chainB.SetBranchAddress("Npfcand", &Npfcand, &b_Npfcand);
     chainB.SetBranchAddress("pfcand_pdgId", &pfcand_pdgId, &b_pfcand_pdgId);
     if (cfAVersion<=71||cfAVersion==74) chainB.SetBranchAddress("pfcand_particleId", &pfcand_particleId, &b_pfcand_particleId);
     chainB.SetBranchAddress("pfcand_pt", &pfcand_pt, &b_pfcand_pt);
-    chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
-    chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);
-    chainB.SetBranchAddress("pfcand_py", &pfcand_py, &b_pfcand_py);
+    // chainB.SetBranchAddress("pfcand_pz", &pfcand_pz, &b_pfcand_pz);
+    // chainB.SetBranchAddress("pfcand_px", &pfcand_px, &b_pfcand_px);
+    // chainB.SetBranchAddress("pfcand_py", &pfcand_py, &b_pfcand_py);
     chainB.SetBranchAddress("pfcand_eta", &pfcand_eta, &b_pfcand_eta);
     chainB.SetBranchAddress("pfcand_phi", &pfcand_phi, &b_pfcand_phi);
-    chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
+    // chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
     chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
     chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
   }
@@ -6114,7 +6217,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("photons_pz", &photons_pz, &b_photons_pz);
     chainB.SetBranchAddress("photons_status", &photons_status, &b_photons_status);
     chainB.SetBranchAddress("photons_theta", &photons_theta, &b_photons_theta);
-    chainB.SetBranchAddress("photons_hadOverEM", &photons_hadOverEM, &b_photons_hadOverEM);
+    if (cfAVersion<=71||cfAVersion==74) chainB.SetBranchAddress("photons_hadOverEM", &photons_hadOverEM, &b_photons_hadOverEM);
     chainB.SetBranchAddress("photons_hadTowOverEM", &photons_hadTowOverEM, &b_photons_hadTowOverEM);
     chainB.SetBranchAddress("photons_scEnergy", &photons_scEnergy, &b_photons_scEnergy);
     chainB.SetBranchAddress("photons_scRawEnergy", &photons_scRawEnergy, &b_photons_scRawEnergy);
@@ -6137,9 +6240,9 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("photons_isoHollowTrkConeDR03", &photons_isoHollowTrkConeDR03, &b_photons_isoHollowTrkConeDR03);
     chainB.SetBranchAddress("photons_nTrkSolidConeDR03", &photons_nTrkSolidConeDR03, &b_photons_nTrkSolidConeDR03);
     chainB.SetBranchAddress("photons_nTrkHollowConeDR03", &photons_nTrkHollowConeDR03, &b_photons_nTrkHollowConeDR03);
-    chainB.SetBranchAddress("photons_isAlsoElectron", &photons_isAlsoElectron, &b_photons_isAlsoElectron);
-    chainB.SetBranchAddress("photons_hasPixelSeed", &photons_hasPixelSeed, &b_photons_hasPixelSeed);
-    chainB.SetBranchAddress("photons_isConverted", &photons_isConverted, &b_photons_isConverted);
+    // chainB.SetBranchAddress("photons_isAlsoElectron", &photons_isAlsoElectron, &b_photons_isAlsoElectron);
+    // chainB.SetBranchAddress("photons_hasPixelSeed", &photons_hasPixelSeed, &b_photons_hasPixelSeed);
+    // chainB.SetBranchAddress("photons_isConverted", &photons_isConverted, &b_photons_isConverted);
     chainB.SetBranchAddress("photons_isEBGap", &photons_isEBGap, &b_photons_isEBGap);
     chainB.SetBranchAddress("photons_isEEGap", &photons_isEEGap, &b_photons_isEEGap);
     chainB.SetBranchAddress("photons_isEBEEGap", &photons_isEBEEGap, &b_photons_isEBEEGap);
@@ -6155,10 +6258,10 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("photons_sigmaEtaEta", &photons_sigmaEtaEta, &b_photons_sigmaEtaEta);
     chainB.SetBranchAddress("photons_sigmaIetaIeta", &photons_sigmaIetaIeta, &b_photons_sigmaIetaIeta);
     chainB.SetBranchAddress("photons_r9", &photons_r9, &b_photons_r9);
-    chainB.SetBranchAddress("photons_gen_et", &photons_gen_et, &b_photons_gen_et);
-    chainB.SetBranchAddress("photons_gen_eta", &photons_gen_eta, &b_photons_gen_eta);
-    chainB.SetBranchAddress("photons_gen_phi", &photons_gen_phi, &b_photons_gen_phi);
-    chainB.SetBranchAddress("photons_gen_id", &photons_gen_id, &b_photons_gen_id);
+    // chainB.SetBranchAddress("photons_gen_et", &photons_gen_et, &b_photons_gen_et);
+    // chainB.SetBranchAddress("photons_gen_eta", &photons_gen_eta, &b_photons_gen_eta);
+    // chainB.SetBranchAddress("photons_gen_phi", &photons_gen_phi, &b_photons_gen_phi);
+    // chainB.SetBranchAddress("photons_gen_id", &photons_gen_id, &b_photons_gen_id);
     chainB.SetBranchAddress("Npv", &Npv, &b_Npv);
     chainB.SetBranchAddress("pv_x", &pv_x, &b_pv_x);
     chainB.SetBranchAddress("pv_y", &pv_y, &b_pv_y);
@@ -6170,7 +6273,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("pv_ndof", &pv_ndof, &b_pv_ndof);
     chainB.SetBranchAddress("pv_isFake", &pv_isFake, &b_pv_isFake);
     chainB.SetBranchAddress("pv_isValid", &pv_isValid, &b_pv_isValid);
-    chainB.SetBranchAddress("pv_tracksSize", &pv_tracksSize, &b_pv_tracksSize);
+    if (cfAVersion<77) chainB.SetBranchAddress("pv_tracksSize", &pv_tracksSize, &b_pv_tracksSize);
     chainB.SetBranchAddress("Ntaus", &Ntaus, &b_Ntaus);
     chainB.SetBranchAddress("taus_status", &taus_status, &b_taus_status);
     chainB.SetBranchAddress("taus_phi", &taus_phi, &b_taus_phi);
@@ -6183,54 +6286,54 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("taus_et", &taus_et, &b_taus_et);
     chainB.SetBranchAddress("taus_energy", &taus_energy, &b_taus_energy);
     chainB.SetBranchAddress("taus_charge", &taus_charge, &b_taus_charge);
-    chainB.SetBranchAddress("taus_emf", &taus_emf, &b_taus_emf);
-    chainB.SetBranchAddress("taus_hcalTotOverPLead", &taus_hcalTotOverPLead, &b_taus_hcalTotOverPLead);
-    chainB.SetBranchAddress("taus_hcalMaxOverPLead", &taus_hcalMaxOverPLead, &b_taus_hcalMaxOverPLead);
-    chainB.SetBranchAddress("taus_hcal3x3OverPLead", &taus_hcal3x3OverPLead, &b_taus_hcal3x3OverPLead);
-    chainB.SetBranchAddress("taus_ecalStripSumEOverPLead", &taus_ecalStripSumEOverPLead, &b_taus_ecalStripSumEOverPLead);
-    chainB.SetBranchAddress("taus_elecPreIdOutput", &taus_elecPreIdOutput, &b_taus_elecPreIdOutput);
-    chainB.SetBranchAddress("taus_elecPreIdDecision", &taus_elecPreIdDecision, &b_taus_elecPreIdDecision);
-    chainB.SetBranchAddress("taus_leadPFChargedHadrCand_pt", &taus_leadPFChargedHadrCand_pt, &b_taus_leadPFChargedHadrCand_pt);
-    chainB.SetBranchAddress("taus_leadPFChargedHadrCand_charge", &taus_leadPFChargedHadrCand_charge, &b_taus_leadPFChargedHadrCand_charge);
-    chainB.SetBranchAddress("taus_leadPFChargedHadrCand_eta", &taus_leadPFChargedHadrCand_eta, &b_taus_leadPFChargedHadrCand_eta);
-    chainB.SetBranchAddress("taus_leadPFChargedHadrCand_ECAL_eta", &taus_leadPFChargedHadrCand_ECAL_eta, &b_taus_leadPFChargedHadrCand_ECAL_eta);
-    chainB.SetBranchAddress("taus_leadPFChargedHadrCand_phi", &taus_leadPFChargedHadrCand_phi, &b_taus_leadPFChargedHadrCand_phi);
-    chainB.SetBranchAddress("taus_isoPFGammaCandsEtSum", &taus_isoPFGammaCandsEtSum, &b_taus_isoPFGammaCandsEtSum);
-    chainB.SetBranchAddress("taus_isoPFChargedHadrCandsPtSum", &taus_isoPFChargedHadrCandsPtSum, &b_taus_isoPFChargedHadrCandsPtSum);
-    chainB.SetBranchAddress("taus_leadingTrackFinding", &taus_leadingTrackFinding, &b_taus_leadingTrackFinding);
-    chainB.SetBranchAddress("taus_leadingTrackPtCut", &taus_leadingTrackPtCut, &b_taus_leadingTrackPtCut);
-    chainB.SetBranchAddress("taus_trackIsolation", &taus_trackIsolation, &b_taus_trackIsolation);
-    chainB.SetBranchAddress("taus_ecalIsolation", &taus_ecalIsolation, &b_taus_ecalIsolation);
-    chainB.SetBranchAddress("taus_byIsolation", &taus_byIsolation, &b_taus_byIsolation);
-    chainB.SetBranchAddress("taus_againstElectron", &taus_againstElectron, &b_taus_againstElectron);
-    chainB.SetBranchAddress("taus_againstMuon", &taus_againstMuon, &b_taus_againstMuon);
-    chainB.SetBranchAddress("taus_taNC_quarter", &taus_taNC_quarter, &b_taus_taNC_quarter);
-    chainB.SetBranchAddress("taus_taNC_one", &taus_taNC_one, &b_taus_taNC_one);
-    chainB.SetBranchAddress("taus_taNC_half", &taus_taNC_half, &b_taus_taNC_half);
-    chainB.SetBranchAddress("taus_taNC_tenth", &taus_taNC_tenth, &b_taus_taNC_tenth);
-    chainB.SetBranchAddress("taus_taNC", &taus_taNC, &b_taus_taNC);
-    chainB.SetBranchAddress("taus_byIsoUsingLeadingPi", &taus_byIsoUsingLeadingPi, &b_taus_byIsoUsingLeadingPi);
-    chainB.SetBranchAddress("taus_tkIsoUsingLeadingPi", &taus_tkIsoUsingLeadingPi, &b_taus_tkIsoUsingLeadingPi);
-    chainB.SetBranchAddress("taus_ecalIsoUsingLeadingPi", &taus_ecalIsoUsingLeadingPi, &b_taus_ecalIsoUsingLeadingPi);
-    chainB.SetBranchAddress("taus_againstElectronLoose", &taus_againstElectronLoose, &b_taus_againstElectronLoose);
-    chainB.SetBranchAddress("taus_againstElectronMedium", &taus_againstElectronMedium, &b_taus_againstElectronMedium);
-    chainB.SetBranchAddress("taus_againstElectronTight", &taus_againstElectronTight, &b_taus_againstElectronTight);
-    chainB.SetBranchAddress("taus_againstElectronMVA", &taus_againstElectronMVA, &b_taus_againstElectronMVA);
-    chainB.SetBranchAddress("taus_againstMuonLoose", &taus_againstMuonLoose, &b_taus_againstMuonLoose);
-    chainB.SetBranchAddress("taus_againstMuonMedium", &taus_againstMuonMedium, &b_taus_againstMuonMedium);
-    chainB.SetBranchAddress("taus_againstMuonTight", &taus_againstMuonTight, &b_taus_againstMuonTight);
-    chainB.SetBranchAddress("taus_decayModeFinding", &taus_decayModeFinding, &b_taus_decayModeFinding);
-    chainB.SetBranchAddress("taus_byVLooseIsolation", &taus_byVLooseIsolation, &b_taus_byVLooseIsolation);
-    chainB.SetBranchAddress("taus_byLooseIsolation", &taus_byLooseIsolation, &b_taus_byLooseIsolation);
-    chainB.SetBranchAddress("taus_byMediumIsolation", &taus_byMediumIsolation, &b_taus_byMediumIsolation);
-    chainB.SetBranchAddress("taus_byTightIsolation", &taus_byTightIsolation, &b_taus_byTightIsolation);
-    chainB.SetBranchAddress("taus_byVLooseIsolationDeltaBetaCorr", &taus_byVLooseIsolationDeltaBetaCorr, &b_taus_byVLooseIsolationDeltaBetaCorr);
-    chainB.SetBranchAddress("taus_byLooseIsolationDeltaBetaCorr", &taus_byLooseIsolationDeltaBetaCorr, &b_taus_byLooseIsolationDeltaBetaCorr);
-    chainB.SetBranchAddress("taus_byMediumIsolationDeltaBetaCorr", &taus_byMediumIsolationDeltaBetaCorr, &b_taus_byMediumIsolationDeltaBetaCorr);
-    chainB.SetBranchAddress("taus_byTightIsolationDeltaBetaCorr", &taus_byTightIsolationDeltaBetaCorr, &b_taus_byTightIsolationDeltaBetaCorr);
-    chainB.SetBranchAddress("taus_signalPFChargedHadrCandsSize", &taus_signalPFChargedHadrCandsSize, &b_taus_signalPFChargedHadrCandsSize);
-    chainB.SetBranchAddress("taus_muDecision", &taus_muDecision, &b_taus_muDecision);
-    chainB.SetBranchAddress("taus_Nprongs", &taus_Nprongs, &b_taus_Nprongs);
+    // chainB.SetBranchAddress("taus_emf", &taus_emf, &b_taus_emf);
+    // chainB.SetBranchAddress("taus_hcalTotOverPLead", &taus_hcalTotOverPLead, &b_taus_hcalTotOverPLead);
+    // chainB.SetBranchAddress("taus_hcalMaxOverPLead", &taus_hcalMaxOverPLead, &b_taus_hcalMaxOverPLead);
+    // chainB.SetBranchAddress("taus_hcal3x3OverPLead", &taus_hcal3x3OverPLead, &b_taus_hcal3x3OverPLead);
+    // chainB.SetBranchAddress("taus_ecalStripSumEOverPLead", &taus_ecalStripSumEOverPLead, &b_taus_ecalStripSumEOverPLead);
+    // chainB.SetBranchAddress("taus_elecPreIdOutput", &taus_elecPreIdOutput, &b_taus_elecPreIdOutput);
+    // chainB.SetBranchAddress("taus_elecPreIdDecision", &taus_elecPreIdDecision, &b_taus_elecPreIdDecision);
+    // chainB.SetBranchAddress("taus_leadPFChargedHadrCand_pt", &taus_leadPFChargedHadrCand_pt, &b_taus_leadPFChargedHadrCand_pt);
+    // chainB.SetBranchAddress("taus_leadPFChargedHadrCand_charge", &taus_leadPFChargedHadrCand_charge, &b_taus_leadPFChargedHadrCand_charge);
+    // chainB.SetBranchAddress("taus_leadPFChargedHadrCand_eta", &taus_leadPFChargedHadrCand_eta, &b_taus_leadPFChargedHadrCand_eta);
+    // chainB.SetBranchAddress("taus_leadPFChargedHadrCand_ECAL_eta", &taus_leadPFChargedHadrCand_ECAL_eta, &b_taus_leadPFChargedHadrCand_ECAL_eta);
+    // chainB.SetBranchAddress("taus_leadPFChargedHadrCand_phi", &taus_leadPFChargedHadrCand_phi, &b_taus_leadPFChargedHadrCand_phi);
+    // chainB.SetBranchAddress("taus_isoPFGammaCandsEtSum", &taus_isoPFGammaCandsEtSum, &b_taus_isoPFGammaCandsEtSum);
+    // chainB.SetBranchAddress("taus_isoPFChargedHadrCandsPtSum", &taus_isoPFChargedHadrCandsPtSum, &b_taus_isoPFChargedHadrCandsPtSum);
+    // chainB.SetBranchAddress("taus_leadingTrackFinding", &taus_leadingTrackFinding, &b_taus_leadingTrackFinding);
+    // chainB.SetBranchAddress("taus_leadingTrackPtCut", &taus_leadingTrackPtCut, &b_taus_leadingTrackPtCut);
+    // chainB.SetBranchAddress("taus_trackIsolation", &taus_trackIsolation, &b_taus_trackIsolation);
+    // chainB.SetBranchAddress("taus_ecalIsolation", &taus_ecalIsolation, &b_taus_ecalIsolation);
+    // chainB.SetBranchAddress("taus_byIsolation", &taus_byIsolation, &b_taus_byIsolation);
+    // chainB.SetBranchAddress("taus_againstElectron", &taus_againstElectron, &b_taus_againstElectron);
+    // chainB.SetBranchAddress("taus_againstMuon", &taus_againstMuon, &b_taus_againstMuon);
+    // chainB.SetBranchAddress("taus_taNC_quarter", &taus_taNC_quarter, &b_taus_taNC_quarter);
+    // chainB.SetBranchAddress("taus_taNC_one", &taus_taNC_one, &b_taus_taNC_one);
+    // chainB.SetBranchAddress("taus_taNC_half", &taus_taNC_half, &b_taus_taNC_half);
+    // chainB.SetBranchAddress("taus_taNC_tenth", &taus_taNC_tenth, &b_taus_taNC_tenth);
+    // chainB.SetBranchAddress("taus_taNC", &taus_taNC, &b_taus_taNC);
+    // chainB.SetBranchAddress("taus_byIsoUsingLeadingPi", &taus_byIsoUsingLeadingPi, &b_taus_byIsoUsingLeadingPi);
+    // chainB.SetBranchAddress("taus_tkIsoUsingLeadingPi", &taus_tkIsoUsingLeadingPi, &b_taus_tkIsoUsingLeadingPi);
+    // chainB.SetBranchAddress("taus_ecalIsoUsingLeadingPi", &taus_ecalIsoUsingLeadingPi, &b_taus_ecalIsoUsingLeadingPi);
+    // chainB.SetBranchAddress("taus_againstElectronLoose", &taus_againstElectronLoose, &b_taus_againstElectronLoose);
+    // chainB.SetBranchAddress("taus_againstElectronMedium", &taus_againstElectronMedium, &b_taus_againstElectronMedium);
+    // chainB.SetBranchAddress("taus_againstElectronTight", &taus_againstElectronTight, &b_taus_againstElectronTight);
+    // chainB.SetBranchAddress("taus_againstElectronMVA", &taus_againstElectronMVA, &b_taus_againstElectronMVA);
+    // chainB.SetBranchAddress("taus_againstMuonLoose", &taus_againstMuonLoose, &b_taus_againstMuonLoose);
+    // chainB.SetBranchAddress("taus_againstMuonMedium", &taus_againstMuonMedium, &b_taus_againstMuonMedium);
+    // chainB.SetBranchAddress("taus_againstMuonTight", &taus_againstMuonTight, &b_taus_againstMuonTight);
+    // chainB.SetBranchAddress("taus_decayModeFinding", &taus_decayModeFinding, &b_taus_decayModeFinding);
+    // chainB.SetBranchAddress("taus_byVLooseIsolation", &taus_byVLooseIsolation, &b_taus_byVLooseIsolation);
+    // chainB.SetBranchAddress("taus_byLooseIsolation", &taus_byLooseIsolation, &b_taus_byLooseIsolation);
+    // chainB.SetBranchAddress("taus_byMediumIsolation", &taus_byMediumIsolation, &b_taus_byMediumIsolation);
+    // chainB.SetBranchAddress("taus_byTightIsolation", &taus_byTightIsolation, &b_taus_byTightIsolation);
+    // chainB.SetBranchAddress("taus_byVLooseIsolationDeltaBetaCorr", &taus_byVLooseIsolationDeltaBetaCorr, &b_taus_byVLooseIsolationDeltaBetaCorr);
+    // chainB.SetBranchAddress("taus_byLooseIsolationDeltaBetaCorr", &taus_byLooseIsolationDeltaBetaCorr, &b_taus_byLooseIsolationDeltaBetaCorr);
+    // chainB.SetBranchAddress("taus_byMediumIsolationDeltaBetaCorr", &taus_byMediumIsolationDeltaBetaCorr, &b_taus_byMediumIsolationDeltaBetaCorr);
+    // chainB.SetBranchAddress("taus_byTightIsolationDeltaBetaCorr", &taus_byTightIsolationDeltaBetaCorr, &b_taus_byTightIsolationDeltaBetaCorr);
+    // chainB.SetBranchAddress("taus_signalPFChargedHadrCandsSize", &taus_signalPFChargedHadrCandsSize, &b_taus_signalPFChargedHadrCandsSize);
+    // chainB.SetBranchAddress("taus_muDecision", &taus_muDecision, &b_taus_muDecision);
+    // chainB.SetBranchAddress("taus_Nprongs", &taus_Nprongs, &b_taus_Nprongs);
     if (cfAVersion<=71||cfAVersion==74) {
       chainB.SetBranchAddress("Ntcmets", &Ntcmets, &b_Ntcmets);
       chainB.SetBranchAddress("tcmets_et", &tcmets_et, &b_tcmets_et);
@@ -6270,7 +6373,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("orbitNumber", &orbitNumber, &b_orbitNumber);
     chainB.SetBranchAddress("weight", &weight, &b_weight);
     chainB.SetBranchAddress("model_params", &model_params, &b_model_params);
-    if (cfAVersion>=75) { 
+    if (cfAVersion>=75&&cfAVersion<=76) { 
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_px", &fastjets_AKPF_R1p2_R0p5pT10_px, &b_fastjets_AKPF_R1p2_R0p5pT10_px);
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_py", &fastjets_AKPF_R1p2_R0p5pT10_py, &b_fastjets_AKPF_R1p2_R0p5pT10_py);
       chainB.SetBranchAddress("fastjets_AK4_R1p2_R0p5pT10_pz", &fastjets_AKPF_R1p2_R0p5pT10_pz, &b_fastjets_AKPF_R1p2_R0p5pT10_pz);

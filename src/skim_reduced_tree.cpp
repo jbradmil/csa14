@@ -10,15 +10,17 @@ using namespace std;
 
 void SkimReducedTree(string inFilename, string outFilename) {
   TChain *inCh = new TChain("reduced_tree");
-  cout << "Input: " << inFilename+"/*root" << endl;
-  inCh->Add((inFilename+"/*root").c_str()); // give it reduced_trees/SAMPLE_NAME
+  cout << "Input: " << inFilename+"*root" << endl;
+  inCh->Add((inFilename+"*root").c_str()); // give it reduced_trees/SAMPLE_NAME/
   cout << "Output: " << outFilename << endl;
 
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
-  //  TTree *outCh = inCh->CopyTree("met>400&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&num_jets_pt30>=4");
-  TTree *outCh = inCh->CopyTree("met>200&&ht30>500&min_delta_phi_met_N>4&&num_jets_pt30>=4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
+  // 13 TeV
+    TTree *outCh = inCh->CopyTree("met>200&&num_jets_pt30>=4&&min_delta_phi_met_N>4&&ht30>500&&num_csvm_jets30>=2");
+  // 8 TeV  
+  // TTree *outCh = inCh->CopyTree("met>125&&ht30>400&&jet2_pt>70&&jet3_pt>50&&passesJSONCut&&passesPVCut&&passes2012METCleaningCut");
   cout << "Saved " << outCh->GetEntries() << " events." << endl;
   outCh->Write();
   outfile->Close();
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]){
 
   std::string outFilename("");
   std::string baseName(inFilename);
-  size_t pos=baseName.find(".root");
+  size_t pos=baseName.rfind("/");
   if(pos!=std::string::npos){
     baseName.erase(pos);
   }
@@ -48,7 +50,10 @@ int main(int argc, char *argv[]){
   if(pos!=std::string::npos){
     baseName.erase(0,pos+1);
   }
-  outFilename="reduced_trees/skimmed/"+baseName+"_skimmed.root";
+  // 13 TeV
+  outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
+  // 8 TeV  
+  //  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
   
   SkimReducedTree(inFilename,outFilename);
 }

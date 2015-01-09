@@ -10,6 +10,7 @@ using std::vector;
 class ObjectPrinter : public cfA{
 public:
   ObjectPrinter(const std::string& in_file_name);
+  float GetCSAElectronIsolation(const uint iel) const;
   void PrintObjects(const unsigned int nentries);
 };
 

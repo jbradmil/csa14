@@ -62,18 +62,16 @@ protected:
   mutable bool recoTausUpToDate;
   mutable bool betaUpToDate;
   static const double CSVTCut, CSVMCut, CSVLCut;
+  static const double ICSVTCut, ICSVMCut, ICSVLCut;
   double scaleFactor;
   
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_px;
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_py;
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_pz;
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_energy;
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_phi;
-  // mutable std::vector<float>   *fastjets_AK4_R1p2_R0p5_eta;
-  // mutable std::vector<std::vector<int> > *fastjets_AK4_R1p2_R0p5_index;
-  // mutable std::vector<int>     *fastjets_AK4_R1p2_R0p5_nconstituents;
   mutable std::vector<double> beta;
 
+
+  //stuff for the btag probability
+  TFile *f_tageff_;
+  TString AssembleBTagEffFilename();
+  void LoadJetTagEffMaps();
 
   int GetcfAVersion() const;
   unsigned TypeCode() const;
@@ -81,7 +79,22 @@ protected:
   int GetGluinoMass() const;
   int GetLSPMass() const;
 
-  // void SetFastJetCollection(const uint=30) const;
+  double GetTriggerEffWeight(const double=50.) const;
+  double GetBtagWeight(const double=50.) const;
+  double GetPIDBtagWeight(const double=50.) const;
+  double GetBtagSF(const int, const double, const double, const int=2) const;
+  double GetBtagEffMC(const int, const double) const;
+  
+
+  void CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Prob1, double &ProbGEQ2,
+			 double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4);
+  double GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff);
+  double GetbJetFastsimSF(const TString & what, const int flavor, const double pt) const;
+  int GetPtBinIndex(const float pt) const;
+  double Get_AN_12_175_Table2_Value(const double pt) const;
+  double Get_AN_12_175_Table10_Value(const double pt) const;
+  double Get_AN_12_175_Table18_Value(const double pt) const;
+
   void ClusterFatJets() const;
   void GetSortedFatJets() const;
   double GetHighestFatJetmJ(const unsigned int=1) const;
@@ -230,11 +243,11 @@ protected:
  
   bool IsMC();
 
-  double GetFatJetPt(const unsigned int, const unsigned int=30) const;
-  int GetFatJetnConst(const unsigned int, const unsigned int=30) const;
-  double GetFatJetmJ(const unsigned int, const unsigned int=30) const;
-  int GetNFatJets(const double=50., const double=10., const unsigned int=30) const;
-  double GetMJ(const double=50., const double=10., const unsigned int=30) const;
+  double GetFatJetPt(const unsigned int/*,  const unsigned int=30*/) const;
+  int GetFatJetnConst(const unsigned int/*,  const unsigned int=30*/) const;
+  double GetFatJetmJ(const unsigned int/*,  const unsigned int=30*/) const;
+  int GetNFatJets(const double=50., const double=10./*,  const unsigned int=30*/) const;
+  double GetMJ(const double=50., const double=10./*,  const unsigned int=30*/) const;
 
   double GetHT(const double=50.) const;
   double GetSumP(const double=50.) const;
@@ -244,6 +257,9 @@ protected:
   unsigned int GetNumCSVTJets(const double=50.) const;
   unsigned int GetNumCSVMJets(const double=50.) const;
   unsigned int GetNumCSVLJets(const double=50.) const;
+  unsigned int GetNumIncCSVTJets(const double=50.) const;
+  unsigned int GetNumIncCSVMJets(const double=50.) const;
+  unsigned int GetNumIncCSVLJets(const double=50.) const;
 
   double GetMTW(const double, const double, const double, const double) const;
   double GetMTWb(const double, const double, const double, const double, const bool=false) const;
@@ -262,12 +278,19 @@ protected:
 
   int GetNumIsoTracks(const double=15.0, const bool=true) const;
 
-  double GetTransverseMass() const;
+  double GetTransverseMassMu() const;
+  double GetTransverseMassEl() const;
+  double GetDeltaThetaT(const double, const double) const;
+  double GetWpT(const double, const double) const;
+
   double GetMHT(const double=30., const double=5.) const;
   double GetMHTPhi(const double=30., const double=5.) const;
 
   double GetDocMET() const;
   double GetGluinoPt(int=1) const;
+
+  int GetNumTaus(const bool=false, const bool=false) const;
+  bool PassPhys14TauID(const int, const bool=false, const bool=false) const;
 
 };
 
