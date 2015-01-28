@@ -16,14 +16,14 @@
 CfASkimmer::CfASkimmer(const std::string& in_file_name,
                        const bool is_list,
 		       const int Nentries_in):
-  EventHandler(in_file_name, is_list, -1, true),
+  EventHandler(in_file_name, is_list, -1, false),
   Nentries(Nentries_in){
-}
+  }
 
 void CfASkimmer::Skim(const std::string& out_file_name){
 
   TFile skimFile(out_file_name.c_str(), "RECREATE");
-  TDirectory *cfA_dir(skimFile.mkdir("configurableAnalysis", "configurableAnalysis"));
+  TDirectory *cfA_dir(skimFile.mkdir("cfA", "cfA"));
   cfA_dir->cd();
   TTree *skimTreeA(chainA.CloneTree(0));
   chainA.CopyAddresses(skimTreeA);
@@ -32,7 +32,7 @@ void CfASkimmer::Skim(const std::string& out_file_name){
   skimFile.cd();
 
   std::set<EventNumber> eventList;
-  unsigned int startCount(0), met200Count(0), numJetsCount(0), numCSVMCount(0), minDeltaPhiCount(0), muonVetoCount(0), electronVetoCount(0);
+  unsigned int startCount(0), mht200Count(0), numJetsCount(0), numCSVMCount(0), minDeltaPhiCount(0), muonVetoCount(0), electronVetoCount(0), ht500count(0);
  
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
@@ -49,31 +49,41 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     if(!returnVal.second) continue;
 
     ++startCount;
-    // MET>200
-    if (pfTypeImets_et->at(0)<200.) continue;
-    met200Count++;
-    // 3 good jets
-    if (GetNumGoodJets(50)<6) continue;
+    // MHT>200
+    // cout << "MHT" << endl;
+    if (GetMHT(30.)<200.) continue;
+    mht200Count++;
+    // 4 good jets
+    // cout << "njets" << endl;
+    if (GetNumGoodJets(30.)<4) continue;
     numJetsCount++;
+    // HT > 500
+    // cout << "ht" << endl;
+    if (GetHT(30.)<500) continue;
+    ht500count++;
     // 2 b-tags
-    if (GetNumCSVMJets(30.)<2) continue;
+    // cout << "b-taqgging" << endl;
+    //  if (GetNumCSVMJets(30.)<2) continue;
     numCSVMCount++;
     // minDeltaPhi
-    // if (getMinDeltaPhiMETN(3,50,2.4,true,30,2.4,true,true)<4) continue;
+    // cout << "MDPN" << endl;
+    if (getMinDeltaPhiMETN(3,30,2.4,true,30,2.4,true,true)<4) continue;
     minDeltaPhiCount++;
     // no leptons
-    // vector<int>  reco_veto_muons, reco_veto_electrons;
-    // if (cmEnergy>8) {
-    //   reco_veto_muons=GetRecoMuons(true);
-    //   reco_veto_electrons=GetRecoElectrons(true);
-    // }
-    // else {
-    //   reco_veto_muons=GetRA2bMuons(true);
-    //   reco_veto_electrons=GetRA2bElectrons(true);
-    // }
-    // if (reco_veto_muons.size()>0) continue;
+    vector<int>  reco_veto_muons, reco_veto_electrons;
+    if (cfAVersion>=75) {
+      // cout << "muons" << endl;
+      reco_veto_muons=GetRecoMuons(true);
+      // cout << "electrons" << endl;
+      reco_veto_electrons=GetRecoElectrons(true);
+    }
+    else {
+      reco_veto_muons=GetRA2bMuons(true);
+      reco_veto_electrons=GetRA2bElectrons(true);
+    }
+    if (reco_veto_muons.size()>0) continue;
     muonVetoCount++;
-    //  if (reco_veto_electrons.size()>0) continue;
+    if (reco_veto_electrons.size()>0) continue;
     electronVetoCount++;
 
     skimTreeA->Fill();
@@ -83,8 +93,9 @@ void CfASkimmer::Skim(const std::string& out_file_name){
 
   TTree cutFlow("cutFlow", "cutFlow");
   cutFlow.Branch("startCount", &startCount);
-  cutFlow.Branch("met200Count", &met200Count);
+  cutFlow.Branch("mht200Count", &mht200Count);
   cutFlow.Branch("numJetsCount", &numJetsCount);
+  cutFlow.Branch("ht500count", &ht500count);
   cutFlow.Branch("numCSVMCount", &numCSVMCount);
   cutFlow.Branch("minDeltaPhiCount", &minDeltaPhiCount);
   cutFlow.Branch("muonVetoCount", &muonVetoCount);
@@ -92,8 +103,9 @@ void CfASkimmer::Skim(const std::string& out_file_name){
   cutFlow.Fill();
 
   std::cout << "startCount " << startCount << std::endl;
-  std::cout << "met200Count " << met200Count << std::endl;
+  std::cout << "mht200Count " << mht200Count << std::endl;
   std::cout << "numJetsCount " << numJetsCount << std::endl;
+  std::cout << "ht500count " << ht500count << std::endl;
   std::cout << "numCSVMCount " << numCSVMCount << std::endl;
   std::cout << "minDeltaPhiCount " << minDeltaPhiCount << std::endl;
   std::cout << "muonVetoCount " << muonVetoCount << std::endl;

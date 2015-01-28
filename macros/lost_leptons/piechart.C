@@ -1,11 +1,13 @@
 // plot_distribution: Macro that plots variables both lumi weighted and normalized to the same area.
 
 #define INT_ROOT
-#include "inc/mfs_style.hpp"
-#include "src/mfs_style.cpp"
-#include "inc/mfs_utilities.hpp"
-#include "src/mfs_utilities.cpp"
+// #include "inc/mfs_style.hpp"
+// #include "src/mfs_style.cpp"
+// #include "inc/mfs_utilities.hpp"
+// #include "src/mfs_utilities.cpp"
 
+#include <iostream>
+#include <vector>
 #include "TPie.h"
 #include "TPieSlice.h"
 #include "TChain.h"
@@ -14,22 +16,23 @@
 #include "TLegend.h"
 #include "TLine.h"
 #include "TString.h"
+#include "TCut.h"
 #include "macros/include/my_style.hpp"
 
 using namespace std;
 using std::cout;
 using std::endl;
 
-class sfeats {
-public:
-  sfeats(TString icut, TString iname, int icolor){
-    cut = icut; name = iname; color = icolor;
-  }
-  TString cut, name;
-  int color;
-};
+// class sfeats {
+// public:
+//   sfeats(TString icut, TString iname, int icolor){
+//     cut = icut; name = iname; color = icolor;
+//   }
+//   TString cut, name;
+//   int color;
+// };
 
-void piechart(int sample=1) { 
+void piechart(TString sample, TCut more_cuts="", TString tag="ttbar_baseline") { 
   // styles style("Standard"); style.setDefaultStyle();
   gStyle->SetTextSize(0.05);            // Set global text size
   gStyle->SetTitleSize(0.05);     // Set the 2 axes title size
@@ -39,76 +42,54 @@ void piechart(int sample=1) {
   gStyle->SetCanvasDefW(1400);
 
   TCanvas can;
-  TString pname, Hname = "histo", totCut, tag, title;
+  TString pname, Hname = "histo", title;
 
   TChain* chain= new TChain("reduced_tree");
  
-  switch (sample) {
-  case 1:
-    chain->Add("reduced_trees/SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2268_v76/*root");
-    tag="t1tttt_25ns";
-    break;
-  case 2:
-    chain->Add("reduced_trees/SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_duanders-Spring14dr-PU_S14_POSTLS170_V6AN1-miniAOD706p1-814812ec83fce2f620905d2bb30e9100_USER_UCSB2269_v76/*root");
-    tag="t1tttt_50ns";
-    break;
-  case 3:
-    chain->Add("reduced_trees/skimmed/lost_lepton/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2208_v76_skimmed.root");
-    tag="ttbar_25ns";
-    break;
-  case 4:
-    chain->Add("reduced_trees/skimmed/lost_lepton/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14_POSTLS170_V6-v1_MINIAODSIM_UCSB2265_v75_skimmed.root");
-    tag="ttbar_50ns";
-    break;
-  default:
-    chain->Add("reduced_trees/SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2268_v76/*root");
-    tag="t1tttt_25ns";
-  }
+  chain->Add(sample);
 
   TH1D histo(Hname, "",100, 0, 10000);
 
+  chain->Project(Hname, "met", "(weightppb*4000)");
+  cout << "Chain contains " << chain->GetEntries() << " entries." << endl;
+  cout << "Chain contains " << histo.Integral(1,101) << " weighted events." << endl;
 
+  TCut ht("ht30>500"), njets("jet4_pt>30"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp);
 
-  TString cuts("met>400&&ht30>1000&&num_csvm_jets>1&&min_delta_phi_met_N>4&&num_jets_pt30>=4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
-  vector<TString> comp;
+  TCut mu_veto("num_reco_veto_muons==0"), el_veto("num_reco_veto_electrons==0");
+  TCut cuts(presel+mu_veto+el_veto);
+    // TCut cuts("mht30>200&&ht30>500&&min_delta_phi_met_N>4&&num_jets_pt30>=4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0&&num_csvm_jets30>=2");
+  // TCut cuts("mht30>200&&ht30>500&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_jets_pt30>=4");
+  cuts+=more_cuts;
+  vector<TCut> comp;
   comp.push_back("(0x0FFF&type_code)==0");//,"Hadronic",1));
   comp.push_back("(0x0FFF&type_code)==0x0100");//,"1 lep",4));
   comp.push_back("(0x0FFF&type_code)==0x0001");//,"1 #tau_{had}",28));
   comp.push_back("(0x0FFF&type_code)==0x0111");//,"1 #tau_{lep}",kYellow));
-  if (sample<3) {
-    comp.push_back("(0x0FFF&type_code)>0x0100&&(0x0FFF&type_code)<0x1000");//,">=2 lep",2));
-    comp.push_back("(0x0FFF&type_code)>0x0001&&(0x0FFF&type_code)<0x0010");//,">=2 #tau",kCyan+2));
-  } else {
-    comp.push_back("(0x0FFF&type_code)==0x0200");//,">=2 lep",2));
-    comp.push_back("(0x0FFF&type_code)==0x0002");//,">=2 #tau",kCyan+2));
-  }
-
+  comp.push_back("((0x000F&type_code)>=2) || (((0x0F00&type_code)/0x0100)>=2) || ((0x0FFF&type_code)==0x0101)");//,">=2 e/mu/tau",2));
+  
   vector<TString> labels;
   labels.push_back("Hadronic");
   labels.push_back("1 W #rightarrow e/#mu");
   labels.push_back("1 W #rightarrow #tau #rightarrow had");
   labels.push_back("1 W #rightarrow #tau #rightarrow e/#mu");
-  if (sample<3) {
-    labels.push_back("#geq 2 W #rightarrow e/#mu");
-    labels.push_back("#geq 2 W #rightarrow #tau");
-  } else {
-    labels.push_back("2 W #rightarrow e/#mu");
-    labels.push_back("2 W #rightarrow #tau");
-  }
-
+  labels.push_back("#geq 2 W #rightarrow e/#mu/#tau");
   vector<float> yields;
   //vector<string> labels;
   vector<int> colors;
   colors.push_back(1);
   colors.push_back(4);
-  colors.push_back(28);
+  colors.push_back(kGreen+2);
   colors.push_back(kYellow);
   colors.push_back(2);
-  colors.push_back(kCyan+2);
+  // colors.push_back(kCyan+2);
 
 
   for(unsigned ind(0); ind<comp.size(); ind++){
-    totCut = "weightppb*5000*("+cuts+"&&"+comp[ind].Data()+")";
+    // totCut = "weightppb*4000*("+cuts+"&&"+comp[ind].Data()+")";
+    TCut totCut = (cuts+comp[ind])*"(weightppb*4000)";
+    //    cout << totCut.GetTitle() << endl;
+    // if (sample.Contains("TTJets")) totCut=(cuts+comp[ind])*"(3.17760399999999981e-05*4000)";
     chain->Project(Hname, "met", totCut);
     yields.push_back(histo.Integral(0,101));
   }
@@ -118,15 +99,18 @@ void piechart(int sample=1) {
   // pie.SetLabels(&labels[0]);
   for(unsigned ind(0); ind<comp.size(); ind++){
     pie.GetSlice(ind)->SetTitle(labels[ind].Data());
+    //  pie.GetSlice(ind)->SetTitleFont(132);
     //  pie->GetSlice(ind)->SetTitleColor(colors[ind]);
   }
-  pie.SetLabelFormat("%txt (%perc)");
+  // pie.SetLabelFormat("%txt: %val (%perc)");
+  pie.SetLabelFormat("#splitline{%txt}{%val (%perc)}");
+  pie.SetLabelsOffset(0.03);
   pie.SetRadius(0.3);
-  pie.Draw("3d"); 
-  //pie.Draw("nol <");
-  pname = "macros/lost_leptons/output/ttpiechart_"+tag+".root";
-  pie.SaveAs(pname);
-  pname = "macros/lost_leptons/plots/ttpiechart_"+tag+".pdf";
+  // pie.Draw("3d"); 
+  pie.Draw("");
+  //  pname = "macros/lost_leptons/output/lepton_piechart_"+tag+".root";
+  // pie.SaveAs(pname);
+  pname = "macros/lost_leptons/plots/lepton_piechart_"+tag+".pdf";
   can.SaveAs(pname);
   
 

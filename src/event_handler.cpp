@@ -92,10 +92,9 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
       chainB.SetBranchStatus("pf_photons_*",0);
       chainB.SetBranchStatus("Njets_AK5PFclean",0);
       chainB.SetBranchStatus("jets_AK5PFclean_*",0);
-    } else {
-      chainB.SetBranchStatus("mc_final*",0);
     }
   }
+  // if (cfAVersion>=75) chainB.SetBranchStatus("mc_final*",0);
   LoadJetTagEffMaps();
 }
 
@@ -422,7 +421,7 @@ double EventHandler::GetBtagEffMC(const int flavor, const double pt) const{
 
 // This gives you the weight you apply to the MC when you don't cut on b-tags
 void EventHandler::CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Prob1, double &ProbGEQ2,
-				     double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4) {
+				     double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4, double pt_cut) {
 
   //must initialize correctly
   Prob2 = 0;
@@ -466,7 +465,7 @@ void EventHandler::CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Pr
     double subprob1=0;
     double subprob2=0;
 
-    if(isGoodJet(ijet,true,50)){ //switch to 50 GeV threshold for b jets (8 TeV)
+    if(isGoodJet(ijet,true,pt_cut)){ //switch to 40 GeV threshold for MJ note
 
       double effi = GetJetTagEff(ijet, h_btageff, h_ctageff, h_ltageff);
       //      cout << "jet: " << ijet << ", effi: " << effi << endl;
@@ -474,21 +473,21 @@ void EventHandler::CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Pr
       
       double product = 1;
       for (unsigned int kjet=0; kjet<jets_AKPF_pt->size(); ++kjet) {
-	if(isGoodJet(kjet,true,50)){
+	if(isGoodJet(kjet,true,pt_cut)){
 	  double effk = GetJetTagEff(kjet, h_btageff, h_ctageff, h_ltageff);
 	  if(kjet != ijet) product = product*(1-effk);
 	  if(kjet > ijet){
 	    double subproduct = 1;
 	    for (unsigned int jjet=0; jjet<jets_AKPF_pt->size(); ++jjet) {
 	      if(jjet != kjet && jjet != ijet){
-		if(isGoodJet(jjet,true,50)){
+		if(isGoodJet(jjet,true,pt_cut)){
 		  double effj = GetJetTagEff(jjet, h_btageff, h_ctageff, h_ltageff);
 		  subproduct = subproduct*(1-effj);
                   if ( jjet > kjet) {
 		    double subproduct2 = 1;
 		    for (unsigned int ljet=0; ljet<jets_AKPF_pt->size(); ++ljet) {
 		      if(ljet != kjet && ljet != ijet && ljet != jjet){
-			if(isGoodJet(ljet,true,50)){
+			if(isGoodJet(ljet,true,pt_cut)){
 			  double effl = GetJetTagEff(ljet, h_btageff, h_ctageff, h_ltageff);
 			  subproduct2 = subproduct2*(1-effl);
 			}
@@ -523,7 +522,7 @@ void EventHandler::CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Pr
 }
 
 //get MC btag efficiency
-double EventHandler::GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff) {
+double EventHandler::GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff, double pt_cut) {
 
   double tageff=0;
   const float pt = jets_AKPF_pt->at(ijet);
@@ -539,7 +538,7 @@ double EventHandler::GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ct
   //high eta LF, max is 700
   else x = pt > cutoff2 ? cutoff2 : pt;
 
-  if( isGoodJet(ijet,true,50) ) {
+  if( isGoodJet(ijet,true,pt_cut) ) {
 
     //  if (theBTagEffType_ == kBTagEff05 || theBTagEffType_ == kBTagEffup5 || theBTagEffType_ == kBTagEffdown5) { //new  BTV-11-004 prescription 
 
@@ -746,7 +745,7 @@ void EventHandler::GetSortedBJets() const{
 void EventHandler::ClusterFatJets() const{
   if(!FatJetsUpToDate){
     sortedFatJetCache.clear();
-    //  cout << "ClusterFatJets" << endl;
+    //      cout << "ClusterFatJets" << endl;
     vector<PseudoJet> fjets_skinny_30(0);
     vector<PseudoJet> skinny_jets_pt30;
     for(size_t jet = 0; jet<jets_AKPF_pt->size(); ++jet){
@@ -754,7 +753,7 @@ void EventHandler::ClusterFatJets() const{
       // 	  || is_nan(jets_AKPF_pz->at(jet)) || is_nan(jets_AKPF_energy->at(jet))) continue;
       const PseudoJet this_pj(jets_AKPF_px->at(jet), jets_AKPF_py->at(jet),
 			      jets_AKPF_pz->at(jet), jets_AKPF_energy->at(jet));
-      if(this_pj.pt()>30.0&&this_pj.eta()>5.0) skinny_jets_pt30.push_back(this_pj);
+      if(this_pj.pt()>30.0&&fabs(this_pj.eta())<5.0) skinny_jets_pt30.push_back(this_pj);
     }
     //  cout << "Found " << skinny_jets_pt30.size() << " skinny jets." << endl;
     // Define clustering parameters
@@ -766,7 +765,10 @@ void EventHandler::ClusterFatJets() const{
     //   cout << "Found " << cs_skinny_30.inclusive_jets().size() << " fat jets." << endl;
     fjets_skinny_30 = sorted_by_pt(cs_skinny_30.inclusive_jets());
     for(size_t jet = 0; jet<fjets_skinny_30.size(); ++jet){ // now add fat jets to cache
-      sortedFatJetCache.push_back(FatJet(TLorentzVector(fjets_skinny_30[jet].px(),fjets_skinny_30[jet].py(),fjets_skinny_30[jet].pz(),fjets_skinny_30[jet].E()),fjets_skinny_30[jet].constituents().size(),jet));
+      // double px = sortedFatJetCache[index].GetLorentzVector().Px();
+      // double py = sortedFatJetCache[index].GetLorentzVector().Py();
+      // if (TMath::Sqrt(px*px+py*py)>50.)
+	sortedFatJetCache.push_back(FatJet(TLorentzVector(fjets_skinny_30[jet].px(),fjets_skinny_30[jet].py(),fjets_skinny_30[jet].pz(),fjets_skinny_30[jet].E()),fjets_skinny_30[jet].constituents().size(),jet));
     }
   }
   FatJetsUpToDate=true;
@@ -784,11 +786,12 @@ void EventHandler::GetSortedFatJets() const{
       }
       std::sort(sortedFatJetCache.begin(),sortedFatJetCache.end(), std::greater<FatJet>());
       //   cout << "Found " << sortedFatJetCache.size() << " fat jets." << endl;
-      // Sorted by MJ
+      // Sorted by mJ
       FatJetsUpToDate=true;
     }
     else ClusterFatJets();
     FatJetsUpToDate=true;
+    //  cout << "Found " << sortedFatJetCache.size() << " fat jets." << endl;
   }
 }
 
@@ -2346,8 +2349,8 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D
   if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
   // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
   if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
-  const double beamx (beamSpot_x->at(0)), beamy(beamSpot_y->at(0));   
-  const double d0 = mus_tk_d0dum->at(imu)-beamx*sin(mus_tk_phi->at(imu))+beamy*cos(mus_tk_phi->at(imu));
+  const double pvx (pv_x->at(0)), pvy(pv_y->at(0));   
+  const double d0 = mus_tk_d0dum->at(imu)-pvx*sin(mus_tk_phi->at(imu))+pvy*cos(mus_tk_phi->at(imu));
   const double mus_vz = mus_tk_vz->at(imu);
   const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
   if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
@@ -2360,9 +2363,9 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D
   // see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
 
   if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
-  if (!(mus_pt->at(imu)>5.0 ||
-	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
-	mus_isPFMuon->at(imu))) return false;
+  // if (!(mus_pt->at(imu)>5.0 ||
+  // 	( mus_pt->at(imu)>3.0 && (mus_isPFMuon->at(imu)||mus_id_TrackerMuonArbitrated->at(imu)||mus_id_AllStandAloneMuons->at(imu)||mus_id_AllGlobalMuons->at(imu)) ) ||
+  // 	mus_isPFMuon->at(imu))) return false;
   
   if (iso2D) {
     TLorentzVector nearestJet(GetNearestJet(TLorentzVector(mus_px->at(imu),mus_py->at(imu),mus_pz->at(imu),mus_energy->at(imu)),mus_jet_ind->at(imu)));
@@ -2400,13 +2403,13 @@ vector<int> EventHandler::GetRecoTaus() const{
   return taus;
 }
 
-vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool iso2D, const bool mT_cut, const bool orth) const{
+vector<int> EventHandler::GetRecoElectrons(const bool veto/*, const bool iso2D, const bool mT_cut, const bool orth*/) const{
   vector<int> electrons;
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
-      if(isRecoElectron(index,3,iso2D,mT_cut,orth)) electrons.push_back(index);
+      if(isRecoElectron(index,3/*,iso2D,mT_cut,orth*/)) electrons.push_back(index);
     }	else {
-      if(isRecoElectron(index,0,iso2D,mT_cut,orth)) electrons.push_back(index);
+      if(isRecoElectron(index,0/*,iso2D,mT_cut,orth*/)) electrons.push_back(index);
     }
   return electrons;
 }
@@ -2422,8 +2425,163 @@ vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
   return electrons;
 }
 
-bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool iso2D, const bool mT_cut, const bool orth) const{
+bool EventHandler::isRecoElectron(const uint iel, const uint level/*, const bool iso2D, const bool mT_cut, const bool orth*/) const{
+
+  if(iel>=els_pt->size()) return false;
+  bool barrel;
+  if(fabs(els_scEta->at(iel))<=1.479){
+    barrel = true;
+  }else if(fabs(els_scEta->at(iel))<2.5){
+    barrel = false;
+  }else{
+    return false;
+  }
+
+  double pt_cut, deta_cut, dphi_cut, ieta_cut, hovere_cut, d0_cut, dz_cut,
+    ooeminusoop_cut, reliso_cut, vprob_cut, misshits_cut;
+
+  if(cfAVersion<75){
+    //See https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgammaCutBasedIdentification#Barrel_Cuts_eta_supercluster_1_4
+    const bool high_pt = els_pt->at(iel)>20.0;
+    switch(level){
+    default:
+    case 0:
+      pt_cut            = 10.;
+      deta_cut        = barrel ? 0.007   : 0.01;
+      dphi_cut        = barrel ? 0.8     : 0.7;
+      ieta_cut        = barrel ? 0.01    : 0.03;
+      hovere_cut      = barrel ? 0.15    : DBL_MAX;
+      d0_cut          = barrel ? 0.04    : 0.04;
+      dz_cut          = barrel ? 0.2     : 0.2;
+      ooeminusoop_cut = barrel ? DBL_MAX  : DBL_MAX;
+      reliso_cut      = barrel ? 0.15    : 0.15;
+      vprob_cut       = barrel ? DBL_MAX  : DBL_MAX;
+      misshits_cut    = barrel ? DBL_MAX  : DBL_MAX;
+      break;
+    case 1:
+       pt_cut            = 20.;
+     deta_cut        = barrel ? 0.007   : 0.009;
+      dphi_cut        = barrel ? 0.15    : 0.10;
+      ieta_cut        = barrel ? 0.01    : 0.03;
+      hovere_cut      = barrel ? 0.12    : 0.10;
+      d0_cut          = barrel ? 0.02    : 0.02;
+      dz_cut          = barrel ? 0.2     : 0.2;
+      ooeminusoop_cut = barrel ? 0.05    : 0.05;
+      reliso_cut      = barrel ? 0.15    : (high_pt ? 0.15 : 0.10);
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 1;
+      break;
+    case 2:
+      pt_cut            = 20.;
+      deta_cut        = barrel ? 0.004   : 0.007;
+      dphi_cut        = barrel ? 0.06    : 0.03;
+      ieta_cut        = barrel ? 0.01    : 0.03;
+      hovere_cut      = barrel ? 0.12    : 0.1;
+      d0_cut          = barrel ? 0.02    : 0.02;
+      dz_cut          = barrel ? 0.1     : 0.1;
+      ooeminusoop_cut = barrel ? 0.05    : 0.05;
+      reliso_cut      = barrel ? 0.15    : (high_pt ? 0.15 : 0.10);
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 1;
+      break;
+    case 3:
+      pt_cut            = 20.;
+      deta_cut        = barrel ? 0.004   : 0.005;
+      dphi_cut        = barrel ? 0.03    : 0.02;
+      ieta_cut        = barrel ? 0.01    : 0.03;
+      hovere_cut      = barrel ? 0.12    : 0.10;
+      d0_cut          = barrel ? 0.02    : 0.02;
+      dz_cut          = barrel ? 0.1     : 0.1;
+      ooeminusoop_cut = barrel ? 0.05    : 0.05;
+      reliso_cut      = barrel ? 0.10    : (high_pt ? 0.10 : 0.07);
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 0;
+      break;
+    }
+  }else{
+    //See https://twiki.cern.ch/twiki/bin/viewauth/CMS/CutBasedElectronIdentificationRun2#CSA14_selection_conditions_25ns
+    switch(level){
+    default:
+    case 0:
+      pt_cut            = 10.;
+      deta_cut        = barrel ? 0.02    : 0.0141;
+      dphi_cut        = barrel ? 0.2579  : 0.2591;
+      ieta_cut        = barrel ? 0.0125  : 0.0371;
+      hovere_cut      = barrel ? 0.2564  : 0.1335;
+      d0_cut          = barrel ? 0.025   : 0.2232;
+      dz_cut          = barrel ? 0.5863  : 0.9513;
+      ooeminusoop_cut = barrel ? 0.1508  : 0.1542;
+      reliso_cut      = barrel ? 0.3313  : 0.3816;
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 2       : 3;
+      break;
+    case 1:
+      pt_cut            = 20.;
+      deta_cut        = barrel ? 0.0181  : 0.0124;
+      dphi_cut        = barrel ? 0.0936  : 0.0624;
+      ieta_cut        = barrel ? 0.0123  : 0.035;
+      hovere_cut      = barrel ? 0.141   : 0.1115;
+      d0_cut          = barrel ? 0.0166  : 0.098;
+      dz_cut          = barrel ? 0.54342 : 0.9187;
+      ooeminusoop_cut = barrel ? 0.1353  : 0.1443;
+      reliso_cut      = barrel ? 0.24    : 0.3529;
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 1;
+      break;
+    case 2:
+      pt_cut            = 20.;
+      deta_cut        = barrel ? 0.0106  : 0.0108;
+      dphi_cut        = barrel ? 0.0323  : 0.0455;
+      ieta_cut        = barrel ? 0.0107  : 0.0318;
+      hovere_cut      = barrel ? 0.067   : 0.097;
+      d0_cut          = barrel ? 0.0131  : 0.0845;
+      dz_cut          = barrel ? 0.22310 : 0.7523;
+      ooeminusoop_cut = barrel ? 0.1043  : 0.1201;
+      reliso_cut      = barrel ? 0.2179  : 0.254;
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 1;
+      break;
+    case 3:
+      pt_cut            = 20.;
+      deta_cut        = barrel ? 0.0091  : 0.0106;
+      dphi_cut        = barrel ? 0.031   : 0.0359;
+      ieta_cut        = barrel ? 0.0106  : 0.0305;
+      hovere_cut      = barrel ? 0.0532  : 0.0835;
+      d0_cut          = barrel ? 0.0126  : 0.0163;
+      dz_cut          = barrel ? 0.0116  : 0.5999;
+      ooeminusoop_cut = barrel ? 0.0609  : 0.1126;
+      reliso_cut      = barrel ? 0.1649  : 0.2075;
+      vprob_cut       = barrel ? 1.e-6   : 1.e-6;
+      misshits_cut    = barrel ? 1       : 1;
+      break;
+    }
+  }
+
+  const double d0 = els_d0dum->at(iel)
+    -pv_x->at(0)*sin(els_tk_phi->at(iel))
+    +pv_y->at(0)*cos(els_tk_phi->at(iel));
+  const double dz = fabs(els_vz->at(iel)-pv_z->at(0));
+  const double sigietaieta = (cfAVersion>=75
+                              ? els_full5x5_sigmaIetaIeta->at(iel)
+                              : els_sigmaIEtaIEta->at(iel));
+
+  return els_pt->at(iel)>pt_cut
+    && deta_cut > fabs(els_dEtaIn->at(iel))
+    && dphi_cut > fabs(els_dPhiIn->at(iel))
+    && ieta_cut > sigietaieta
+    && hovere_cut > els_hadOverEm->at(iel)
+    && d0_cut > fabs(d0)
+    && dz_cut > fabs(dz)
+    && ooeminusoop_cut > fabs((1.0-els_eOverPIn->at(iel))/els_caloEnergy->at(iel))
+    && (reliso_cut>GetCSAElectronIsolation(iel))
+    && (true || vprob_cut)
+    && (els_PATpassConversionVeto->at(iel))
+    && (misshits_cut >= els_expectedMissingInnerHits->at(iel));
+  
+  // JACK'S CODE
+
   //N.B.: cut does not have the fabs(1/E-1/p) / ooEmooP and conversion rejection cuts from the EGamma POG!!!
+  /*
   if (iel>els_pt->size()) return false;
   const double dmax(std::numeric_limits<double>::max());
   double pt_cut(10.0); //Not actually part of the EGamma ID
@@ -2530,6 +2688,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool i
   }
 
   return true;
+  */
 }
 
 double EventHandler::GetElectronRelIso(const unsigned int k) const{
@@ -2638,31 +2797,40 @@ bool EventHandler::IsMC(){
 
 double EventHandler::GetFatJetPt(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
-  double px(0.), py(0.);
-  if (index>sortedFatJetCache.size()) return -1;
-  px = sortedFatJetCache[index].GetLorentzVector().Px();
-  py = sortedFatJetCache[index].GetLorentzVector().Py();
-  return TMath::Sqrt(px*px+py*py);
+  if (index+1>sortedFatJetCache.size()) return -1;
+  //  cout << "GetFatJetPt()" << endl;
+  return sortedFatJetCache[index].GetLorentzVector().Pt();
+}
+
+double EventHandler::GetFatJetEta(const unsigned int index/*, const unsigned int pt_cut*/) const{
+  GetSortedFatJets();
+  if (index+1>sortedFatJetCache.size()) return -999;
+  //  cout << "GetFatJetEta()" << endl;
+  return sortedFatJetCache[index].GetLorentzVector().Eta();
+}
+
+double EventHandler::GetFatJetPhi(const unsigned int index/*, const unsigned int pt_cut*/) const{
+  GetSortedFatJets();
+  if (index+1>sortedFatJetCache.size()) return -999;
+  return sortedFatJetCache[index].GetLorentzVector().Phi();
+}
+
+double EventHandler::GetFatJetEnergy(const unsigned int index/*, const unsigned int pt_cut*/) const{
+  GetSortedFatJets();
+  if (index+1>sortedFatJetCache.size()) return -1;
+  return sortedFatJetCache[index].GetLorentzVector().E();
 }
 
 int EventHandler::GetFatJetnConst(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
-  if (index>sortedFatJetCache.size()) return -1;
+  if (index+1>sortedFatJetCache.size()) return -1;
   return sortedFatJetCache[index].GetNConst();
 }
 
 double EventHandler::GetFatJetmJ(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
-  double px(0.), py(0.), pz(0.), energy(0.);
-  if (index>sortedFatJetCache.size()) return -1;
-  
-  px = sortedFatJetCache[index].GetLorentzVector().Px();
-  py = sortedFatJetCache[index].GetLorentzVector().Py();
-  pz = sortedFatJetCache[index].GetLorentzVector().Pz();
-  energy = sortedFatJetCache[index].GetLorentzVector().E();
-  
-  TLorentzVector TLV(px, py, pz, energy);
-  return TLV.M();
+  if (index+1>sortedFatJetCache.size()) return -1;
+  return sortedFatJetCache[index].GetLorentzVector().M();
 }
 
 int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const double fat_jet_eta_cut/* , const unsigned int skinny_jet_pt_cut*/) const{
@@ -2771,7 +2939,7 @@ unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
 unsigned int EventHandler::GetNumCSVMJets(const double pt_cut) const{
   int numPassing(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut){
+    if(isGoodJet(i, true, pt_cut) && ((cfAVersion<=76&&jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut)||(cfAVersion>=77&&jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVMCut))){
       ++numPassing;
     }
   }
@@ -2925,6 +3093,70 @@ int EventHandler::GetNumIsoTracks(const double ptThresh, const bool mT_cut) cons
   return nisotracks;
 }
 
+std::vector<std::pair<int,double> > EventHandler::GetIsoTracks(const double ptThresh, const bool mT_cut) const{
+  std::vector<std::pair<int,double> > isotracks;
+  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
+    if ( (isotk_pt->at(itrack) >= ptThresh) &&
+	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
+	 ( fabs(isotk_dzpv->at(itrack)) <0.05) &&
+	 ( !mT_cut || GetMTW(isotk_pt->at(itrack),pfTypeImets_et->at(0),isotk_phi->at(itrack),pfTypeImets_phi->at(0))<100 ) &&
+	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
+	 ){
+      isotracks.push_back(std::make_pair(itrack, isotk_iso->at(itrack) /isotk_pt->at(itrack)));
+    }
+  }
+  return isotracks;
+}
+
+double EventHandler::GetPFCandIsolation(const uint indexA) const { // absolute, not relative
+  double isoSum(0);
+  for (uint other(0); other<pfcand_pdgId->size(); other++) {
+    if (other==indexA) continue; // don't count track in it's own isolation sum
+    if (static_cast<int>(pfcand_charge->at(other))==0) continue; // only consider charged tracks
+    if (fabs(pfcand_dz->at(other))>0.1) continue; // pileup suppression
+    double deltaR = Math::GetDeltaR(pfcand_phi->at(indexA), pfcand_eta->at(indexA), pfcand_phi->at(other), pfcand_eta->at(other)); // isolation cone
+    if (deltaR>0.3) continue;
+    isoSum+=pfcand_pt->at(other);
+  }
+  return isoSum;
+}
+
+bool EventHandler::PassIsoTrackBaseline(const uint itk) const {
+  if (static_cast<int>(pfcand_charge->at(itk))==0) return false;
+  if (pfcand_pt->at(itk)<5) return false;
+  if (fabs(pfcand_eta->at(itk))>2.5) return false;
+  if (fabs(pfcand_dz->at(itk))>0.1) return false;
+  if (static_cast<int>(pfcand_pdgId->at(itk))==0) return false;
+  return true;
+}
+
+void EventHandler::NewGetIsoTracks(std::vector<std::pair<int,double> > &eCands, std::vector<std::pair<int,double> > &muCands, std::vector<std::pair<int,double> > &hadCands, bool mT_cut) {
+  if (cfAVersion<77) return;
+  eCands.clear();
+  muCands.clear();
+  hadCands.clear();
+  // cout << "Found " << pfcand_pt->size() << " PFCands." << endl;
+  for (uint itk(0); itk<pfcand_pdgId->size(); itk++) {
+    if (!PassIsoTrackBaseline(itk)) continue;
+    if (mT_cut && GetMTW(pfcand_pt->at(itk),pfTypeImets_et->at(0),pfcand_phi->at(itk),pfTypeImets_phi->at(0))>100) continue;
+    //  int type = static_cast<int>(pfcand_pdgId->at(itk));
+    double iso = GetPFCandIsolation(itk);
+    double relIso=iso/pfcand_pt->at(itk);
+    // note: not cutting here on isolation!
+    switch (abs(static_cast<int>(pfcand_pdgId->at(itk)))) {
+    case 11:
+      eCands.push_back(std::make_pair(itk, relIso));
+    case 13:
+      muCands.push_back(std::make_pair(itk, relIso));
+    case 211:
+      hadCands.push_back(std::make_pair(itk, relIso));
+    default:
+      continue;
+    }
+  }
+  return;
+}
+
 double EventHandler::GetTransverseMassMu() const{
   //Find leading lepton
   vector<int> reco_veto_muons;
@@ -3028,4 +3260,91 @@ bool EventHandler::PassPhys14TauID(const int itau, const bool againstEMu, const 
   if (againstEMu && (!taus_againstMuonLoose3->at(itau) || !taus_againstElectronLooseMVA5->at(itau))) return false;
   if (mT_cut && GetMTW(taus_pt->at(itau), pfTypeImets_et->at(0), taus_phi->at(itau), pfTypeImets_phi->at(0))>100) return false;
   return true;
+}
+
+void EventHandler::GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus) {
+  true_electrons.clear();
+  true_muons.clear();
+  true_had_taus.clear();
+
+  // loop to get all e/mu, tag tau-->e/mu
+  //  cout << "Find e/mu" << endl;
+  for(unsigned i = 0; i < mc_doc_id->size(); ++i){ 
+    const int id = static_cast<int>(floor(fabs(mc_doc_id->at(i))+0.5));
+    const int mom = static_cast<int>(floor(mc_doc_mother_id->at(i)));
+    const int gmom = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(i))+0.5));
+    const int ggmom = static_cast<int>(floor(fabs(mc_doc_ggrandmother_id->at(i))+0.5));
+    // if (abs(mom) == 24 || (abs(mom) == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24)))) PrintGenParticleInfo(i);
+    if((id == 11 || id == 13) && (abs(mom) == 24 || (abs(mom) == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24))))){
+      if (abs(mom)!=15) { // from W, no prob
+	if (id==11) true_electrons.push_back(i);
+	else if (id==13) true_muons.push_back(i);
+      }
+      else { // from tau, check for Brem
+	uint nlep(0);
+	// cout << " from tau, check for Brem" << endl;
+	for(uint j=i; j<mc_doc_id->size(); ++j) {
+	  const int momb = static_cast<int>(floor(mc_doc_mother_id->at(j)));
+	  const int gmomb = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(j))+0.5));
+	  const int ggmomb = static_cast<int>(floor(fabs(mc_doc_ggrandmother_id->at(j))+0.5));
+	  if (abs(momb)!=15||(gmomb!=24&&ggmomb!=24)) continue;
+	  const int idb = static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5));
+	  if (idb==id) nlep++;
+	  // cout << "nlep=" << nlep << ": ";
+	  // PrintGenParticleInfo(j);
+	  if (nlep>1) {
+	    // cout << "BREM!" << endl;
+	    break;
+	  }
+	  if (momb!=mom) break;
+	}
+	if (nlep>1) continue;
+	if (id==11) true_electrons.push_back(i);
+	else if (id==13) true_muons.push_back(i);
+      }
+    }
+  }
+  // cout << "Now find taus" << endl;
+  // now find taus
+  for(unsigned i = 0; i < mc_doc_id->size(); ++i){ 
+    const int id = static_cast<int>(floor((mc_doc_id->at(i))));
+    const int mom = static_cast<int>(floor(fabs(mc_doc_mother_id->at(i))+0.5));
+    if (abs(id)==15 && mom == 24) { // only count highest tau in the chain
+      // PrintGenParticleInfo(i);
+      true_had_taus.push_back(i);
+      uint nmu(0), nel(0);
+        // cout << "Check for leptonic decay...id=" << id << endl;
+      // do another loop from here to see if the tau decays leptonically
+      for(uint j=i; j<mc_doc_id->size(); ++j) {
+	const int idb = static_cast<int>(floor((mc_doc_id->at(j))));
+	if (abs(idb)!=11&&abs(idb)!=13) continue;
+	const int momb = static_cast<int>(floor(mc_doc_mother_id->at(j)));
+	if (momb != id) continue;
+	const int gmomb = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(j))+0.5));
+	if (gmomb!=24) continue;
+	 // cout << "Found one! ";
+	 // PrintGenParticleInfo(j);
+	if (static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5))==11) nel++;
+	if (static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5))==13) nmu++;
+      }
+      if (nel==1||nmu==1) true_had_taus.pop_back();
+    }
+  }
+  // cout << "Found " << true_electrons.size() << " electrons, " << true_muons.size() << " muons, and " << true_had_taus.size() << " taus." << endl;
+  return;
+  
+}
+
+void EventHandler::PrintGenParticleInfo(const int imc) const {
+  cout<<imc<<": ID "<<static_cast<int>(mc_doc_id->at(imc))<<", \tMom ID "<<static_cast<int>(mc_doc_mother_id->at(imc)) <<", \tGMom ID "<<static_cast<int>(mc_doc_grandmother_id->at(imc)) <<", \tGGMom ID "<<static_cast<int>(mc_doc_ggrandmother_id->at(imc))
+      <<", \tN mothers "<<mc_doc_numOfMothers->at(imc)
+      <<", \tN daughters "<<mc_doc_numOfDaughters->at(imc)
+      <<",   \tpx "<<mc_doc_px->at(imc)
+      <<",   \tpy "<<mc_doc_py->at(imc)
+      <<",   \tpz "<<mc_doc_pz->at(imc)
+    //   <<",   \tpT "<<mc_doc_pt->at(imc)
+    //   <<",   \teta "<<mc_doc_eta->at(imc)
+    //  <<",   \tphi "<<mc_doc_phi->at(imc)
+      <<", \tstatus "<< static_cast<int>(mc_doc_status->at(imc)) <<endl;
+  return;
 }

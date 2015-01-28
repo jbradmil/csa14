@@ -338,6 +338,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   els_pfIsolationR03_sumPhotonEt(0),
   els_pfIsolationR03_sumPUPt(0),
   els_full5x5_sigmaIetaIeta(0),
+  els_expectedMissingInnerHits(0),
   els_gen_id(0),
   els_gen_phi(0),
   els_gen_pt(0),
@@ -1484,6 +1485,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   pfcand_theta(0),
   pfcand_energy(0),
   pfcand_charge(0),
+  pfcand_dz(0),
   Npfmets(0),
   pfmets_et(0),
   pfmets_phi(0),
@@ -1733,6 +1735,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_els_pfIsolationR03_sumPhotonEt(),
   b_els_pfIsolationR03_sumPUPt(),
   b_els_full5x5_sigmaIetaIeta(),
+  b_els_expectedMissingInnerHits(),
   b_els_gen_id(),
   b_els_gen_phi(),
   b_els_gen_pt(),
@@ -2880,6 +2883,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_pfcand_theta(),
   b_pfcand_energy(),
   b_pfcand_charge(),
+  b_pfcand_dz(),
   b_Npfmets(),
   b_pfmets_et(),
   b_pfmets_phi(),
@@ -3544,6 +3548,7 @@ void cfA::InitializeB(){
   els_pfIsolationR03_sumPhotonEt=0;
   els_pfIsolationR03_sumPUPt=0;
   els_full5x5_sigmaIetaIeta=0;
+  els_expectedMissingInnerHits=0;
   els_gen_id=0;
   els_gen_phi=0;
   els_gen_pt=0;
@@ -4691,6 +4696,7 @@ void cfA::InitializeB(){
   pfcand_theta=0;
   pfcand_energy=0;
   pfcand_charge=0;
+  pfcand_dz=0;
   Npfmets=0;
   pfmets_et=0;
   pfmets_phi=0;
@@ -4941,6 +4947,7 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("els_pfIsolationR03_sumPhotonEt", &els_pfIsolationR03_sumPhotonEt, &b_els_pfIsolationR03_sumPhotonEt);
     chainB.SetBranchAddress("els_pfIsolationR03_sumPUPt", &els_pfIsolationR03_sumPUPt, &b_els_pfIsolationR03_sumPUPt);
     chainB.SetBranchAddress("els_full5x5_sigmaIetaIeta", &els_full5x5_sigmaIetaIeta, &b_els_full5x5_sigmaIetaIeta);
+    chainB.SetBranchAddress("els_expectedMissingInnerHits", &els_expectedMissingInnerHits, &b_els_expectedMissingInnerHits);
   }
   // chainB.SetBranchAddress("els_gen_id", &els_gen_id, &b_els_gen_id);
   // chainB.SetBranchAddress("els_gen_phi", &els_gen_phi, &b_els_gen_phi);
@@ -5279,7 +5286,7 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_mass", &mc_doc_mass, &b_mc_doc_mass);
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
-  if (cfAVersion>=73&&cfAVersion!=74&&(sampleName.find("lite")==std::string::npos||sampleName.find("skimmed")==std::string::npos)) {
+  if (cfAVersion>=75) {
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
@@ -6192,6 +6199,7 @@ void cfA::InitializeB(){
     // chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
     chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
     chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
+    if (cfAVersion>=76) chainB.SetBranchAddress("pfcand_dz", &pfcand_dz, &b_pfcand_dz);
   }
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("Npfmets", &Npfmets, &b_Npfmets);

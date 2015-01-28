@@ -8,21 +8,32 @@ using std::endl;
 
 int main(int argc, char *argv[]){
   std::string inFilename("");
-  unsigned int nentries(1);
+   bool iscfA(false), isList(false);
   int c(0);
-  while((c=getopt(argc, argv, "i:n:"))!=-1){
+  int Nentries(1);
+  while((c=getopt(argc, argv, "i:n:cl"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
       break;
     case 'n':
-      nentries=atoi(optarg);
+      Nentries=atoi(optarg);
+      break;
+    case 'c':
+      iscfA=true;
+      break;
+    case 'l':
+      isList=true;
       break;
     default:
       break;
     }
   }
 
-  ObjectPrinter objp(inFilename);
-  objp.PrintObjects(nentries);
+  if(iscfA){
+    inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
+  }
+
+  ObjectPrinter objp(inFilename, isList);
+  objp.PrintObjects(Nentries);
 }

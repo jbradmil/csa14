@@ -18,7 +18,7 @@ then
     mkdir -p $TREEDIR/$ENERGY/$DATASET 
 fi 
 
-for i in {3..9}
+for i in {1..9}
 do
     echo "ls -d $CFADIR/$DATASET/*f$i*.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part$i.list"
     ls -d $CFADIR/$DATASET/*f$i*.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part$i.list

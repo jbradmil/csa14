@@ -18,8 +18,8 @@ then
     mkdir -p $TREEDIR/$ENERGY/$DATASET 
 fi 
 
-echo "ls -d $CFADIR/$DATASET/*f1_*.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list"
-ls -d $CFADIR/$DATASET/*f1_*.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list
+echo "ls -d $CFADIR/$DATASET/*f1.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list"
+ls -d $CFADIR/$DATASET/*f1.root > $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list
 echo "ls -d $CFADIR/$DATASET/*f10*.root >> $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list"
 ls -d $CFADIR/$DATASET/*f10*.root >> $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list
 echo "[DEBUG] JobSubmit.csh ./scripts/make_reduced_tree.exe -l -i $OUTPUTDIR/$ENERGY/$DATASET/$DATASET.part10.list"  

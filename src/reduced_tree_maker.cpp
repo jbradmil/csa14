@@ -14,7 +14,7 @@ ReducedTreeMaker::ReducedTreeMaker(const std::string& in_file_name,
                                    const bool is_list,
                                    const double weight_in,
 				   const int Nentries_in):
-  EventHandler(in_file_name, is_list, weight_in, true),
+  EventHandler(in_file_name, is_list, weight_in, false),
   Nentries(Nentries_in){
   }
 
@@ -86,41 +86,23 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   unsigned short num_truth_matched_b_jets(0), num_good_truth_matched_b_jets(0);
 
-  // unsigned short num_gen_partons(0), num_gen_partons_pt20(0), num_gen_partons_pt40(0), num_gen_partons_pt70(0), num_gen_partons_pt100(0), num_gen_partons_pt150(0);
-
-
-  /*
-    unsigned short num_ra2b_veto_electrons(0), num_ra2b_veto_muons(0), num_ra2b_veto_taus(0), num_ra2b_veto_leptons(0);
-    unsigned short num_ra2b_noiso_electrons(0), num_ra2b_noiso_muons(0), num_ra2b_noiso_taus(0), num_ra2b_noiso_leptons(0);
-    unsigned short num_ra2b_loose_electrons(0), num_ra2b_loose_muons(0), num_ra2b_loose_taus(0), num_ra2b_loose_leptons(0);
-    unsigned short num_ra2b_medium_electrons(0), num_ra2b_medium_muons(0), num_ra2b_medium_taus(0), num_ra2b_medium_leptons(0);
-    unsigned short num_ra2b_tight_electrons(0), num_ra2b_tight_muons(0), num_ra2b_tight_taus(0), num_ra2b_tight_leptons(0);
-    unsigned short num_lost_ra2b_electrons(0), num_lost_ra2b_muons(0), num_lost_ra2b_leptons(0);
-  */
-  // unsigned short num_ra2b_iso_tracks(0);  
-  // unsigned short num_iso_tracks(0);
-  
  
   float top_pt_weight(0.0), top_pt_weight_official(0.0), pu_weight(0.0), trigger_eff_weight, btag_weight, btag_pid_weight;
   double Prob0, ProbGEQ1, Prob1, ProbGEQ2, Prob2, ProbGEQ3, Prob3, ProbGEQ4;
-  // double qcd_pt_0b(1.66), qcd_pt_1b(1.23), qcd_pt_2b(0.82), qcd_pt_3b(1.03), qcd_pt_4b(1.03);
-  // double qcd_ht_0b(1.9), qcd_ht_1b(1.54), qcd_ht_2b(1.13), qcd_ht_3b(1.3), qcd_ht_4b(1.3);
+  double Prob0_pt50, ProbGEQ1_pt50, Prob1_pt50, ProbGEQ2_pt50, Prob2_pt50, ProbGEQ3_pt50, Prob3_pt50, ProbGEQ4_pt50;
 
-  unsigned short num_gen_electrons(0), num_gen_muons(0), num_gen_taus(0);
-  // num_gen_taus(0), num_gen_nus(0);
+  unsigned short num_true_electrons(0), num_true_muons(0), num_true_had_taus(0);
 
-  // const int nptbins(6);
-  // float pt_thresholds[nptbins] = {0., 5., 10., 20., 30., 40};
-  // vector<int> num_gen_muons_pt(nptbins,0);
-
-  // num_lost_taus(0);
 
   int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_iso2D(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
   int num_reco_electrons(0), num_reco_veto_electrons(0), num_reco_veto_electrons_iso2D(0), num_reco_veto_electrons_mT100(0), num_reco_veto_electrons_mT100_orth(0);
   int num_taus_POG_phys14_ID(0), num_taus_POG_phys14_ID_againstEMu(0), num_taus_POG_phys14_ID_mT100(0), num_taus_POG_phys14_ID_againstEMu_mT100(0);
   float tau_pt, tau_chargedIsoPtSum, tau_mT;
 
-  float iso_track_pt, iso_track_iso, iso_track_mT;
+  float iso_track_pt, iso_track_relIso, iso_track_mT;
+  float e_track_pt, e_track_relIso, e_track_mT;
+  float mu_track_pt, mu_track_relIso, mu_track_mT;
+  float had_track_pt, had_track_relIso, had_track_mT;
   
 
   // int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
@@ -154,6 +136,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
   int num_iso_tracks_pt10, num_iso_tracks_pt10_mT, num_iso_tracks_pt15, num_iso_tracks_pt15_mT;
+  int num_e_iso_tracks, num_mu_iso_tracks, num_had_iso_tracks;
+  int num_e_iso_tracks_mT, num_mu_iso_tracks_mT, num_had_iso_tracks_mT;
 
   float mT_mu, mT_el;
   float deltaThetaT, W_pT;
@@ -187,6 +171,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   // double fatpT25_MJ(-9999.), fatpT25_MJ_pt100(-9999.), fatpT25_MJ_pt150(-9999.), fatpT25_MJ_pt200(-9999.), fatpT25_MJ_pt300(-9999.);
 
   double fatpT30_jet1_pt(-9999.), fatpT30_jet2_pt(-9999.), fatpT30_jet3_pt(-9999.), fatpT30_jet4_pt(-9999.);
+  double fatpT30_jet1_eta(-9999.), fatpT30_jet2_eta(-9999.), fatpT30_jet3_eta(-9999.), fatpT30_jet4_eta(-9999.);
+  double fatpT30_jet1_phi(-9999.), fatpT30_jet2_phi(-9999.), fatpT30_jet3_phi(-9999.), fatpT30_jet4_phi(-9999.);
+  double fatpT30_jet1_energy(-9999.), fatpT30_jet2_energy(-9999.), fatpT30_jet3_energy(-9999.), fatpT30_jet4_energy(-9999.);
   int fatpT30_jet1_nConst(-1), fatpT30_jet2_nConst(-1), fatpT30_jet3_nConst(-1), fatpT30_jet4_nConst(-1);
   double fatpT30_jet1_mJ(-9999.), fatpT30_jet2_mJ(-9999.), fatpT30_jet3_mJ(-9999.), fatpT30_jet4_mJ(-9999.);
   int num_fatpT30_jets(-1), num_fatpT30_jets_pt100(-1), num_fatpT30_jets_pt150(-1), num_fatpT30_jets_pt200(-1),  num_fatpT30_jets_pt300(-1);
@@ -256,6 +243,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("ProbGEQ3", &ProbGEQ3);
   reduced_tree.Branch("Prob3", &Prob3);
   reduced_tree.Branch("ProbGEQ4", &ProbGEQ4);
+  reduced_tree.Branch("Prob0_pt50", &Prob0_pt50);
+  reduced_tree.Branch("ProbGEQ1_pt50", &ProbGEQ1_pt50);
+  reduced_tree.Branch("Prob1_pt50", &Prob1_pt50);
+  reduced_tree.Branch("ProbGEQ2_pt50", &ProbGEQ2_pt50);
+  reduced_tree.Branch("Prob2_pt50", &Prob2_pt50);
+  reduced_tree.Branch("ProbGEQ3_pt50", &ProbGEQ3_pt50);
+  reduced_tree.Branch("Prob3_pt50", &Prob3_pt50);
+  reduced_tree.Branch("ProbGEQ4_pt50", &ProbGEQ4_pt50);
  
   reduced_tree.Branch("run", &run);
   reduced_tree.Branch("event", &event);
@@ -378,10 +373,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   reduced_tree.Branch("num_truth_matched_b_jets", &num_truth_matched_b_jets);
   reduced_tree.Branch("num_good_truth_matched_b_jets", &num_good_truth_matched_b_jets);
-
-  reduced_tree.Branch("num_gen_muons", &num_gen_muons);
-  reduced_tree.Branch("num_gen_electrons", &num_gen_electrons);
-  reduced_tree.Branch("num_gen_taus", &num_gen_taus);
 
   // reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
   // reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
@@ -604,6 +595,18 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("fatpT30_jet2_pt", &fatpT30_jet2_pt);
   reduced_tree.Branch("fatpT30_jet3_pt", &fatpT30_jet3_pt);
   reduced_tree.Branch("fatpT30_jet4_pt", &fatpT30_jet4_pt);
+  reduced_tree.Branch("fatpT30_jet1_eta", &fatpT30_jet1_eta);
+  reduced_tree.Branch("fatpT30_jet2_eta", &fatpT30_jet2_eta);
+  reduced_tree.Branch("fatpT30_jet3_eta", &fatpT30_jet3_eta);
+  reduced_tree.Branch("fatpT30_jet4_eta", &fatpT30_jet4_eta);
+  reduced_tree.Branch("fatpT30_jet1_phi", &fatpT30_jet1_phi);
+  reduced_tree.Branch("fatpT30_jet2_phi", &fatpT30_jet2_phi);
+  reduced_tree.Branch("fatpT30_jet3_phi", &fatpT30_jet3_phi);
+  reduced_tree.Branch("fatpT30_jet4_phi", &fatpT30_jet4_phi);
+  reduced_tree.Branch("fatpT30_jet1_energy", &fatpT30_jet1_energy);
+  reduced_tree.Branch("fatpT30_jet2_energy", &fatpT30_jet2_energy);
+  reduced_tree.Branch("fatpT30_jet3_energy", &fatpT30_jet3_energy);
+  reduced_tree.Branch("fatpT30_jet4_energy", &fatpT30_jet4_energy);
   reduced_tree.Branch("fatpT30_jet1_mJ", &fatpT30_jet1_mJ);
   reduced_tree.Branch("fatpT30_jet2_mJ", &fatpT30_jet2_mJ);
   reduced_tree.Branch("fatpT30_jet3_mJ", &fatpT30_jet3_mJ);
@@ -660,9 +663,33 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_iso_tracks_pt10_mT", &num_iso_tracks_pt10_mT);
   reduced_tree.Branch("num_iso_tracks_pt15", &num_iso_tracks_pt15);
   reduced_tree.Branch("num_iso_tracks_pt15_mT", &num_iso_tracks_pt15_mT);
+
+  reduced_tree.Branch("num_e_iso_tracks", &num_e_iso_tracks);
+  reduced_tree.Branch("num_mu_iso_tracks", &num_mu_iso_tracks);
+  reduced_tree.Branch("num_had_iso_tracks", &num_had_iso_tracks);
+  reduced_tree.Branch("num_e_iso_tracks_mT", &num_e_iso_tracks_mT);
+  reduced_tree.Branch("num_mu_iso_tracks_mT", &num_mu_iso_tracks_mT);
+  reduced_tree.Branch("num_had_iso_tracks_mT", &num_had_iso_tracks_mT);
+  
   reduced_tree.Branch("iso_track_pt", &iso_track_pt);
-  reduced_tree.Branch("iso_track_iso", &iso_track_iso);
+  reduced_tree.Branch("iso_track_relIso", &iso_track_relIso);
   reduced_tree.Branch("iso_track_mT", &iso_track_mT);
+  reduced_tree.Branch("e_track_pt", &e_track_pt);
+  reduced_tree.Branch("e_track_relIso", &e_track_relIso);
+  reduced_tree.Branch("e_track_mT", &e_track_mT);
+  reduced_tree.Branch("mu_track_pt", &mu_track_pt);
+  reduced_tree.Branch("mu_track_relIso", &mu_track_relIso);
+  reduced_tree.Branch("mu_track_mT", &mu_track_mT);
+  reduced_tree.Branch("had_track_pt", &had_track_pt);
+  reduced_tree.Branch("had_track_relIso", &had_track_relIso);
+  reduced_tree.Branch("had_track_mT", &had_track_mT);
+
+  reduced_tree.Branch("num_true_muons", &num_true_muons);
+  reduced_tree.Branch("num_true_electrons", &num_true_electrons);
+  reduced_tree.Branch("num_true_had_taus", &num_true_had_taus);
+
+
+
 
 
   int n_to_process(Nentries);
@@ -814,12 +841,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     
 
-    // num_gen_partons=GetNGenPartons();
-    // num_gen_partons_pt20=GetNGenPartons(20.);
-    // num_gen_partons_pt40=GetNGenPartons(40.);
-    // num_gen_partons_pt70=GetNGenPartons(70.);
-    // num_gen_partons_pt100=GetNGenPartons(100.);
-    // num_gen_partons_pt150=GetNGenPartons(150.);
+    // num_true_partons=GetNGenPartons();
+    // num_true_partons_pt20=GetNGenPartons(20.);
+    // num_true_partons_pt40=GetNGenPartons(40.);
+    // num_true_partons_pt70=GetNGenPartons(70.);
+    // num_true_partons_pt100=GetNGenPartons(100.);
+    // num_true_partons_pt150=GetNGenPartons(150.);
 
     mht30=GetMHT(30.);
     mht30_phi=GetMHTPhi(30.);
@@ -859,7 +886,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     pu_weight=isRealData?1.0:GetPUWeight(lumiWeights);
     top_pt_weight=isttbar?GetTopPtWeight():1.0;
     top_pt_weight_official=isttbar?GetTopPtWeightOfficial():1.0;
-    weightppb=this_scale_factor*pu_weight*top_pt_weight_official;
+    weightppb=this_scale_factor;
+    if (cfAVersion<73) weightppb*=(pu_weight*top_pt_weight_official);
 
     trigger_eff_weight=GetTriggerEffWeight();
     if (cfAVersion<=71) {
@@ -868,11 +896,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
 
     CalculateTagProbs(Prob0, ProbGEQ1, Prob1, ProbGEQ2, Prob2, ProbGEQ3, Prob3, ProbGEQ4);
+    CalculateTagProbs(Prob0_pt50, ProbGEQ1_pt50, Prob1_pt50, ProbGEQ2_pt50, Prob2_pt50, ProbGEQ3_pt50, Prob3_pt50, ProbGEQ4_pt50, 50.);
     }
-
-    num_gen_taus=GetNGenParticles(15);
-    num_gen_muons=GetNGenParticles(13);
-    num_gen_electrons=GetNGenParticles(11);
 
 
 
@@ -900,9 +925,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     if (cfAVersion>=73&&cfAVersion!=74) {
       reco_electrons = GetRecoElectrons(false);
       reco_veto_electrons = GetRecoElectrons(true);
-      reco_veto_electrons_iso2D=GetRecoElectrons(true,true);
-      reco_veto_electrons_mT = GetRecoElectrons(true,false,true);
-      reco_veto_electrons_mT_orth = GetRecoElectrons(true,false,true,true);
+      // reco_veto_electrons_iso2D=GetRecoElectrons(true,true);
+      // reco_veto_electrons_mT = GetRecoElectrons(true,false,true);
+      // reco_veto_electrons_mT_orth = GetRecoElectrons(true,false,true,true);
     }
     else {
       reco_electrons = GetRA2bElectrons(false);
@@ -1194,7 +1219,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
 
 
-    // cout << "minDeltaPhi..." << endl;
+    //     cout << "minDeltaPhi..." << endl;
     min_delta_phi_met=GetMinDeltaPhiMET(3,30.);
     min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
     min_delta_phi_met_N=getMinDeltaPhiMETN(3,30.,2.4,true,30.,2.4,true,true);
@@ -1204,25 +1229,89 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     jet2_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(2));
     jet3_DeltaPhiMETN = getDeltaPhiMETN(GetJetXIndex(3));
 
+    num_iso_tracks_pt10=0;
+    num_iso_tracks_pt10_mT=0;
+    num_iso_tracks_pt15=0;
+    num_iso_tracks_pt15_mT=0;
+    num_e_iso_tracks=0;
+    num_mu_iso_tracks=0;
+    num_had_iso_tracks=0;
+    num_e_iso_tracks_mT=0;
+    num_mu_iso_tracks_mT=0;
+    num_had_iso_tracks_mT=0;
+    iso_track_pt=-1;
+    iso_track_relIso=-1;
+    iso_track_mT=-1;
+    e_track_pt=-1;
+    e_track_relIso=-1;
+    e_track_mT=-1;
+    mu_track_pt=-1;
+    mu_track_relIso=-1;
+    mu_track_mT=-1;
+    had_track_pt=-1;
+    had_track_relIso=-1;
+    had_track_mT=-1;
+    vector<std::pair<int, double> > e_tracks, mu_tracks, had_tracks;
     if (cfAVersion==71||cfAVersion==74||cfAVersion>=76) {
       num_iso_tracks_pt10=GetNumIsoTracks(10, false);
       num_iso_tracks_pt10_mT=GetNumIsoTracks(10, true);
-      num_iso_tracks_pt15=GetNumIsoTracks(15, false);
-      num_iso_tracks_pt15_mT=GetNumIsoTracks(15, true);
-    } else {
-      num_iso_tracks_pt10=-1;
-      num_iso_tracks_pt10_mT=-1;
-      num_iso_tracks_pt15=-1;
-      num_iso_tracks_pt15_mT=-1;
-    }
-
-    iso_track_pt=-1;
-    iso_track_iso=-1;
-    iso_track_mT=-1;
-    if (isotk_pt->size()>0) {
-      iso_track_pt=isotk_pt->at(0);
-      iso_track_iso=isotk_iso->at(0);
-      iso_track_mT=GetMTW(iso_track_pt, met, isotk_phi->at(0), met_phi);
+      // store index and relIso of tracks
+      vector<pair<int, double> > isotracks = GetIsoTracks(15, false);
+      num_iso_tracks_pt15=isotracks.size();
+      if (num_iso_tracks_pt15>0) {
+	iso_track_pt=isotk_pt->at(isotracks[0].first);
+	iso_track_relIso=isotracks[0].second;
+	iso_track_mT=GetMTW(iso_track_pt, met, isotk_phi->at(isotracks[0].first), met_phi);
+	for (uint itk(0); itk<isotracks.size(); itk++) {
+	  if (GetMTW(isotk_pt->at(isotracks[itk].first), met, isotk_phi->at(isotracks[itk].first), met_phi)<100) num_iso_tracks_pt15_mT++;
+	}
+      }
+      if (cfAVersion>=76) {
+	NewGetIsoTracks(e_tracks, mu_tracks, had_tracks, false);
+	if (e_tracks.size()>0) {
+	  e_track_pt=pfcand_pt->at(e_tracks[0].first);
+	  double e_track_phi=pfcand_phi->at(e_tracks[0].first);
+	  e_track_mT=GetMTW(e_track_pt, met, e_track_phi, met_phi);
+	  e_track_relIso=e_tracks[0].second;
+	}
+	if (mu_tracks.size()>0) {
+	  mu_track_pt=pfcand_pt->at(mu_tracks[0].first);
+	  double mu_track_phi=pfcand_phi->at(mu_tracks[0].first);
+	  mu_track_mT=GetMTW(mu_track_pt, met, mu_track_phi, met_phi);
+	  mu_track_relIso=mu_tracks[0].second;
+	}
+	if (had_tracks.size()>0) {
+	  had_track_pt=pfcand_pt->at(had_tracks[0].first);
+	  double had_track_phi=pfcand_phi->at(had_tracks[0].first);
+	  had_track_mT=GetMTW(had_track_pt, met, had_track_phi, met_phi);
+	  had_track_relIso=had_tracks[0].second;
+	}
+	for (uint itk(0); itk<e_tracks.size(); itk++) {
+	  double pt=pfcand_pt->at(e_tracks[itk].first);
+	  double phi=pfcand_phi->at(e_tracks[itk].first);
+	  double mT=GetMTW(pt, met, phi, met_phi);
+	  if (e_tracks[itk].second>0.2) continue;
+	  num_e_iso_tracks++;
+	  if (mT<100)  num_e_iso_tracks_mT++;
+	}
+	for (uint itk(0); itk<mu_tracks.size(); itk++) {
+	  double pt=pfcand_pt->at(mu_tracks[itk].first);
+	  double phi=pfcand_phi->at(mu_tracks[itk].first);
+	  double mT=GetMTW(pt, met, phi, met_phi);
+	  if (mu_tracks[itk].second>0.2) continue;
+	  num_mu_iso_tracks++;
+	  if (mT<100)  num_mu_iso_tracks_mT++;
+	}
+	for (uint itk(0); itk<had_tracks.size(); itk++) {
+	  double pt=pfcand_pt->at(had_tracks[itk].first);
+	  if(pt<10) continue;
+	  double phi=pfcand_phi->at(had_tracks[itk].first);
+	  double mT=GetMTW(pt, met, phi, met_phi);
+	  if (had_tracks[itk].second>0.1) continue;
+	  num_had_iso_tracks++;
+	  if (mT<100)  num_had_iso_tracks_mT++;
+	}
+      }
     }
 
     // cout << "mT..." << endl;
@@ -1357,6 +1446,18 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     fatpT30_jet2_pt=GetFatJetPt(1);
     fatpT30_jet3_pt=GetFatJetPt(2);
     fatpT30_jet4_pt=GetFatJetPt(3);
+    fatpT30_jet1_eta=GetFatJetEta(0);    
+    fatpT30_jet2_eta=GetFatJetEta(1);
+    fatpT30_jet3_eta=GetFatJetEta(2);
+    fatpT30_jet4_eta=GetFatJetEta(3);
+    fatpT30_jet1_phi=GetFatJetPhi(0);    
+    fatpT30_jet2_phi=GetFatJetPhi(1);
+    fatpT30_jet3_phi=GetFatJetPhi(2);
+    fatpT30_jet4_phi=GetFatJetPhi(3);
+    fatpT30_jet1_energy=GetFatJetEnergy(0);    
+    fatpT30_jet2_energy=GetFatJetEnergy(1);
+    fatpT30_jet3_energy=GetFatJetEnergy(2);
+    fatpT30_jet4_energy=GetFatJetEnergy(3);
     //      	cout << "JERR4" << endl;
 
     fatpT30_jet1_nConst=GetFatJetnConst(0);
@@ -1414,6 +1515,20 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	tau_chargedIsoPtSum=taus_pt->at(0);
 	tau_mT=GetMTW(tau_pt,met,taus_phi->at(0),met_phi);
       }
+
+    //   if (entry==180 || entry==523 || entry==573 || entry==1041 || entry==1661) {
+      std::vector<int> true_electrons;
+      std::vector<int> true_muons;
+      std::vector<int> true_had_taus;
+      // if (entry==3633||entry==11120||entry==12397||entry==15305||entry==15896) GetTrueLeptons(true_electrons, true_muons, true_had_taus);
+      GetTrueLeptons(true_electrons, true_muons, true_had_taus);
+    
+      num_true_electrons=true_electrons.size();
+      num_true_muons=true_muons.size();
+      num_true_had_taus=true_had_taus.size();
+      //  }
+
+      //if ((num_true_electrons+num_true_muons+num_true_had_taus)>2) cout << "3 lepton event: " << entry << endl;
 
     reduced_tree.Fill(); 
     //  if (i==20) break;

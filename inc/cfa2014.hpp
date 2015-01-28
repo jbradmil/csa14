@@ -357,6 +357,7 @@ protected:
   std::vector<float> *els_pfIsolationR03_sumPhotonEt;
   std::vector<float> *els_pfIsolationR03_sumPUPt;
   std::vector<float> *els_full5x5_sigmaIetaIeta;
+  std::vector<float> *els_expectedMissingInnerHits;
   std::vector<float> *els_gen_id;
   std::vector<float> *els_gen_phi;
   std::vector<float> *els_gen_pt;
@@ -1507,6 +1508,7 @@ protected:
   std::vector<float> *pfcand_theta;
   std::vector<float> *pfcand_energy;
   std::vector<float> *pfcand_charge;
+  std::vector<float> *pfcand_dz;
   UInt_t Npfmets;
   std::vector<float> *pfmets_et;
   std::vector<float> *pfmets_phi;
@@ -1759,6 +1761,7 @@ protected:
   TBranch *b_els_pfIsolationR03_sumPhotonEt;
   TBranch *b_els_pfIsolationR03_sumPUPt;
   TBranch *b_els_full5x5_sigmaIetaIeta;
+  TBranch *b_els_expectedMissingInnerHits;
   TBranch *b_els_gen_id;
   TBranch *b_els_gen_phi;
   TBranch *b_els_gen_pt;
@@ -2906,6 +2909,7 @@ protected:
   TBranch *b_pfcand_theta;
   TBranch *b_pfcand_energy;
   TBranch *b_pfcand_charge;
+  TBranch *b_pfcand_dz;
   TBranch *b_Npfmets;
   TBranch *b_pfmets_et;
   TBranch *b_pfmets_phi;

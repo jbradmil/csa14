@@ -36,6 +36,8 @@ namespace particleId {
   };
 }
 
+// enum lepton{electron=11, muon=13, tau=15};
+
 class EventHandler : public cfA{
 public:
   EventHandler(const std::string &, const bool, const double=1.0, const bool=false);
@@ -87,8 +89,8 @@ protected:
   
 
   void CalculateTagProbs(double &Prob0, double &ProbGEQ1, double &Prob1, double &ProbGEQ2,
-			 double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4);
-  double GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff);
+			 double &Prob2, double &ProbGEQ3, double &Prob3, double &ProbGEQ4, double pt_cut=40.);
+  double GetJetTagEff(unsigned int ijet, TH1D* h_btageff, TH1D* h_ctageff, TH1D* h_ltageff, double pt_cut=40.);
   double GetbJetFastsimSF(const TString & what, const int flavor, const double pt) const;
   int GetPtBinIndex(const float pt) const;
   double Get_AN_12_175_Table2_Value(const double pt) const;
@@ -220,8 +222,8 @@ protected:
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(const bool veto, const bool iso2D=false, const bool mT_cut=false, const bool orth=false) const;
-  bool isRecoElectron(const uint imu, const uint level=0, const bool=false, const bool=false, const bool=false) const;
+  vector<int> GetRecoElectrons(const bool veto/*, const bool iso2D=false, const bool mT_cut=false, const bool orth=false*/) const;
+  bool isRecoElectron(const uint imu, const uint level=0/*, const bool=false, const bool=false, const bool=false*/) const;
 
   vector<int> GetRA2bElectrons(const bool veto) const;
   vector<int> GetRA2bMuons(const bool veto) const;
@@ -244,6 +246,9 @@ protected:
   bool IsMC();
 
   double GetFatJetPt(const unsigned int/*,  const unsigned int=30*/) const;
+  double GetFatJetEta(const unsigned int/*,  const unsigned int=30*/) const;
+  double GetFatJetPhi(const unsigned int/*,  const unsigned int=30*/) const;
+  double GetFatJetEnergy(const unsigned int/*,  const unsigned int=30*/) const;
   int GetFatJetnConst(const unsigned int/*,  const unsigned int=30*/) const;
   double GetFatJetmJ(const unsigned int/*,  const unsigned int=30*/) const;
   int GetNFatJets(const double=50., const double=10./*,  const unsigned int=30*/) const;
@@ -277,6 +282,10 @@ protected:
   double GetMinDeltaPhiMET(const unsigned int=3, const double=50., const double=2.4) const;
 
   int GetNumIsoTracks(const double=15.0, const bool=true) const;
+  vector<std::pair<int,double> > GetIsoTracks(const double=15.0, const bool=true) const;
+  void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool mT_cut=true);
+  bool PassIsoTrackBaseline(const uint index) const;
+  double GetPFCandIsolation(const uint indexA) const;
 
   double GetTransverseMassMu() const;
   double GetTransverseMassEl() const;
@@ -292,6 +301,9 @@ protected:
   int GetNumTaus(const bool=false, const bool=false) const;
   bool PassPhys14TauID(const int, const bool=false, const bool=false) const;
 
+  void GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus);
+  void PrintGenParticleInfo(const int imc) const;
+  
 };
 
 #endif
