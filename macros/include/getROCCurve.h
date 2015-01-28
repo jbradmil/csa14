@@ -30,7 +30,7 @@ TGraph* getROCCurve(TH1D* hbg, TH1D* hsig, const int color=1000) {
 
   TGraph* gr = new TGraph(nbinsx,bg,sig);
   gr->SetLineColor(color);
-  gr->SetLineWidth(3);
+  gr->SetLineWidth(4);
 
   return gr;
 }

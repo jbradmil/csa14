@@ -68,8 +68,8 @@ void set_style(TLegend* leg, float text_size=0.045, bool transparent=false) {
 }
 
 void set_style(TLine* line) {
-  line->SetLineColor(6);
-  line->SetLineWidth(3);
+  line->SetLineColor(kGray+3);
+  line->SetLineWidth(4);
   line->SetLineStyle(7);
 }
 
