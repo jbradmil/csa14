@@ -82,11 +82,11 @@ void draw_from_trees(TString var, TCut other_cuts, TCut btag_cut,
   // TCut qcd_0b("1.846"), qcd_1b("1.471"), qcd_2b("1.045"), qcd_geq3b("1.342");
   TCut qcd_0b("1.716"), qcd_1b("1.389"), qcd_2b("0.865"), qcd_geq3b("1.");
   if (plot_title.Contains("_raw")) {
-      qcd_0b = "1.";
-      qcd_1b = "1.";
-      qcd_2b = "1.";
-      qcd_geq3b = "1.";
-    }
+    qcd_0b = "1.";
+    qcd_1b = "1.";
+    qcd_2b = "1.";
+    qcd_geq3b = "1.";
+  }
   TString s_btag_cut(btag_cut.GetTitle());
   if (s_btag_cut.Contains("==0")) weight*=w_0b;
   else if (s_btag_cut.Contains(">=1")) weight*=w_geq1b;
@@ -438,6 +438,19 @@ void draw_from_trees(TString var, TCut other_cuts, TCut btag_cut,
   latex->SetTextSize(0.03);
   latex->DrawLatex(0.19, 0.84, "#sqrt{s} = 8 TeV, L = 19.4 fb^{-1}");
 
+  //    TLegend * leg2 = new TLegend(0.72, 0.68, 0.94, 0.92);
+  TLatex * nbLabel = new TLatex();
+  nbLabel->SetNDC();
+  nbLabel->SetTextAlign(12);
+  nbLabel->SetTextFont(62);
+  nbLabel->SetTextSize(0.062);
+  TString s_nbLabel("");
+  if (s_btag_cut.Contains("==0")) s_nbLabel="N_{b-jets}=0";
+  else if (s_btag_cut.Contains("==1")) s_nbLabel="N_{b-jets}=1";
+  else if (s_btag_cut.Contains("==2")) s_nbLabel="N_{b-jets}=2";
+  else if (s_btag_cut.Contains(">=3")) s_nbLabel="N_{b-jets}#geq3";
+  if (s_nbLabel.Length()>0) nbLabel->DrawLatex(0.77, 0.60, s_nbLabel);
+
   TPaveText * pave = new TPaveText(0.18, 0.86, 0.28, 0.96, "brNDC");
   pave->SetLineColor(0);
   pave->SetFillColor(0);
@@ -445,36 +458,36 @@ void draw_from_trees(TString var, TCut other_cuts, TCut btag_cut,
   pave->SetBorderSize(1);
   cout << "Plot data..." << endl;
   if (plotData) hdata_obs->Draw("e1 same");
-      hdummy->GetXaxis()->SetLabelSize(0);
-      // Draw ratio
-      pad2->cd();
-      pad2->SetGridy(0);
-      ratiostaterr->Draw("e2");
-      //ratiosysterr->Draw("e2 same");
-      ratiostaterr->Draw("e2 same");
-      ratiounity->Draw();
-      ratio->Draw("e1 same");
-      ratioleg->Draw();
-      // Kolmogorov-Smirnov test and Chi2 test
+  hdummy->GetXaxis()->SetLabelSize(0);
+  // Draw ratio
+  pad2->cd();
+  pad2->SetGridy(0);
+  ratiostaterr->Draw("e2");
+  //ratiosysterr->Draw("e2 same");
+  ratiostaterr->Draw("e2 same");
+  ratiounity->Draw();
+  ratio->Draw("e1 same");
+  ratioleg->Draw();
+  // Kolmogorov-Smirnov test and Chi2 test
      
-      // double nchisq = hdata_obs->Chi2Test(hmc_exp, "UWCHI2/NDF"); // MC uncert. (stat)
-      // //double kolprob = hdata_obs->KolmogorovTest(hmc_exp); // MC uncert. (stat)
-      // TText * text = pave->AddText(Form("#chi_{#nu}^{2} = %.3f", nchisq));
-      // //TText * text = pave->AddText(Form("#chi_{#nu}^{2} = %.3f, K_{s} = %.3f", nchisq, kolprob));
-      // text->SetTextFont(62);
-      // text->SetTextSize(0.07);
-      // text->SetTextSize(0.06);
-      if (plotData) pave->Draw();
-      pad1->cd();
-      gPad->RedrawAxis();
-      gPad->Modified();
-      gPad->Update();
-      pad2->cd();
-      gPad->RedrawAxis();
-      gPad->Modified();
-      gPad->Update();
+  // double nchisq = hdata_obs->Chi2Test(hmc_exp, "UWCHI2/NDF"); // MC uncert. (stat)
+  // //double kolprob = hdata_obs->KolmogorovTest(hmc_exp); // MC uncert. (stat)
+  // TText * text = pave->AddText(Form("#chi_{#nu}^{2} = %.3f", nchisq));
+  // //TText * text = pave->AddText(Form("#chi_{#nu}^{2} = %.3f, K_{s} = %.3f", nchisq, kolprob));
+  // text->SetTextFont(62);
+  // text->SetTextSize(0.07);
+  // text->SetTextSize(0.06);
+  if (plotData) pave->Draw();
+  pad1->cd();
+  gPad->RedrawAxis();
+  gPad->Modified();
+  gPad->Update();
+  pad2->cd();
+  gPad->RedrawAxis();
+  gPad->Modified();
+  gPad->Update();
 
-      c1->cd();
+  c1->cd();
   
   // if (plotSig) {
   //   ht1bbbb_1500_100->SetLineColor(2);
@@ -568,12 +581,6 @@ int main() {
   single_top_ch = new TChain("reduced_tree");
   other_ch = new TChain("reduced_tree");
   data_obs_ch = new TChain("reduced_tree");
-  // t1tttt_1500_100_ch = new TChain("reduced_tree");
-  // t1tttt_1200_800_ch = new TChain("reduced_tree");
-  // t1bbbb_1500_100_ch = new TChain("reduced_tree");
-  // t1bbbb_1000_900_ch = new TChain("reduced_tree");
-
-  
   // TFileCollection* ttbar_fc = new TFileCollection("ttbar_fc","","../../reduced_trees/tfcs/8TeV/ttbar.txt");
   // TFileCollection* qcd_fc = new TFileCollection("qcd_fc","","../../reduced_trees/tfcs/8TeV/qcd.txt");
   // TFileCollection* znn_fc = new TFileCollection("znn_fc","","../../reduced_trees/tfcs/8TeV/znn.txt");
@@ -590,15 +597,9 @@ int main() {
    
 
 
-
+  // normal skim
   ttbar_ch->Add("../../reduced_trees/8TeV/skimmed/TT*.root");
-  // ttbar_ch->Add("../../reduced_trees/8TeV/skimmed/xtra/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v1_AODSIM_UCSB1850_v71_skimmed.root");
-  // ttbar_ch->Add("../../reduced_trees/8TeV/skimmed/TTZ*.root");
-  // ttbar_ch->Add("../../reduced_trees/8TeV/skimmed/TTW*.root");
-  // ttbar_ch->Add("../../reduced_trees/8TeV/skimmed/TTH*.root");
-  //  qcd_ch->Add("../../reduced_trees/8TeV/skimmed/QCD_Pt*.root");
   qcd_ch->Add("../../reduced_trees/8TeV/skimmed/QCD_HT*.root"); 
-  // qcd_ch->Add("../../reduced_trees/8TeV/skimmed/BJets*.root");
   znn_ch->Add("../../reduced_trees/8TeV/skimmed/ZJets*.root");
   wjets_ch->Add("../../reduced_trees/8TeV/skimmed/W*Jets*.root");
   single_top_ch->Add("../../reduced_trees/8TeV/skimmed/T_*.root");
@@ -609,16 +610,8 @@ int main() {
   data_obs_ch->Add("../../reduced_trees/8TeV/skimmed/Jet*.root");
   remove_duplicate_events(data_obs_ch);
 
-  // t1tttt_1500_100_ch->Add("../../reduced_trees/SMS-T1tttt_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2268_v76/*.root");
-  // t1tttt_1200_800_ch->Add("../../reduced_trees/SMS-T1tttt_2J_mGl-1200_mLSP-800_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2267_v76/*.root");
-  // t1bbbb_1500_100_ch->Add("../../reduced_trees/SMS-T1bbbb_2J_mGl-1500_mLSP-100_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v3_MINIAODSIM_UCSB2266_v76/*.root");
-  // t1bbbb_1000_900_ch->Add("../../reduced_trees/SMS-T1bbbb_2J_mGl-1000_mLSP-900_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v2_MINIAODSIM_UCSB2264_v76/*.root");
 
   cout << "Entries in chains..." << endl;
-  // cout << "t1tttt_1500_100 N=" << t1tttt_1500_100_ch->GetEntries() << endl;
-  // cout << "t1tttt_1200_800 N=" << t1tttt_1200_800_ch->GetEntries() << endl;
-  // cout << "t1bbbb_1500_100 N=" << t1bbbb_1500_100_ch->GetEntries() << endl;
-  // cout << "t1bbbb_1000_900 N=" << t1bbbb_1000_900_ch->GetEntries() << endl;
   cout << "ttbar N=" << ttbar_ch->GetEntries() << endl;
   cout << "qcd N=" << qcd_ch->GetEntries() << endl;
   cout << "znn N=" << znn_ch->GetEntries() << endl;
@@ -657,107 +650,478 @@ int main() {
   TCut AN_baseline("met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&min_delta_phi_met_N>4");
   TCut AN_LDP("met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&min_delta_phi_met_N<4");
 
-  TCut Zrich("met>250&&ht50>500&&jet3_pt>50&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&min_delta_phi_met_N_2012>4&&num_iso_tracks_pt15_mT==0");
+  TCut AN_Zrich("met>500&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&num_iso_tracks_pt15_mT==0&&min_delta_phi_met_N>4");
   TCut LL("met>250&&ht50>500&&jet3_pt>50&&num_reco_veto_electrons==0&&num_reco_veto_muons==0&&min_delta_phi_met_N_2012>4&&num_iso_tracks_pt15_mT==1");
 
 
 
-  // Binning N-1
-  // draw_from_trees("met",trigger+"met>125&&ht30>400&&jet2_pt>70&&jet3_pt>50&&num_csvm_jets30>=1&&(num_reco_veto_electrons+num_reco_veto_muons==1)&&min_delta_phi_met_N>4","(weightppb*19399)",
-  //  		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 30, 125, 500.,
-  //  		  "plotData",-1,-1,
-  //  		  "met_SL_1209");
+ 
 
-  // Fudge test
+  // Search region
+
+  draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==0",
+    		  ";#Delta#Phi^{min}_{N};Events / 20 fb^{-1}", 20, 0., 40,
+   		  "plotData",
+    		  "min_delta_phi_met_N_0b_127_QCD_fudged");
+  draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==1",
+    		  ";#Delta#Phi^{min}_{N};Events / 20 fb^{-1}", 20, 0., 40,
+   		  "plotData",
+    		  "min_delta_phi_met_N_1b_127_QCD_fudged");
+  draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==2",
+    		  ";#Delta#Phi^{min}_{N};Events / 20 fb^{-1}", 20, 0., 40,
+   		  "plotData",
+    		  "min_delta_phi_met_N_2b_127_QCD_fudged");
+  draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40>=3",
+    		  ";#Delta#Phi^{min}_{N};Events / 20 fb^{-1}", 20, 0., 40,
+   		  "plotData",
+    		  "min_delta_phi_met_N_geq3b_127_QCD_fudged");
+  draw_from_trees("num_csvm_jets40",trigger+AN_baseline,"",
+  		  ";N_{b-jets} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
+  		  "plotData",
+  		  "num_csvm_jets40_baseline_127_QCD_fudged");
+  draw_from_trees("num_csvm_jets40",trigger+AN_baseline,"",
+  		  ";N_{b-jets} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
+  		  "plotData",
+  		  "num_csvm_jets40_baseline_127_QCD_raw");
+  draw_from_trees("ht40",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_0b_baseline_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_1b_baseline_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_2b_baseline_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("met",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 12, 200, 500,
+  		  "plotData",
+  		  "met_0b_baseline_127_QCD_fudged");
+  draw_from_trees("met",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 12, 200, 500,
+  		  "plotData",
+  		  "met_1b_baseline_127_QCD_fudged");
+  draw_from_trees("met",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 12, 200, 500,
+  		  "plotData",
+  		  "met_2b_baseline_127_QCD_fudged");
+  draw_from_trees("met",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 12, 200, 500,
+  		  "plotData",
+  		  "met_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  "plotData",
+  		  "num_jets_pt40_0b_baseline_127_QCD_fudged");
+  draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  "plotData",
+  		  "num_jets_pt40_1b_baseline_127_QCD_fudged");
+  draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  "plotData",
+  		  "num_jets_pt40_2b_baseline_127_QCD_fudged");
+  draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  "plotData",
+  		  "num_jets_pt40_geq3b_baseline_127_QCD_fudged");
+
+  draw_from_trees("num_fatpT30_jets",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
+  		  "plotData",
+  		  "num_fatpT30_jets_baseline_0b_127_QCD_fudged");
+  draw_from_trees("num_fatpT30_jets",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
+  		  "plotData",
+  		  "num_fatpT30_jets_baseline_1b_127_QCD_fudged");
+  draw_from_trees("num_fatpT30_jets",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
+  		  "plotData",
+  		  "num_fatpT30_jets_baseline_2b_127_QCD_fudged");
+  draw_from_trees("num_fatpT30_jets",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
+  		  "plotData",
+  		  "num_fatpT30_jets_baseline_geq3b_127_QCD_fudged");
+  draw_from_trees("fatpT30_MJ",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "fatpT30_MJ_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_MJ",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "fatpT30_MJ_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_MJ",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "fatpT30_MJ_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_MJ",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "fatpT30_MJ_geq3b_baseline_127_QCD_fudged");
+   draw_from_trees("highest_mJ",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_0b_baseline_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_1b_baseline_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_2b_baseline_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_0b_baseline_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_1b_baseline_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_2b_baseline_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_0b_baseline_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_1b_baseline_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_2b_baseline_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_0b_baseline_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_1b_baseline_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_2b_baseline_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_geq3b_baseline_127_QCD_fudged");
+   draw_from_trees("fatpT30_jet1_pt",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_eta",trigger+AN_baseline,"num_csvm_jets40==0",
+  		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet1_eta_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_eta",trigger+AN_baseline,"num_csvm_jets40==1",
+  		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet1_eta_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_eta",trigger+AN_baseline,"num_csvm_jets40==2",
+  		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet1_eta_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_eta",trigger+AN_baseline,"num_csvm_jets40>=3",
+  		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet1_eta_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_eta",trigger+AN_baseline+"fatpT30_jet2_pt>0","num_csvm_jets40==0",
+  		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet2_eta_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_eta",trigger+AN_baseline+"fatpT30_jet2_pt>0","num_csvm_jets40==1",
+  		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet2_eta_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_eta",trigger+AN_baseline+"fatpT30_jet2_pt>0","num_csvm_jets40==2",
+  		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet2_eta_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_eta",trigger+AN_baseline+"fatpT30_jet2_pt>0","num_csvm_jets40>=3",
+  		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet2_eta_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_eta",trigger+AN_baseline+"fatpT30_jet3_pt>0","num_csvm_jets40==0",
+  		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet3_eta_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_eta",trigger+AN_baseline+"fatpT30_jet3_pt>0","num_csvm_jets40==1",
+  		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet3_eta_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_eta",trigger+AN_baseline+"fatpT30_jet3_pt>0","num_csvm_jets40==2",
+  		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet3_eta_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_eta",trigger+AN_baseline+"fatpT30_jet3_pt>0","num_csvm_jets40>=3",
+  		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet3_eta_geq3b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_eta",trigger+AN_baseline+"fatpT30_jet4_pt>0","num_csvm_jets40==0",
+  		  ";#eta_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet4_eta_0b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_eta",trigger+AN_baseline+"fatpT30_jet4_pt>0","num_csvm_jets40==1",
+  		  ";#eta_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet4_eta_1b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_eta",trigger+AN_baseline+"fatpT30_jet4_pt>0","num_csvm_jets40==2",
+  		  ";#eta_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet4_eta_2b_baseline_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_eta",trigger+AN_baseline+"fatpT30_jet4_pt>0","num_csvm_jets40>=3",
+  		  ";#eta_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
+  		  "plotData",
+  		  "fatpT30_jet4_eta_geq3b_baseline_127_QCD_fudged");
+  
+  // LDP
+  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_0b_LDP_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_1b_LDP_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_2b_LDP_127_QCD_fudged");
+  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2150,
+  		  "plotData",
+  		  "ht40_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_0b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_1b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_2b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";p_{T,1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet1_pt_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_0b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_1b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_2b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";p_{T,2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet2_pt_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_0b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_1b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_2b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";p_{T,3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet3_pt_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_0b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_1b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_2b_LDP_127_QCD_fudged");
+  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";p_{T,4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
+  		  "plotData",
+  		  "fatpT30_jet4_pt_geq3b_LDP_127_QCD_fudged");
+  
+  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_0b_LDP_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_1b_LDP_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_2b_LDP_127_QCD_fudged");
+  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";m_{J,1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "highest_mJ_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_0b_LDP_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_1b_LDP_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_2b_LDP_127_QCD_fudged");
+  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";m_{J,2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "scnd_highest_mJ_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_0b_LDP_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_1b_LDP_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_2b_LDP_127_QCD_fudged");
+  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";m_{J,3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "thrd_highest_mJ_geq3b_LDP_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_0b_LDP_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_1b_LDP_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_2b_LDP_127_QCD_fudged");
+  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
+  		  ";m_{J,4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+  		  "plotData",
+  		  "frth_highest_mJ_geq3b_LDP_127_QCD_fudged");
+  
   draw_from_trees("num_fatpT30_jets",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";n_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 5, 0, 5,
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
   		  "plotData",
   		  "num_fatpT30_jets_LDP_0b_127_QCD_fudged");
   draw_from_trees("num_fatpT30_jets",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";n_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 5, 0, 5,
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
   		  "plotData",
   		  "num_fatpT30_jets_LDP_1b_127_QCD_fudged");
   draw_from_trees("num_fatpT30_jets",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";n_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 5, 0, 5,
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
   		  "plotData",
   		  "num_fatpT30_jets_LDP_2b_127_QCD_fudged");
   draw_from_trees("num_fatpT30_jets",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";n_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 5, 0, 5,
+  		  ";N_{jets (R=1.2)} (p_{T} > 50 GeV);Events / 5 fb^{-1}", 6, 0, 6,
   		  "plotData",
   		  "num_fatpT30_jets_LDP_geq3b_127_QCD_fudged");
-  
-  draw_from_trees("met_phi",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==0",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 64, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_no_mdp_0b_LDP_127_QCD_fudged");
-    draw_from_trees("met_phi",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==1",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 64, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_no_mdp_1b_LDP_127_QCD_fudged");
-      draw_from_trees("met_phi",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40==2",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 64, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_no_mdp_2b_LDP_127_QCD_fudged");
-        draw_from_trees("met_phi",trigger+"met>200&&ht40>750&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","num_csvm_jets40>=3",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 64, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_no_mdp_geq3b_LDP_127_QCD_fudged");
-
-  
-  draw_from_trees("jet1_phi",trigger+AN_baseline,"num_csvm_jets40==0",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_0b_baseline_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_baseline,"num_csvm_jets40==1",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_1b_baseline_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_baseline,"num_csvm_jets40==2",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_2b_baseline_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_baseline,"num_csvm_jets40>=3",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_geq3b_baseline_127_QCD_fudged");
-
-    draw_from_trees("jet1_phi",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_0b_LDP_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_1b_LDP_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_2b_LDP_127_QCD_fudged");
-  draw_from_trees("jet1_phi",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "jet1_phi_geq3b_LDP_127_QCD_fudged");
-  
-
-  
-  draw_from_trees("met_phi",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_0b_LDP_127_QCD_fudged");
-    draw_from_trees("met_phi",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_1b_LDP_127_QCD_fudged");
-      draw_from_trees("met_phi",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_2b_LDP_127_QCD_fudged");
-        draw_from_trees("met_phi",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";#phi_{MET};Events / 5 fb^{-1}", 16, -3.2, 3.2,
-  		  "plotData",
-  		  "met_phi_geq3b_LDP_127_QCD_fudged");
-  
- draw_from_trees("fatpT30_jet1_energy",trigger+AN_LDP,"num_csvm_jets40==0",
+    
+  draw_from_trees("fatpT30_jet1_energy",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";E_{1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet1_energy_0b_LDP_127_QCD_fudged");
@@ -773,7 +1137,7 @@ int main() {
   		  ";E_{1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet1_energy_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet2_energy",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet2_energy",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";E_{2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet2_energy_0b_LDP_127_QCD_fudged");
@@ -789,7 +1153,7 @@ int main() {
   		  ";E_{2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet2_energy_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet3_energy",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet3_energy",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";E_{3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet3_energy_0b_LDP_127_QCD_fudged");
@@ -805,7 +1169,7 @@ int main() {
   		  ";E_{3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet3_energy_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet4_energy",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet4_energy",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";E_{4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
   		  "plotData",
   		  "fatpT30_jet4_energy_0b_LDP_127_QCD_fudged");
@@ -822,7 +1186,7 @@ int main() {
   		  "plotData",
   		  "fatpT30_jet4_energy_geq3b_LDP_127_QCD_fudged");
   
-    draw_from_trees("fatpT30_jet1_phi",trigger+AN_LDP+"fatpT30_jet1_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet1_phi",trigger+AN_LDP+"fatpT30_jet1_pt>0","num_csvm_jets40==0",
   		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet1_phi_0b_LDP_127_QCD_fudged");
@@ -838,7 +1202,7 @@ int main() {
   		  ";#phi_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet1_phi_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet2_phi",trigger+AN_LDP+"fatpT30_jet2_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet2_phi",trigger+AN_LDP+"fatpT30_jet2_pt>0","num_csvm_jets40==0",
   		  ";#phi_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet2_phi_0b_LDP_127_QCD_fudged");
@@ -854,7 +1218,7 @@ int main() {
   		  ";#phi_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet2_phi_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet3_phi",trigger+AN_LDP+"fatpT30_jet3_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet3_phi",trigger+AN_LDP+"fatpT30_jet3_pt>0","num_csvm_jets40==0",
   		  ";#phi_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet3_phi_0b_LDP_127_QCD_fudged");
@@ -870,7 +1234,7 @@ int main() {
   		  ";#phi_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet3_phi_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet4_phi",trigger+AN_LDP+"fatpT30_jet4_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet4_phi",trigger+AN_LDP+"fatpT30_jet4_pt>0","num_csvm_jets40==0",
   		  ";#phi_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet4_phi_0b_LDP_127_QCD_fudged");
@@ -887,7 +1251,7 @@ int main() {
   		  "plotData",
   		  "fatpT30_jet4_phi_geq3b_LDP_127_QCD_fudged");
   
-    draw_from_trees("fatpT30_jet1_eta",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet1_eta",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet1_eta_0b_LDP_127_QCD_fudged");
@@ -903,7 +1267,7 @@ int main() {
   		  ";#eta_{1};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet1_eta_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet2_eta",trigger+AN_LDP+"fatpT30_jet2_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet2_eta",trigger+AN_LDP+"fatpT30_jet2_pt>0","num_csvm_jets40==0",
   		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet2_eta_0b_LDP_127_QCD_fudged");
@@ -919,7 +1283,7 @@ int main() {
   		  ";#eta_{2};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet2_eta_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet3_eta",trigger+AN_LDP+"fatpT30_jet3_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet3_eta",trigger+AN_LDP+"fatpT30_jet3_pt>0","num_csvm_jets40==0",
   		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet3_eta_0b_LDP_127_QCD_fudged");
@@ -935,7 +1299,7 @@ int main() {
   		  ";#eta_{3};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet3_eta_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet4_eta",trigger+AN_LDP+"fatpT30_jet4_pt>0","num_csvm_jets40==0",
+  draw_from_trees("fatpT30_jet4_eta",trigger+AN_LDP+"fatpT30_jet4_pt>0","num_csvm_jets40==0",
   		  ";#eta_{4};Events / 5 fb^{-1}", 16, -3.2, 3.2,
   		  "plotData",
   		  "fatpT30_jet4_eta_0b_LDP_127_QCD_fudged");
@@ -952,155 +1316,8 @@ int main() {
   		  "plotData",
   		  "fatpT30_jet4_eta_geq3b_LDP_127_QCD_fudged");
   
-    draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";p_{T, 1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet1_pt_0b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";p_{T, 1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet1_pt_1b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";p_{T, 1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet1_pt_2b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet1_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";p_{T, 1} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet1_pt_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";p_{T, 2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet2_pt_0b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";p_{T, 2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet2_pt_1b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";p_{T, 2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet2_pt_2b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet2_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";p_{T, 2} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet2_pt_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";p_{T, 3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet3_pt_0b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";p_{T, 3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet3_pt_1b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";p_{T, 3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet3_pt_2b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet3_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";p_{T, 3} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet3_pt_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";p_{T, 4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet4_pt_0b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";p_{T, 4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet4_pt_1b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";p_{T, 4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet4_pt_2b_LDP_127_QCD_fudged");
-  draw_from_trees("fatpT30_jet4_pt",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";p_{T, 4} [GeV];Events / 5 fb^{-1}", 20, 0, 1000,
-  		  "plotData",
-  		  "fatpT30_jet4_pt_geq3b_LDP_127_QCD_fudged");
-  
-  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";m_{J, 1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "highest_mJ_0b_LDP_127_QCD_fudged");
-  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";m_{J, 1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "highest_mJ_1b_LDP_127_QCD_fudged");
-  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";m_{J, 1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "highest_mJ_2b_LDP_127_QCD_fudged");
-  draw_from_trees("highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";m_{J, 1} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "highest_mJ_geq3b_LDP_127_QCD_fudged");
-    draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";m_{J, 2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "scnd_highest_mJ_0b_LDP_127_QCD_fudged");
-  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";m_{J, 2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "scnd_highest_mJ_1b_LDP_127_QCD_fudged");
-  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";m_{J, 2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "scnd_highest_mJ_2b_LDP_127_QCD_fudged");
-  draw_from_trees("scnd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";m_{J, 2} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "scnd_highest_mJ_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";m_{J, 3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "thrd_highest_mJ_0b_LDP_127_QCD_fudged");
-  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";m_{J, 3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "thrd_highest_mJ_1b_LDP_127_QCD_fudged");
-  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";m_{J, 3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "thrd_highest_mJ_2b_LDP_127_QCD_fudged");
-  draw_from_trees("thrd_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";m_{J, 3} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "thrd_highest_mJ_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";m_{J, 4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "frth_highest_mJ_0b_LDP_127_QCD_fudged");
-  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";m_{J, 4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "frth_highest_mJ_1b_LDP_127_QCD_fudged");
-  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";m_{J, 4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "frth_highest_mJ_2b_LDP_127_QCD_fudged");
-  draw_from_trees("frth_highest_mJ",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";m_{J, 4} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
-  		  "plotData",
-  		  "frth_highest_mJ_geq3b_LDP_127_QCD_fudged");
-
-
-  
-  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2050,
-  		  "plotData",
-  		  "ht40_0b_LDP_127_QCD_fudged");
-  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2050,
-  		  "plotData",
-  		  "ht40_1b_LDP_127_QCD_fudged");
-  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2050,
-  		  "plotData",
-  		  "ht40_2b_LDP_127_QCD_fudged");
-  draw_from_trees("ht40",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2050,
-  		  "plotData",
-  		  "ht40_geq3b_LDP_127_QCD_fudged");
-      draw_from_trees("fatpT30_MJ",trigger+AN_LDP,"num_csvm_jets40==0",
+ 
+  draw_from_trees("fatpT30_MJ",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
   		  "plotData",
   		  "fatpT30_MJ_0b_LDP_127_QCD_fudged");
@@ -1117,44 +1334,24 @@ int main() {
   		  "plotData",
   		  "fatpT30_MJ_geq3b_LDP_127_QCD_fudged");
   
-    draw_from_trees("num_csvm_jets40",trigger+AN_baseline,"",
-  		  ";n_{CSVM} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
-  		  "plotData",
-  		  "num_csvm_jets40_nm1_127_QCD_fudged");
   draw_from_trees("num_csvm_jets40",trigger+AN_LDP,"",
-  		  ";n_{CSVM} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
+  		  ";N_{b-jets} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
   		  "plotData",
   		  "num_csvm_jets40_LDP_nm1_127_QCD_fudged");
-    draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==0",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
-  		  "plotData",
-  		  "num_jets_pt40_0b_127_QCD_fudged");
   draw_from_trees("num_jets_pt40",trigger+AN_LDP,"num_csvm_jets40==0",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
   		  "plotData",
   		  "num_jets_pt40_LDP_0b_127_QCD_fudged");
-      draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==1",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
-  		  "plotData",
-  		  "num_jets_pt40_1b_127_QCD_fudged");
   draw_from_trees("num_jets_pt40",trigger+AN_LDP,"num_csvm_jets40==1",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
   		  "plotData",
   		  "num_jets_pt40_LDP_1b_127_QCD_fudged");
-      draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40==2",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
-  		  "plotData",
-  		  "num_jets_pt40_2b_127_QCD_fudged");
   draw_from_trees("num_jets_pt40",trigger+AN_LDP,"num_csvm_jets40==2",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
   		  "plotData",
   		  "num_jets_pt40_LDP_2b_127_QCD_fudged");
-      draw_from_trees("num_jets_pt40",trigger+AN_baseline,"num_csvm_jets40>=3",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
-  		  "plotData",
-  		  "num_jets_pt40_geq3b_127_QCD_fudged");
   draw_from_trees("num_jets_pt40",trigger+AN_LDP,"num_csvm_jets40>=3",
-  		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
   		  "plotData",
   		  "num_jets_pt40_LDP_geq3b_127_QCD_fudged");
   
@@ -1179,14 +1376,14 @@ int main() {
   // LDP raw (for QCD fudge factors)
   
   draw_from_trees("num_csvm_jets40",trigger+AN_baseline,"",
-		  ";n_{CSVM} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
+		  ";N_{b-jets} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
 		  "plotData",
 		  "num_csvm_jets40_nm1_127_QCD_raw");
   draw_from_trees("num_csvm_jets40",trigger+AN_LDP,"",
-		  ";n_{CSVM} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
+		  ";N_{b-jets} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 4, 0, 4,
 		  "plotData",
 		  "num_csvm_jets40_LDP_nm1_127_QCD_raw");
- draw_from_trees("met",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("met",trigger+AN_LDP,"num_csvm_jets40==0",
 		  ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 12, 200, 500,
 		  "plotData",
 		  "met_0b_127_QCD_raw");
@@ -1218,7 +1415,7 @@ int main() {
   		  ";H_{T} [GeV];Events / 5 fb^{-1}", 14, 750, 2050,
   		  "plotData",
   		  "ht40_geq3b_127_QCD_raw");
-        draw_from_trees("fatpT30_MJ",trigger+AN_LDP,"num_csvm_jets40==0",
+  draw_from_trees("fatpT30_MJ",trigger+AN_LDP,"num_csvm_jets40==0",
   		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
   		  "plotData",
   		  "fatpT30_MJ_0b_127_QCD_raw");
@@ -1234,18 +1431,18 @@ int main() {
   		  ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
   		  "plotData",
   		  "fatpT30_MJ_geq3b_127_QCD_raw");
-    draw_from_trees("num_jets_pt40",trigger+AN_baseline,"",
-		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+  draw_from_trees("num_jets_pt40",trigger+AN_baseline,"",
+		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
 		  "plotData",
 		  "num_jets_pt40_nm1_127_QCD_raw");
   draw_from_trees("num_jets_pt40",trigger+AN_LDP,"",
-		  ";n_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
+		  ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 5, 4, 9,
 		  "plotData",
 		  "num_jets_pt40_LDP_nm1_127_QCD_raw");
   
  
 
-        draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>500&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","",
+  draw_from_trees("min_delta_phi_met_N",trigger+"met>200&&ht40>500&&jet4_pt>40&&num_reco_veto_electrons==0&&num_reco_veto_muons==0","",
     		  ";#Delta#Phi^{min}_{N};Events / 20 fb^{-1}", 20, 0., 40,
    		  "plotData",
     		  "min_delta_phi_met_N_nm1_127_QCD_raw");
@@ -1256,8 +1453,76 @@ int main() {
 
     
 
+  
 
+  // Z-rich
+  /*
+    draw_from_trees("met",trigger+AN_Zrich,"num_csvm_jets40==0",
+    ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 10, 500, 1000 ,
+    "plotData",
+    "met_0b_Zrich_127_QCD_fudged");
+    draw_from_trees("met",trigger+AN_Zrich,"num_csvm_jets40==1",
+    ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 10, 500, 1000 ,
+    "plotData",
+    "met_1b_Zrich_127_QCD_fudged");
+    draw_from_trees("met",trigger+AN_Zrich,"num_csvm_jets40==2",
+    ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 10, 500, 1000 ,
+    "plotData",
+    "met_2b_Zrich_127_QCD_fudged");
+    draw_from_trees("met",trigger+AN_Zrich,"num_csvm_jets40>=3",
+    ";E_{T}^{miss} [GeV];Events / 5 fb^{-1}", 10, 500, 1000 ,
+    "plotData",
+    "met_geq3b_Zrich_127_QCD_fudged");
+    draw_from_trees("ht40",trigger+AN_Zrich,"num_csvm_jets40==0",
+    ";H_{T} [GeV];Events / 5 fb^{-1}", 7, 750, 2150,
+    "plotData",
+    "ht40_0b_Zrich_127_QCD_fudged");
+    draw_from_trees("ht40",trigger+AN_Zrich,"num_csvm_jets40==1",
+    ";H_{T} [GeV];Events / 5 fb^{-1}", 7, 750, 2150,
+    "plotData",
+    "ht40_1b_Zrich_127_QCD_fudged");
+    draw_from_trees("ht40",trigger+AN_Zrich,"num_csvm_jets40==2",
+    ";H_{T} [GeV];Events / 5 fb^{-1}", 7, 750, 2150,
+    "plotData",
+    "ht40_2b_Zrich_127_QCD_fudged");
+    draw_from_trees("ht40",trigger+AN_Zrich,"num_csvm_jets40>=3",
+    ";H_{T} [GeV];Events / 5 fb^{-1}", 7, 750, 2150,
+    "plotData",
+    "ht40_geq3b_Zrich_127_QCD_fudged");
 
+    draw_from_trees("fatpT30_MJ",trigger+AN_Zrich,"num_csvm_jets40==0",
+    ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+    "plotData",
+    "fatpT30_MJ_0b_Zrich_127_QCD_fudged");
+    draw_from_trees("fatpT30_MJ",trigger+AN_Zrich,"num_csvm_jets40==1",
+    ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+    "plotData",
+    "fatpT30_MJ_1b_Zrich_127_QCD_fudged");
+    draw_from_trees("fatpT30_MJ",trigger+AN_Zrich,"num_csvm_jets40==2",
+    ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+    "plotData",
+    "fatpT30_MJ_2b_Zrich_127_QCD_fudged");
+    draw_from_trees("fatpT30_MJ",trigger+AN_Zrich,"num_csvm_jets40>=3",
+    ";#Sigmam_{J} [GeV];Events / 5 fb^{-1}", 12, 0, 600,
+    "plotData",
+    "fatpT30_MJ_geq3b_Zrich_127_QCD_fudged");
+    draw_from_trees("num_jets_pt40",trigger+AN_Zrich,"num_csvm_jets40==0",
+    ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 3, 1, 4,
+    "plotData",
+    "num_jets_pt40_Zrich_0b_127_QCD_fudged");
+    draw_from_trees("num_jets_pt40",trigger+AN_Zrich,"num_csvm_jets40==1",
+    ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 3, 1, 4,
+    "plotData",
+    "num_jets_pt40_Zrich_1b_127_QCD_fudged");
+    draw_from_trees("num_jets_pt40",trigger+AN_Zrich,"num_csvm_jets40==2",
+    ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 3, 1, 4,
+    "plotData",
+    "num_jets_pt40_Zrich_2b_127_QCD_fudged");
+    draw_from_trees("num_jets_pt40",trigger+AN_Zrich,"num_csvm_jets40>=3",
+    ";N_{jets (R=0.5)} (p_{T} > 40 GeV);Events / 5 fb^{-1}", 3, 1, 4,
+    "plotData",
+    "num_jets_pt40_Zrich_geq3b_127_QCD_fudged");
+  */
   return 0;
   
 }
