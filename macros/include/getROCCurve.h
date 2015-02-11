@@ -24,11 +24,11 @@ TGraph* getROCCurve(TH1D* hbg, TH1D* hsig, const int color=1000) {
   double sig[nbinsx], bg[nbinsx];
   for (unsigned int bin(0); bin<nbinsx+1; bin++) {
    sig[bin] = hsig->Integral(bin+1,nbinsx+1)/hsig->Integral(1,nbinsx+1);
-   bg[bin] = 1-hbg->Integral(bin+1,nbinsx+1)/hbg->Integral(1,nbinsx+1);
+   bg[bin] = hbg->Integral(bin+1,nbinsx+1)/hbg->Integral(1,nbinsx+1);
    // bg[bin] = hbg->Integral(bin+1,nbinsx+1)/hbg->Integral(1,nbinsx+1);
   }
 
-  TGraph* gr = new TGraph(nbinsx,bg,sig);
+  TGraph* gr = new TGraph(nbinsx,sig,bg);
   gr->SetLineColor(color);
   gr->SetLineWidth(4);
 

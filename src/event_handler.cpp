@@ -2349,8 +2349,7 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D
   if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
   // GlobalMuonPromptTight includes: isGlobal, globalTrack()->normalizedChi2() < 10, numberOfValidMuonHits() > 0
   if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
-  const double pvx (pv_x->at(0)), pvy(pv_y->at(0));   
-  const double d0 = mus_tk_d0dum->at(imu)-pvx*sin(mus_tk_phi->at(imu))+pvy*cos(mus_tk_phi->at(imu));
+  const double d0 = GetMuonD0(imu);
   const double mus_vz = mus_tk_vz->at(imu);
   const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
   if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
@@ -2388,6 +2387,10 @@ bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool iso2D
   }
 
   return true;
+}
+
+double EventHandler::GetMuonD0(const unsigned int imu) const{
+  return mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
 }
 
 double EventHandler::GetMuonRelIso(const unsigned int imu) const{
@@ -2557,9 +2560,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level/*, const bool
     }
   }
 
-  const double d0 = els_d0dum->at(iel)
-    -pv_x->at(0)*sin(els_tk_phi->at(iel))
-    +pv_y->at(0)*cos(els_tk_phi->at(iel));
+  const double d0 = GetElectronD0(iel);
   const double dz = fabs(els_vz->at(iel)-pv_z->at(0));
   const double sigietaieta = (cfAVersion>=75
                               ? els_full5x5_sigmaIetaIeta->at(iel)
@@ -2689,6 +2690,10 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level/*, const bool
 
   return true;
   */
+}
+
+double EventHandler::GetElectronD0(const unsigned int iel) const{
+  return els_d0dum->at(iel) - pv_x->at(0)*sin(els_tk_phi->at(iel)) + pv_y->at(0)*cos(els_tk_phi->at(iel));
 }
 
 double EventHandler::GetElectronRelIso(const unsigned int k) const{
@@ -3262,77 +3267,167 @@ bool EventHandler::PassPhys14TauID(const int itau, const bool againstEMu, const 
   return true;
 }
 
-void EventHandler::GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus) {
+void EventHandler::GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons,
+				   std::vector<int> &true_had_taus, std::vector<int> &true_lep_taus) {
   true_electrons.clear();
   true_muons.clear();
   true_had_taus.clear();
-
-  // loop to get all e/mu, tag tau-->e/mu
-  //  cout << "Find e/mu" << endl;
-  for(unsigned i = 0; i < mc_doc_id->size(); ++i){ 
+  true_lep_taus.clear();
+  bool tau_to_3tau(false);
+  vector<int> lep_from_tau;
+  for(unsigned i = 0; i < mc_doc_id->size(); ++i){
     const int id = static_cast<int>(floor(fabs(mc_doc_id->at(i))+0.5));
-    const int mom = static_cast<int>(floor(mc_doc_mother_id->at(i)));
+    const int mom = static_cast<int>(floor(fabs(mc_doc_mother_id->at(i))+0.5));
     const int gmom = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(i))+0.5));
     const int ggmom = static_cast<int>(floor(fabs(mc_doc_ggrandmother_id->at(i))+0.5));
-    // if (abs(mom) == 24 || (abs(mom) == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24)))) PrintGenParticleInfo(i);
-    if((id == 11 || id == 13) && (abs(mom) == 24 || (abs(mom) == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24))))){
-      if (abs(mom)!=15) { // from W, no prob
+    if((id == 11 || id == 13) && (mom == 24 || (mom == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24))))){
+      if (mom == 24) { // Lep from W
 	if (id==11) true_electrons.push_back(i);
 	else if (id==13) true_muons.push_back(i);
-      }
-      else { // from tau, check for Brem
-	uint nlep(0);
-	// cout << " from tau, check for Brem" << endl;
-	for(uint j=i; j<mc_doc_id->size(); ++j) {
-	  const int momb = static_cast<int>(floor(mc_doc_mother_id->at(j)));
-	  const int gmomb = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(j))+0.5));
-	  const int ggmomb = static_cast<int>(floor(fabs(mc_doc_ggrandmother_id->at(j))+0.5));
-	  if (abs(momb)!=15||(gmomb!=24&&ggmomb!=24)) continue;
+      } else if(!tau_to_3tau) { // Lep from tau, check for Brem
+	uint nlep(1);
+	for(uint j=i+1; j<mc_doc_id->size(); ++j) {
 	  const int idb = static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5));
-	  if (idb==id) nlep++;
-	  // cout << "nlep=" << nlep << ": ";
-	  // PrintGenParticleInfo(j);
-	  if (nlep>1) {
-	    // cout << "BREM!" << endl;
+	  const int momb = static_cast<int>(floor(fabs(mc_doc_mother_id->at(j))+0.5));
+	  if(momb==15 && (idb==11 || idb==13)) nlep++;
+	  if(momb!=15 || (momb==15&&idb==16) || j==mc_doc_id->size()-1){
+	    if(nlep==1){
+	      if (id==11) true_electrons.push_back(i);
+	      else if (id==13) true_muons.push_back(i);
+	      lep_from_tau.push_back(i);
+	    }
+	    i = j-1; // Moving index to first particle after tau daughters
 	    break;
 	  }
-	  if (momb!=mom) break;
-	}
-	if (nlep>1) continue;
-	if (id==11) true_electrons.push_back(i);
-	else if (id==13) true_muons.push_back(i);
-      }
+	} // Loop over tau daughters
+      } // if lepton comes from tau
     }
-  }
-  // cout << "Now find taus" << endl;
-  // now find taus
-  for(unsigned i = 0; i < mc_doc_id->size(); ++i){ 
-    const int id = static_cast<int>(floor((mc_doc_id->at(i))));
-    const int mom = static_cast<int>(floor(fabs(mc_doc_mother_id->at(i))+0.5));
-    if (abs(id)==15 && mom == 24) { // only count highest tau in the chain
-      // PrintGenParticleInfo(i);
+    if(id == 15 && mom == 24){
       true_had_taus.push_back(i);
-      uint nmu(0), nel(0);
-        // cout << "Check for leptonic decay...id=" << id << endl;
-      // do another loop from here to see if the tau decays leptonically
-      for(uint j=i; j<mc_doc_id->size(); ++j) {
-	const int idb = static_cast<int>(floor((mc_doc_id->at(j))));
-	if (abs(idb)!=11&&abs(idb)!=13) continue;
-	const int momb = static_cast<int>(floor(mc_doc_mother_id->at(j)));
-	if (momb != id) continue;
-	const int gmomb = static_cast<int>(floor(fabs(mc_doc_grandmother_id->at(j))+0.5));
-	if (gmomb!=24) continue;
-	 // cout << "Found one! ";
-	 // PrintGenParticleInfo(j);
-	if (static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5))==11) nel++;
-	if (static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5))==13) nmu++;
+    }
+    // Counting number of tau->tautautau
+    if((id == 15) && (mom == 15 && (gmom == 24 || (gmom == 15 && ggmom == 24)))){
+      uint nlep(1);
+      for(uint j=i+1; j<mc_doc_id->size(); ++j) {
+	const int idb = static_cast<int>(floor(fabs(mc_doc_id->at(j))+0.5));
+	const int momb = static_cast<int>(floor(fabs(mc_doc_mother_id->at(j))+0.5));
+	if(momb==15 && idb==15) nlep++;
+	if(momb!=15 || (momb==15&&idb==16) || j==mc_doc_id->size()-1){
+	  if(nlep>1) tau_to_3tau = true;
+	  i = j-1; // Moving index to first particle after tau daughters
+	  break;
+	}
+      } // Loop over tau daughters
+    } // if tau comes from prompt tau
+  } // Loop over mc_doc
+  // Removing leptonic taus from tau list by finding smallest DeltaR(lep,tau)
+  for(unsigned ind = 0; ind < lep_from_tau.size(); ++ind){
+    float minDr(9999.), lepEta(mc_doc_eta->at(lep_from_tau[ind])), lepPhi(mc_doc_phi->at(lep_from_tau[ind]));
+    int imintau(-1);
+    for(unsigned itau=0; itau < true_had_taus.size(); itau++){
+      float tauEta(mc_doc_eta->at(true_had_taus[itau])), tauPhi(mc_doc_phi->at(true_had_taus[itau]));
+      float tauDr(Math::GetDeltaR(tauPhi, tauEta, lepPhi, lepEta));
+      if(tauDr < minDr) {
+	minDr = tauDr;
+	imintau = itau;
       }
-      if (nel==1||nmu==1) true_had_taus.pop_back();
+    }
+    if(imintau>=0) {
+      true_lep_taus.push_back(imintau);
+      true_had_taus.erase(true_had_taus.begin()+imintau);
+    } else cout<<"Not found a tau match for lepton "<<ind<<endl; // Should not happen
+  } // Loop over leptons from taus
+  return;
+}
+
+double EventHandler::GetDRToClosestParton(const int imc) const {
+  double minDR(DBL_MAX);
+  double i_eta(mc_doc_eta->at(imc)), i_phi(mc_doc_phi->at(imc));
+  for(unsigned jmc = 0; jmc < mc_doc_id->size(); ++jmc){
+    const int id = static_cast<int>(floor(fabs(mc_doc_id->at(jmc))+0.5));
+    const int status = static_cast<int>(floor(fabs(mc_doc_status->at(jmc))+0.5));
+    if (!(id==21||(id>=1&&id<=5))) continue; //partons only
+    if (status<22||status>23) continue; // hard scatter only
+    double DR = Math::GetDeltaR(i_phi, i_eta, mc_doc_phi->at(jmc), mc_doc_eta->at(jmc));
+    if (DR<minDR) {
+      minDR=DR;
     }
   }
-  // cout << "Found " << true_electrons.size() << " electrons, " << true_muons.size() << " muons, and " << true_had_taus.size() << " taus." << endl;
-  return;
-  
+  if (minDR>1000) return -999.;
+  return minDR;
+}
+
+std::vector<int> EventHandler::MatchElectrons(const std::vector<int> true_electrons) const{
+  std::vector<int> reco_electrons;
+  for (uint iel(0); iel<true_electrons.size(); iel++) {
+    reco_electrons.push_back(GetClosestRecoElectron(true_electrons[iel]));
+  }
+  return reco_electrons;
+}
+
+int EventHandler::GetClosestRecoElectron(const uint imc) const {
+  const int bad_index = -1;
+  if(imc >= mc_doc_id->size()) return bad_index;
+  TVector3 mc3(mc_doc_pt->at(imc)*cos(mc_doc_phi->at(imc)),
+		  mc_doc_pt->at(imc)*sin(mc_doc_phi->at(imc)),
+		  mc_doc_pt->at(imc)*sinh(mc_doc_eta->at(imc)));
+  // printf("True el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mc_doc_pt->at(imc), mc_doc_eta->at(imc), mc_doc_phi->at(imc));
+  float best_score = std::numeric_limits<float>::max();
+  int best_part = bad_index;
+  for(uint iel(0); iel < els_pt->size(); iel++) {
+    TVector3 el3(els_pt->at(iel)*cos(els_phi->at(iel)),
+		  els_pt->at(iel)*sin(els_phi->at(iel)),
+		  els_pt->at(iel)*sinh(els_scEta->at(iel)));
+    float this_score = (el3-mc3).Mag2();
+    // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), els_phi->at(iel), els_scEta->at(iel));
+    // float deltaPt =  (el3-mc3).Pt();
+    if(this_score < best_score){
+      best_score = this_score;
+      best_part = iel;
+       // printf("Reco el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", els_pt->at(iel), els_scEta->at(iel), els_phi->at(iel));
+       // printf("el %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", iel, deltaPt, deltaR, this_score);
+    }
+  }
+  if (best_score>50) return -1;
+  //  cout << "Matched el: " << best_part << endl;
+  return best_part;
+}
+
+std::vector<int> EventHandler::MatchMuons(const std::vector<int> true_muons) const{
+  std::vector<int> reco_muons;
+  for (uint imu(0); imu<true_muons.size(); imu++) {
+    reco_muons.push_back(GetClosestRecoMuon(true_muons[imu]));
+  }
+  //  cout << "Filled reco muon vector " <<  reco_muons.size() << " times." << endl;
+  return reco_muons;
+}
+
+int EventHandler::GetClosestRecoMuon(const uint imc) const {
+  const int bad_index = -1;
+  if(imc >= mc_doc_id->size()) return bad_index;
+  TVector3 mc3(mc_doc_pt->at(imc)*cos(mc_doc_phi->at(imc)),
+		  mc_doc_pt->at(imc)*sin(mc_doc_phi->at(imc)),
+		  mc_doc_pt->at(imc)*sinh(mc_doc_eta->at(imc)));
+  //  printf("True mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mc_doc_pt->at(imc), mc_doc_eta->at(imc), mc_doc_phi->at(imc));
+  float best_score = std::numeric_limits<float>::max();
+  int best_part = bad_index;
+  for(uint imu(0); imu < mus_pt->size(); imu++) {
+    TVector3 mu3(mus_pt->at(imu)*cos(mus_tk_phi->at(imu)),
+		  mus_pt->at(imu)*sin(mus_tk_phi->at(imu)),
+		  mus_pt->at(imu)*sinh(mus_eta->at(imu)));
+    float this_score = (mu3-mc3).Mag2();
+    // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), mus_tk_phi->at(imu), mus_eta->at(imu));
+    // float deltaPt =  (mu3-mc3).Pt();
+    if(this_score < best_score){
+      best_score = this_score;
+      best_part = imu;
+      //      printf("Reco mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mus_pt->at(imu), mus_eta->at(imu), mus_tk_phi->at(imu));
+      //      printf("mu %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", imu, deltaPt, deltaR, this_score);
+    }
+  }
+  if (best_score>50) return -1;
+  //  cout << "Matched mu: " << best_part << endl;
+  return best_part;
 }
 
 void EventHandler::PrintGenParticleInfo(const int imc) const {

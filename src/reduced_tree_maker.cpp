@@ -6,6 +6,7 @@
 #include "event_handler.hpp"
 #include "event_number.hpp"
 #include "math.hpp"
+#include "TROOT.h"
 
 
 using namespace std;
@@ -19,6 +20,9 @@ ReducedTreeMaker::ReducedTreeMaker(const std::string& in_file_name,
   }
 
 void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
+
+  gROOT->ProcessLine("#include <vector>");
+  
   TFile file(out_file_name.c_str(), "recreate");
   std::set<EventNumber> eventList;
   file.cd();
@@ -91,7 +95,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   double Prob0, ProbGEQ1, Prob1, ProbGEQ2, Prob2, ProbGEQ3, Prob3, ProbGEQ4;
   double Prob0_pt50, ProbGEQ1_pt50, Prob1_pt50, ProbGEQ2_pt50, Prob2_pt50, ProbGEQ3_pt50, Prob3_pt50, ProbGEQ4_pt50;
 
-  unsigned short num_true_electrons(0), num_true_muons(0), num_true_had_taus(0);
 
 
   int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_iso2D(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
@@ -190,7 +193,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   double doc_met(0.);
   double gluino1_pt(0.), gluino2_pt(0.);
 
-
+  unsigned short num_true_electrons(0), num_true_muons(0), num_true_had_taus(0), num_true_lep_taus(0);
+  vector<float> true_electron_pt, true_electron_eta, true_electron_min_parton_dR, true_electron_rel_iso, true_electron_d0;
+  vector<bool> true_electron_passID;
+  vector<float> true_muon_pt, true_muon_eta, true_muon_min_parton_dR, true_muon_rel_iso, true_muon_d0;
+  vector<bool> true_muon_passID;
+  vector<float> true_had_tau_pt, true_had_tau_eta, true_had_tau_min_parton_dR;
 
 
   reduced_tree.Branch("weightppb", &weightppb);
@@ -684,10 +692,28 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("had_track_relIso", &had_track_relIso);
   reduced_tree.Branch("had_track_mT", &had_track_mT);
 
-  reduced_tree.Branch("num_true_muons", &num_true_muons);
   reduced_tree.Branch("num_true_electrons", &num_true_electrons);
-  reduced_tree.Branch("num_true_had_taus", &num_true_had_taus);
+  reduced_tree.Branch("true_electron_pt", &true_electron_pt);
+  reduced_tree.Branch("true_electron_eta", &true_electron_eta);
+  reduced_tree.Branch("true_electron_min_parton_dR", &true_electron_min_parton_dR);
+  reduced_tree.Branch("true_electron_passID", &true_electron_passID);
+  reduced_tree.Branch("true_electron_rel_iso", &true_electron_rel_iso);
+  reduced_tree.Branch("true_electron_d0", &true_electron_d0);
 
+  reduced_tree.Branch("num_true_muons", &num_true_muons);
+  reduced_tree.Branch("true_muon_pt", &true_muon_pt);
+  reduced_tree.Branch("true_muon_eta", &true_muon_eta);
+  reduced_tree.Branch("true_muon_min_parton_dR", &true_muon_min_parton_dR);
+  reduced_tree.Branch("true_muon_passID", &true_muon_passID);
+  reduced_tree.Branch("true_muon_rel_iso", &true_muon_rel_iso);
+  reduced_tree.Branch("true_muon_d0", &true_muon_d0);
+
+  reduced_tree.Branch("num_true_had_taus", &num_true_had_taus);
+  reduced_tree.Branch("true_had_tau_pt", &true_had_tau_pt);
+  reduced_tree.Branch("true_had_tau_eta", &true_had_tau_eta);
+  reduced_tree.Branch("true_had_tau_min_parton_dR", &true_had_tau_min_parton_dR);
+
+  reduced_tree.Branch("num_true_lep_taus", &num_true_lep_taus);
 
 
 
@@ -705,6 +731,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     GetEntry(i);
     entry=i;
    
+    //  if (i<675) continue;
     //  cout << "*****Event " << i << "*****" << endl;
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
@@ -1516,22 +1543,77 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 	tau_mT=GetMTW(tau_pt,met,taus_phi->at(0),met_phi);
       }
 
-    //   if (entry==180 || entry==523 || entry==573 || entry==1041 || entry==1661) {
       std::vector<int> true_electrons;
       std::vector<int> true_muons;
       std::vector<int> true_had_taus;
-      // if (entry==3633||entry==11120||entry==12397||entry==15305||entry==15896) GetTrueLeptons(true_electrons, true_muons, true_had_taus);
-      GetTrueLeptons(true_electrons, true_muons, true_had_taus);
-    
+      std::vector<int> true_lep_taus;
+      GetTrueLeptons(true_electrons, true_muons, true_had_taus, true_lep_taus);
+      //     cout << "Found " << true_electrons.size() << " prompt electrons." << endl;
+      std::vector<int> matched_electrons = MatchElectrons(true_electrons);
+      //      cout << "Found " << true_muons.size() << " prompt muons." << endl;
+      std::vector<int> matched_muons = MatchMuons(true_muons);
+
       num_true_electrons=true_electrons.size();
       num_true_muons=true_muons.size();
       num_true_had_taus=true_had_taus.size();
-      //  }
+      num_true_lep_taus=true_lep_taus.size();
 
-      //if ((num_true_electrons+num_true_muons+num_true_had_taus)>2) cout << "3 lepton event: " << entry << endl;
-
+      true_electron_pt.clear();
+      true_electron_eta.clear();
+      true_electron_min_parton_dR.clear();
+      true_electron_passID.clear();
+      true_electron_rel_iso.clear();
+      true_electron_d0.clear();
+      for (uint iel(0); iel<num_true_electrons; iel++) {
+	true_electron_pt.push_back(mc_doc_pt->at(true_electrons[iel]));
+	true_electron_eta.push_back(mc_doc_eta->at(true_electrons[iel]));
+	true_electron_min_parton_dR.push_back(GetDRToClosestParton(true_electrons[iel]));
+	if (matched_electrons[iel]>=0)	{
+	  true_electron_passID.push_back(isRecoElectron(matched_electrons[iel],0));
+	  true_electron_rel_iso.push_back(GetCSAElectronIsolation(matched_electrons[iel]));
+	  true_electron_d0.push_back(GetElectronD0(matched_electrons[iel]));
+	} else {
+	  true_electron_passID.push_back(-999.);
+	  true_electron_rel_iso.push_back(-999.);
+	  true_electron_d0.push_back(-999.);
+	}
+      }
+      
+      true_muon_pt.clear();
+      true_muon_eta.clear();
+      true_muon_min_parton_dR.clear();
+      true_muon_passID.clear();
+      true_muon_rel_iso.clear();
+      true_muon_d0.clear();
+      for (uint imu(0); imu<num_true_muons; imu++) {
+	true_muon_pt.push_back(mc_doc_pt->at(true_muons[imu]));
+	true_muon_eta.push_back(mc_doc_eta->at(true_muons[imu]));
+	true_muon_min_parton_dR.push_back(GetDRToClosestParton(true_muons[imu]));
+	//	cout << "True muon " << imu << ": ";
+	if (matched_muons[imu]>=0)	{
+	  //	  cout << "matched to reco muon " << matched_muons[imu] << endl;
+	  true_muon_passID.push_back(isRecoMuon(matched_muons[imu],0));
+	  true_muon_rel_iso.push_back(GetMuonRelIso(matched_muons[imu]));
+	  true_muon_d0.push_back(GetMuonD0(matched_muons[imu]));
+	} else {
+	  //	  cout << "not matched." << endl;
+	  true_muon_passID.push_back(-999.);
+	  true_muon_rel_iso.push_back(-999.);
+	  true_muon_d0.push_back(-999.);
+	}
+      }
+      
+      true_had_tau_pt.clear();
+      true_had_tau_eta.clear();
+      true_had_tau_min_parton_dR.clear();
+      for (uint itau(0); itau<num_true_had_taus; itau++) {
+	true_had_tau_pt.push_back(mc_doc_pt->at(true_had_taus[itau]));
+	true_had_tau_eta.push_back(mc_doc_eta->at(true_had_taus[itau]));
+	true_had_tau_min_parton_dR.push_back(GetDRToClosestParton(true_had_taus[itau]));
+      }
+      
     reduced_tree.Fill(); 
-    //  if (i==20) break;
+    //    if (i==20) break;
 
   }
 

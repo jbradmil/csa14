@@ -213,6 +213,7 @@ protected:
 
   vector<int> GetRecoMuons(const bool veto, const bool iso2D=false, const bool mT_cut=false, const bool orth=false) const;
   bool isRecoMuon(const uint imu, const uint level=0, const bool=false, const bool=false, const bool=false) const;
+  double GetMuonD0(const unsigned int imu) const;
   bool isTrueMuon(const double eta, const double phi) const;
   bool isbMuon(const double eta, const double phi) const;
   double GetMuonRelIso(const unsigned int imu) const;
@@ -223,8 +224,9 @@ protected:
   float GetRecoMuonIsolation(uint imu);
 
   vector<int> GetRecoElectrons(const bool veto/*, const bool iso2D=false, const bool mT_cut=false, const bool orth=false*/) const;
-  bool isRecoElectron(const uint imu, const uint level=0/*, const bool=false, const bool=false, const bool=false*/) const;
-
+  bool isRecoElectron(const uint iel, const uint level=0/*, const bool=false, const bool=false, const bool=false*/) const;
+  double GetElectronD0(const unsigned int iel) const;
+  
   vector<int> GetRA2bElectrons(const bool veto) const;
   vector<int> GetRA2bMuons(const bool veto) const;
 
@@ -301,7 +303,12 @@ protected:
   int GetNumTaus(const bool=false, const bool=false) const;
   bool PassPhys14TauID(const int, const bool=false, const bool=false) const;
 
-  void GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus);
+  void GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus, std::vector<int> &true_lep_taus);
+  double GetDRToClosestParton(const int imc) const;
+  std::vector<int> MatchElectrons(const std::vector<int> true_electrons) const;
+  int GetClosestRecoElectron(const uint imc) const;
+  std::vector<int> MatchMuons(const std::vector<int> true_muons) const;
+  int GetClosestRecoMuon(const uint imc) const;
   void PrintGenParticleInfo(const int imc) const;
   
 };

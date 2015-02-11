@@ -58,7 +58,7 @@ void set_style(TH1 * h, const TString& p) {
 
 void set_style(TLegend* leg, float text_size=0.045, bool transparent=false) {
   if (transparent) leg->SetFillStyle(0);
-  leg->SetFillColor(0);
+  leg->SetFillStyle(0);
   leg->SetLineColor(0);
   leg->SetShadowColor(0);
   leg->SetTextFont(62);
