@@ -12,10 +12,10 @@ class ReducedTreeMaker : public EventHandler{
 public:
   ReducedTreeMaker(const std::string& in_file_name,
                    const bool is_list,
-                   const double weight_in=1.0,
+		   const double weight_in=1.0,
 		   const int Nentries_in=-1);
 
-  void MakeReducedTree(const std::string& out_file_name);
+  void MakeReducedTree(const std::string& out_file_name, const bool is_skimmed);
 
 private:
    int Nentries;

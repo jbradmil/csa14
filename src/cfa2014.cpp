@@ -1486,6 +1486,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   pfcand_energy(0),
   pfcand_charge(0),
   pfcand_dz(0),
+  pfcand_fromPV(0),
   Npfmets(0),
   pfmets_et(0),
   pfmets_phi(0),
@@ -2884,6 +2885,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_pfcand_energy(),
   b_pfcand_charge(),
   b_pfcand_dz(),
+  b_pfcand_fromPV(),
   b_Npfmets(),
   b_pfmets_et(),
   b_pfmets_phi(),
@@ -3159,6 +3161,8 @@ void cfA::AddFiles(const std::string& fileIn, const bool isList){
     } else {
       chainA.Add((fileIn+"/cfA/eventA").c_str());
       chainB.Add((fileIn+"/cfA/eventB").c_str());      
+      // std::cout << fileIn+"/cfA/eventB" << std::endl;
+      // std::cout << "Entries in chain: " << chainB.GetEntries() << std::endl;
     }
   }
 }
@@ -4697,6 +4701,7 @@ void cfA::InitializeB(){
   pfcand_energy=0;
   pfcand_charge=0;
   pfcand_dz=0;
+  pfcand_fromPV=0;
   Npfmets=0;
   pfmets_et=0;
   pfmets_phi=0;
@@ -6199,7 +6204,10 @@ void cfA::InitializeB(){
     // chainB.SetBranchAddress("pfcand_theta", &pfcand_theta, &b_pfcand_theta);
     chainB.SetBranchAddress("pfcand_energy", &pfcand_energy, &b_pfcand_energy);
     chainB.SetBranchAddress("pfcand_charge", &pfcand_charge, &b_pfcand_charge);
-    if (cfAVersion>=76) chainB.SetBranchAddress("pfcand_dz", &pfcand_dz, &b_pfcand_dz);
+    if (cfAVersion>=76) {
+      chainB.SetBranchAddress("pfcand_dz", &pfcand_dz, &b_pfcand_dz);
+      chainB.SetBranchAddress("pfcand_fromPV", &pfcand_fromPV, &b_pfcand_fromPV);
+    }
   }
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("Npfmets", &Npfmets, &b_Npfmets);

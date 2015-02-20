@@ -19,7 +19,7 @@ ReducedTreeMaker::ReducedTreeMaker(const std::string& in_file_name,
   Nentries(Nentries_in){
   }
 
-void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
+void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const bool is_skimmed){
 
   gROOT->ProcessLine("#include <vector>");
   
@@ -97,40 +97,31 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
 
 
-  int num_reco_muons(0), num_reco_veto_muons(0), num_reco_veto_muons_iso2D(0), num_reco_veto_muons_mT100(0), num_reco_veto_muons_mT100_orth(0);
-  int num_reco_electrons(0), num_reco_veto_electrons(0), num_reco_veto_electrons_iso2D(0), num_reco_veto_electrons_mT100(0), num_reco_veto_electrons_mT100_orth(0);
-  int num_taus_POG_phys14_ID(0), num_taus_POG_phys14_ID_againstEMu(0), num_taus_POG_phys14_ID_mT100(0), num_taus_POG_phys14_ID_againstEMu_mT100(0);
-  float tau_pt, tau_chargedIsoPtSum, tau_mT;
+  int num_mus(0), num_mus_mini(0), num_veto_mus(0), num_veto_mus_mini(0);
+  int num_els(0), num_els_mini(0), num_veto_els(0), num_veto_els_mini(0);
+  int num_veto_taus_mT(0);
+  vector<bool> tau_loose, tau_medium, tau_tight;
+  vector<float> tau_pt, tau_dB_iso, tau_chargedIsoPtSum, tau_mT;
 
-  float iso_track_pt, iso_track_relIso, iso_track_mT;
-  float e_track_pt, e_track_relIso, e_track_mT;
-  float mu_track_pt, mu_track_relIso, mu_track_mT;
-  float had_track_pt, had_track_relIso, had_track_mT;
-  
+  float iso_track_pt, iso_track_dB_iso, iso_track_mini_iso, iso_track_mT;
 
-  // int num_lost_electrons(0), num_lost_muons(0), num_lost_leptons(0);
+
+  // int num_lost_els(0), num_lost_mus(0), num_lost_leptons(0);
 
 
 
-  int muon_true, muon_b;
-  int muon_signal, muon_veto;
-  float muon_pt, muon_eta, muon_phi;
-  float muon_mT, muon_dphi_met;
-  float muon_relIso;
-  float muon_NH_Iso, muon_CH_Iso, muon_ph_Iso, muon_PU_Iso;
-  float muon_ptRel, muon_minDR;
+  vector<bool> mu_signal, mu_veto, mu_vid, mu_tm;
+  vector<float> mu_pt, mu_eta, mu_phi;
+  vector<float> mu_dB_iso_R04, mu_dB_iso_R03, mu_mini_iso;
+  vector<float> mu_mT;
+  vector<int> mu_truid, mu_momid;
 
+  vector<bool> el_signal, el_veto, el_sid, el_vid, el_tm;
+  vector<float> el_pt, el_eta, el_phi;
+  vector<float> el_dB_iso_R03, el_mini_iso;
+  vector<float> el_mT;
+  vector<int> el_truid, el_momid;
 
-
-  int electron_true;
-  int electron_signal, electron_veto;
-  float electron_pt, electron_eta, electron_phi;
-  float electron_mT, electron_dphi_met;
-  float electron_relIso;
-  float electron_NH_Iso, electron_CH_Iso, electron_ph_Iso;
-  float electron_ptRel, electron_minDR;
-
-  // int lep1, lep2;
 
   float min_delta_phi_met, min_delta_phi_met_loose_jets;
   float min_delta_phi_met_N, min_delta_phi_met_N_loose_jets;
@@ -138,9 +129,25 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   float jet1_DeltaPhiMETN, jet2_DeltaPhiMETN, jet3_DeltaPhiMETN;
 
   // float deltaPhiN_1, deltaPhiN_2, deltaPhiN_3;
-  int num_iso_tracks_pt10, num_iso_tracks_pt10_mT, num_iso_tracks_pt15, num_iso_tracks_pt15_mT;
-  int num_e_iso_tracks, num_mu_iso_tracks, num_had_iso_tracks;
-  int num_e_iso_tracks_mT, num_mu_iso_tracks_mT, num_had_iso_tracks_mT;
+  int num_iso_tracks_pt10, num_iso_tracks_pt10_mT, num_iso_tracks_pt15, num_iso_tracks_pt15_mT, num_iso_tracks_mini_mT;
+  int num_el_tracks, num_mu_tracks, num_had_tracks;
+  int num_el_tracks_mT, num_mu_tracks_mT, num_had_tracks_mT;
+  int num_el_tracks_mini_mT, num_mu_tracks_mini_mT, num_had_tracks_mini_mT;
+  int num_had_tracks_no_iso, num_had_tracks_mT_no_iso;
+
+  vector<bool> el_track_tm;
+  vector<int> el_track_truid, el_track_momid;
+  vector<float> el_track_pt, el_track_ch_iso, el_track_dB_iso, el_track_mini_iso, el_track_mT;
+  vector<bool> mu_track_tm;
+  vector<int> mu_track_truid, mu_track_momid;
+  vector<float> mu_track_pt, mu_track_ch_iso, mu_track_dB_iso, mu_track_mini_iso, mu_track_mT;
+  vector<bool> had_track_from_tau;
+  vector<int> had_track_truid;
+  vector<float> had_track_pt, had_track_ch_iso, had_track_dB_iso, had_track_mini_iso, had_track_mT;
+  // bool had_track_from_tau;
+  // int had_track_truid;
+  // float had_track_pt, had_track_ch_iso, had_track_dB_iso, had_track_mini_iso, had_track_mT;
+  
 
   float mT_mu, mT_el;
   float deltaThetaT, W_pT;
@@ -148,30 +155,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   bool ht_bin1, ht_bin2, ht_bin3, ht_bin4;
   bool met_bin1, met_bin2, met_bin3, met_bin4;
   bool nb_bin1, nb_bin2, nb_bin3;
-
-  // double fatpT10_jet1_pt(-9999.), fatpT10_jet2_pt(-9999.), fatpT10_jet3_pt(-9999.), fatpT10_jet4_pt(-9999.);
-  // int fatpT10_jet1_nConst(-1), fatpT10_jet2_nConst(-1), fatpT10_jet3_nConst(-1), fatpT10_jet4_nConst(-1);
-  // double fatpT10_jet1_mJ(-9999.), fatpT10_jet2_mJ(-9999.), fatpT10_jet3_mJ(-9999.), fatpT10_jet4_mJ(-9999.);
-  // int num_fatpT10_jets(-1), num_fatpT10_jets_pt100(-1), num_fatpT10_jets_pt150(-1), num_fatpT10_jets_pt200(-1),  num_fatpT10_jets_pt300(-1);
-  // double fatpT10_MJ(-9999.), fatpT10_MJ_pt100(-9999.), fatpT10_MJ_pt150(-9999.), fatpT10_MJ_pt200(-9999.), fatpT10_MJ_pt300(-9999.);
-
-  // double fatpT15_jet1_pt(-9999.), fatpT15_jet2_pt(-9999.), fatpT15_jet3_pt(-9999.), fatpT15_jet4_pt(-9999.);
-  // int fatpT15_jet1_nConst(-1), fatpT15_jet2_nConst(-1), fatpT15_jet3_nConst(-1), fatpT15_jet4_nConst(-1);
-  // double fatpT15_jet1_mJ(-9999.), fatpT15_jet2_mJ(-9999.), fatpT15_jet3_mJ(-9999.), fatpT15_jet4_mJ(-9999.);
-  // int num_fatpT15_jets(-1), num_fatpT15_jets_pt100(-1), num_fatpT15_jets_pt150(-1), num_fatpT15_jets_pt200(-1),  num_fatpT15_jets_pt300(-1);
-  // double fatpT15_MJ(-9999.), fatpT15_MJ_pt100(-9999.), fatpT15_MJ_pt150(-9999.), fatpT15_MJ_pt200(-9999.), fatpT15_MJ_pt300(-9999.);
-
-  // double fatpT20_jet1_pt(-9999.), fatpT20_jet2_pt(-9999.), fatpT20_jet3_pt(-9999.), fatpT20_jet4_pt(-9999.);
-  // int fatpT20_jet1_nConst(-1), fatpT20_jet2_nConst(-1), fatpT20_jet3_nConst(-1), fatpT20_jet4_nConst(-1);
-  // double fatpT20_jet1_mJ(-9999.), fatpT20_jet2_mJ(-9999.), fatpT20_jet3_mJ(-9999.), fatpT20_jet4_mJ(-9999.);
-  // int num_fatpT20_jets(-1), num_fatpT20_jets_pt100(-1), num_fatpT20_jets_pt150(-1), num_fatpT20_jets_pt200(-1),  num_fatpT20_jets_pt300(-1);
-  // double fatpT20_MJ(-9999.), fatpT20_MJ_pt100(-9999.), fatpT20_MJ_pt150(-9999.), fatpT20_MJ_pt200(-9999.), fatpT20_MJ_pt300(-9999.);
-
-  // double fatpT25_jet1_pt(-9999.), fatpT25_jet2_pt(-9999.), fatpT25_jet3_pt(-9999.), fatpT25_jet4_pt(-9999.);
-  // int fatpT25_jet1_nConst(-1), fatpT25_jet2_nConst(-1), fatpT25_jet3_nConst(-1), fatpT25_jet4_nConst(-1);
-  // double fatpT25_jet1_mJ(-9999.), fatpT25_jet2_mJ(-9999.), fatpT25_jet3_mJ(-9999.), fatpT25_jet4_mJ(-9999.);
-  // int num_fatpT25_jets(-1), num_fatpT25_jets_pt100(-1), num_fatpT25_jets_pt150(-1), num_fatpT25_jets_pt200(-1),  num_fatpT25_jets_pt300(-1);
-  // double fatpT25_MJ(-9999.), fatpT25_MJ_pt100(-9999.), fatpT25_MJ_pt150(-9999.), fatpT25_MJ_pt200(-9999.), fatpT25_MJ_pt300(-9999.);
 
   double fatpT30_jet1_pt(-9999.), fatpT30_jet2_pt(-9999.), fatpT30_jet3_pt(-9999.), fatpT30_jet4_pt(-9999.);
   double fatpT30_jet1_eta(-9999.), fatpT30_jet2_eta(-9999.), fatpT30_jet3_eta(-9999.), fatpT30_jet4_eta(-9999.);
@@ -193,13 +176,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   double doc_met(0.);
   double gluino1_pt(0.), gluino2_pt(0.);
 
-  unsigned short num_true_electrons(0), num_true_muons(0), num_true_had_taus(0), num_true_lep_taus(0);
-  vector<float> true_electron_pt, true_electron_eta, true_electron_min_parton_dR, true_electron_rel_iso, true_electron_d0;
-  vector<bool> true_electron_passID;
-  vector<float> true_muon_pt, true_muon_eta, true_muon_min_parton_dR, true_muon_rel_iso, true_muon_d0;
-  vector<bool> true_muon_passID;
+  unsigned short num_true_els(0), num_true_mus(0), num_true_had_taus(0), num_true_lep_taus(0);
+  vector<float> true_el_pt, true_el_eta, true_el_min_parton_dR, true_el_rel_iso, true_el_mini_iso, true_el_d0, true_el_tk_pt, true_el_tk_ch_iso;
+  vector<bool> true_el_reco, true_el_passID, true_el_track;
+  vector<float> true_mu_pt, true_mu_eta, true_mu_min_parton_dR, true_mu_rel_iso, true_mu_mini_iso, true_mu_d0, true_mu_tk_pt, true_mu_tk_ch_iso;
+  vector<bool> true_mu_reco, true_mu_passID, true_mu_track;
   vector<float> true_had_tau_pt, true_had_tau_eta, true_had_tau_min_parton_dR;
 
+  //  cout << "Defining tree branches" << endl;
 
   reduced_tree.Branch("weightppb", &weightppb);
 
@@ -382,96 +366,45 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_truth_matched_b_jets", &num_truth_matched_b_jets);
   reduced_tree.Branch("num_good_truth_matched_b_jets", &num_good_truth_matched_b_jets);
 
-  // reduced_tree.Branch("muon_gen_mother_id", &muon_gen_mother_id);
-  // reduced_tree.Branch("muon_gen_pt", &muon_gen_pt);
-  // reduced_tree.Branch("muon_gen_eta", &muon_gen_eta);
-  // reduced_tree.Branch("muon_gen_phi", &muon_gen_phi);
-  // reduced_tree.Branch("muon_reco_match", &muon_reco_match);
+  reduced_tree.Branch("num_veto_mus", &num_veto_mus);
+  reduced_tree.Branch("num_veto_mus_mini", &num_veto_mus_mini);
+  reduced_tree.Branch("num_mus", &num_mus);
+  reduced_tree.Branch("num_mus_mini", &num_mus_mini);
+  if (cfAVersion>=73) {
+    reduced_tree.Branch("mu_tm", &mu_tm);
+    reduced_tree.Branch("mu_truid", &mu_truid);
+    reduced_tree.Branch("mu_momid", &mu_momid);
+    reduced_tree.Branch("mu_signal", &mu_signal);
+    reduced_tree.Branch("mu_veto", &mu_veto);
+    reduced_tree.Branch("mu_vid", &mu_vid);
+    reduced_tree.Branch("mu_pt", &mu_pt);
+    reduced_tree.Branch("mu_eta", &mu_eta);
+    reduced_tree.Branch("mu_phi", &mu_phi);
+    reduced_tree.Branch("mu_dB_iso_R04", &mu_dB_iso_R04);
+    reduced_tree.Branch("mu_dB_iso_R03", &mu_dB_iso_R03);
+    reduced_tree.Branch("mu_mini_iso", &mu_mini_iso);
+    reduced_tree.Branch("mu_mT", &mu_mT);
+  }
 
-  reduced_tree.Branch("muon_true", &muon_true);
-  reduced_tree.Branch("muon_b", &muon_b);
-  reduced_tree.Branch("muon_signal", &muon_signal);
-  reduced_tree.Branch("muon_veto", &muon_veto);
-
-  reduced_tree.Branch("muon_pt", &muon_pt);
-  reduced_tree.Branch("muon_eta", &muon_eta);
-  reduced_tree.Branch("muon_phi", &muon_phi);
-
-  reduced_tree.Branch("muon_dphi_met", &muon_dphi_met);
-  reduced_tree.Branch("muon_mT", &muon_mT);
-
-  reduced_tree.Branch("muon_relIso", &muon_relIso);
-  reduced_tree.Branch("muon_NH_Iso", &muon_NH_Iso);
-  reduced_tree.Branch("muon_CH_Iso", &muon_CH_Iso);
-  reduced_tree.Branch("muon_ph_Iso", &muon_ph_Iso);
-  reduced_tree.Branch("muon_PU_Iso", &muon_PU_Iso);
-
-  reduced_tree.Branch("muon_ptRel", &muon_ptRel);
-  reduced_tree.Branch("muon_minDR",&muon_minDR);
-
-
-
-  // reduced_tree.Branch("muon_NH_Et", &muon_NH_Et);
-  // reduced_tree.Branch("muon_CH_pt", &muon_CH_pt);
-  // reduced_tree.Branch("muon_ph_Et", &muon_ph_Et);
-  // reduced_tree.Branch("muon_PU_pt", &muon_PU_pt);
-
-  // reduced_tree.Branch("muon_minDR_jet", &muon_minDR_jet);
-  // 
-
-
-  reduced_tree.Branch("num_reco_veto_muons", &num_reco_veto_muons);
-  reduced_tree.Branch("num_reco_veto_muons_iso2D", &num_reco_veto_muons_iso2D);
-  reduced_tree.Branch("num_reco_veto_muons_mT100", &num_reco_veto_muons_mT100);
-  reduced_tree.Branch("num_reco_veto_muons_mT100_orth", &num_reco_veto_muons_mT100_orth);
-  reduced_tree.Branch("num_reco_muons", &num_reco_muons);
-
-  reduced_tree.Branch("num_reco_veto_electrons", &num_reco_veto_electrons);
-  reduced_tree.Branch("num_reco_veto_electrons_iso2D", &num_reco_veto_electrons_iso2D);
-  reduced_tree.Branch("num_reco_veto_electrons_mT100", &num_reco_veto_electrons_mT100);
-  reduced_tree.Branch("num_reco_veto_electrons_mT100_orth", &num_reco_veto_electrons_mT100_orth);
-  reduced_tree.Branch("num_reco_electrons", &num_reco_electrons);
-
-  // reduced_tree.Branch("electron_gen_mother_id", &electron_gen_mother_id);
-  // reduced_tree.Branch("electron_gen_pt", &electron_gen_pt);
-  // reduced_tree.Branch("electron_gen_eta", &electron_gen_eta);
-  // reduced_tree.Branch("electron_gen_phi", &electron_gen_phi);
-  // reduced_tree.Branch("electron_reco_match", &electron_reco_match);
-
-  // reduced_tree.Branch("electron_PFmatched", &electron_PFmatched);
-
-  reduced_tree.Branch("electron_true", &electron_true);
-  reduced_tree.Branch("electron_signal", &electron_signal);
-  reduced_tree.Branch("electron_veto", &electron_veto);
-
-  reduced_tree.Branch("electron_pt", &electron_pt);
-  reduced_tree.Branch("electron_eta", &electron_eta);
-  reduced_tree.Branch("electron_phi", &electron_phi);
-
-  reduced_tree.Branch("electron_dphi_met", &electron_dphi_met);
-  reduced_tree.Branch("electron_mT", &electron_mT);
-
-  reduced_tree.Branch("electron_relIso", &electron_relIso);
-  reduced_tree.Branch("electron_NH_Iso", &electron_NH_Iso);
-  reduced_tree.Branch("electron_CH_Iso", &electron_CH_Iso);
-  reduced_tree.Branch("electron_ph_Iso", &electron_ph_Iso);
-
-  reduced_tree.Branch("electron_ptRel", &electron_ptRel);
-  reduced_tree.Branch("electron_minDR",&electron_minDR);
-
-  // reduced_tree.Branch("electron_NH_Et", &electron_NH_Et);
-  // reduced_tree.Branch("electron_CH_pt", &electron_CH_pt);
-  // reduced_tree.Branch("electron_ph_Et", &electron_ph_Et);
-
-  // reduced_tree.Branch("electron_minDR_jet", &electron_minDR_jet);
-
-  // reduced_tree.Branch("num_lost_electrons", &num_lost_electrons);
-  // reduced_tree.Branch("num_lost_muons", &num_lost_muons);
-  // reduced_tree.Branch("num_lost_leptons", &num_lost_leptons);
-
-  // reduced_tree.Branch("lep1", &lep1);
-  // reduced_tree.Branch("lep2", &lep2);
-
+  reduced_tree.Branch("num_veto_els", &num_veto_els);
+  reduced_tree.Branch("num_veto_els_mini", &num_veto_els_mini);
+  reduced_tree.Branch("num_els", &num_els);
+  reduced_tree.Branch("num_els_mini", &num_els_mini);
+  if (cfAVersion>=73) {
+    reduced_tree.Branch("el_tm", &el_tm);
+    reduced_tree.Branch("el_truid", &el_truid);
+    reduced_tree.Branch("el_momid", &el_momid);
+    reduced_tree.Branch("el_signal", &el_signal);
+    reduced_tree.Branch("el_veto", &el_veto);
+    reduced_tree.Branch("el_sid", &el_sid);
+    reduced_tree.Branch("el_vid", &el_vid);
+    reduced_tree.Branch("el_pt", &el_pt);
+    reduced_tree.Branch("el_eta", &el_eta);
+    reduced_tree.Branch("el_phi", &el_phi);
+    reduced_tree.Branch("el_dB_iso_R03", &el_dB_iso_R03);
+    reduced_tree.Branch("el_mini_iso", &el_mini_iso);
+    reduced_tree.Branch("el_mT", &el_mT);
+  }
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
   reduced_tree.Branch("min_delta_phi_met_N_2012", &min_delta_phi_met_N_2012);
   reduced_tree.Branch("min_delta_phi_met_N_loose_jets", &min_delta_phi_met_N_loose_jets);
@@ -480,9 +413,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("jet1_DeltaPhiMETN", &jet1_DeltaPhiMETN);
   reduced_tree.Branch("jet2_DeltaPhiMETN", &jet2_DeltaPhiMETN);
   reduced_tree.Branch("jet3_DeltaPhiMETN", &jet3_DeltaPhiMETN);
-  // reduced_tree.Branch("deltaPhiN_1", &deltaPhiN_1);
-  // reduced_tree.Branch("deltaPhiN_2", &deltaPhiN_2);
-  // reduced_tree.Branch("deltaPhiN_3", &deltaPhiN_3);
+
 
 
   reduced_tree.Branch("mT_mu", &mT_mu);
@@ -504,100 +435,6 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("nb_bin1", &nb_bin1);
   reduced_tree.Branch("nb_bin2", &nb_bin2);
   reduced_tree.Branch("nb_bin3", &nb_bin3);
-
-  // if (cfAVersion>=74) {
-  //   reduced_tree.Branch("fatpT10_jet1_pt", &fatpT10_jet1_pt);
-  //   reduced_tree.Branch("fatpT10_jet2_pt", &fatpT10_jet2_pt);
-  //   reduced_tree.Branch("fatpT10_jet3_pt", &fatpT10_jet3_pt);
-  //   reduced_tree.Branch("fatpT10_jet4_pt", &fatpT10_jet4_pt);
-  //   reduced_tree.Branch("fatpT10_jet1_mJ", &fatpT10_jet1_mJ);
-  //   reduced_tree.Branch("fatpT10_jet2_mJ", &fatpT10_jet2_mJ);
-  //   reduced_tree.Branch("fatpT10_jet3_mJ", &fatpT10_jet3_mJ);
-  //   reduced_tree.Branch("fatpT10_jet4_mJ", &fatpT10_jet4_mJ);
-  //   reduced_tree.Branch("fatpT10_jet1_nConst", &fatpT10_jet1_nConst);
-  //   reduced_tree.Branch("fatpT10_jet2_nConst", &fatpT10_jet2_nConst);
-  //   reduced_tree.Branch("fatpT10_jet3_nConst", &fatpT10_jet3_nConst);
-  //   reduced_tree.Branch("fatpT10_jet4_nConst", &fatpT10_jet4_nConst);
-  //   reduced_tree.Branch("num_fatpT10_jets", &num_fatpT10_jets);
-  //   reduced_tree.Branch("num_fatpT10_jets_pt100", &num_fatpT10_jets_pt100);
-  //   reduced_tree.Branch("num_fatpT10_jets_pt150", &num_fatpT10_jets_pt150);
-  //   reduced_tree.Branch("num_fatpT10_jets_pt200", &num_fatpT10_jets_pt200);
-  //   reduced_tree.Branch("num_fatpT10_jets_pt300", &num_fatpT10_jets_pt300);
-  //   reduced_tree.Branch("fatpT10_MJ", &fatpT10_MJ);
-  //   reduced_tree.Branch("fatpT10_MJ_pt100", &fatpT10_MJ_pt100);
-  //   reduced_tree.Branch("fatpT10_MJ_pt150", &fatpT10_MJ_pt150);
-  //   reduced_tree.Branch("fatpT10_MJ_pt200", &fatpT10_MJ_pt200);
-  //   reduced_tree.Branch("fatpT10_MJ_pt300", &fatpT10_MJ_pt300);
-
-  //   reduced_tree.Branch("fatpT15_jet1_pt", &fatpT15_jet1_pt);
-  //   reduced_tree.Branch("fatpT15_jet2_pt", &fatpT15_jet2_pt);
-  //   reduced_tree.Branch("fatpT15_jet3_pt", &fatpT15_jet3_pt);
-  //   reduced_tree.Branch("fatpT15_jet4_pt", &fatpT15_jet4_pt);
-  //   reduced_tree.Branch("fatpT15_jet1_mJ", &fatpT15_jet1_mJ);
-  //   reduced_tree.Branch("fatpT15_jet2_mJ", &fatpT15_jet2_mJ);
-  //   reduced_tree.Branch("fatpT15_jet3_mJ", &fatpT15_jet3_mJ);
-  //   reduced_tree.Branch("fatpT15_jet4_mJ", &fatpT15_jet4_mJ);
-  //   reduced_tree.Branch("fatpT15_jet1_nConst", &fatpT15_jet1_nConst);
-  //   reduced_tree.Branch("fatpT15_jet2_nConst", &fatpT15_jet2_nConst);
-  //   reduced_tree.Branch("fatpT15_jet3_nConst", &fatpT15_jet3_nConst);
-  //   reduced_tree.Branch("fatpT15_jet4_nConst", &fatpT15_jet4_nConst);
-  //   reduced_tree.Branch("num_fatpT15_jets", &num_fatpT15_jets);
-  //   reduced_tree.Branch("num_fatpT15_jets_pt100", &num_fatpT15_jets_pt100);
-  //   reduced_tree.Branch("num_fatpT15_jets_pt150", &num_fatpT15_jets_pt150);
-  //   reduced_tree.Branch("num_fatpT15_jets_pt200", &num_fatpT15_jets_pt200);
-  //   reduced_tree.Branch("num_fatpT15_jets_pt300", &num_fatpT15_jets_pt300);
-  //   reduced_tree.Branch("fatpT15_MJ", &fatpT15_MJ);
-  //   reduced_tree.Branch("fatpT15_MJ_pt100", &fatpT15_MJ_pt100);
-  //   reduced_tree.Branch("fatpT15_MJ_pt150", &fatpT15_MJ_pt150);
-  //   reduced_tree.Branch("fatpT15_MJ_pt200", &fatpT15_MJ_pt200);
-  //   reduced_tree.Branch("fatpT15_MJ_pt300", &fatpT15_MJ_pt300);
-
-  //   reduced_tree.Branch("fatpT20_jet1_pt", &fatpT20_jet1_pt);
-  //   reduced_tree.Branch("fatpT20_jet2_pt", &fatpT20_jet2_pt);
-  //   reduced_tree.Branch("fatpT20_jet3_pt", &fatpT20_jet3_pt);
-  //   reduced_tree.Branch("fatpT20_jet4_pt", &fatpT20_jet4_pt);
-  //   reduced_tree.Branch("fatpT20_jet1_mJ", &fatpT20_jet1_mJ);
-  //   reduced_tree.Branch("fatpT20_jet2_mJ", &fatpT20_jet2_mJ);
-  //   reduced_tree.Branch("fatpT20_jet3_mJ", &fatpT20_jet3_mJ);
-  //   reduced_tree.Branch("fatpT20_jet4_mJ", &fatpT20_jet4_mJ);
-  //   reduced_tree.Branch("fatpT20_jet1_nConst", &fatpT20_jet1_nConst);
-  //   reduced_tree.Branch("fatpT20_jet2_nConst", &fatpT20_jet2_nConst);
-  //   reduced_tree.Branch("fatpT20_jet3_nConst", &fatpT20_jet3_nConst);
-  //   reduced_tree.Branch("fatpT20_jet4_nConst", &fatpT20_jet4_nConst);
-  //   reduced_tree.Branch("num_fatpT20_jets", &num_fatpT20_jets);
-  //   reduced_tree.Branch("num_fatpT20_jets_pt100", &num_fatpT20_jets_pt100);
-  //   reduced_tree.Branch("num_fatpT20_jets_pt150", &num_fatpT20_jets_pt150);
-  //   reduced_tree.Branch("num_fatpT20_jets_pt200", &num_fatpT20_jets_pt200);
-  //   reduced_tree.Branch("num_fatpT20_jets_pt300", &num_fatpT20_jets_pt300);
-  //   reduced_tree.Branch("fatpT20_MJ", &fatpT20_MJ);
-  //   reduced_tree.Branch("fatpT20_MJ_pt100", &fatpT20_MJ_pt100);
-  //   reduced_tree.Branch("fatpT20_MJ_pt150", &fatpT20_MJ_pt150);
-  //   reduced_tree.Branch("fatpT20_MJ_pt200", &fatpT20_MJ_pt200);
-  //   reduced_tree.Branch("fatpT20_MJ_pt300", &fatpT20_MJ_pt300);
-
-  //   reduced_tree.Branch("fatpT25_jet1_pt", &fatpT25_jet1_pt);
-  //   reduced_tree.Branch("fatpT25_jet2_pt", &fatpT25_jet2_pt);
-  //   reduced_tree.Branch("fatpT25_jet3_pt", &fatpT25_jet3_pt);
-  //   reduced_tree.Branch("fatpT25_jet4_pt", &fatpT25_jet4_pt);
-  //   reduced_tree.Branch("fatpT25_jet1_mJ", &fatpT25_jet1_mJ);
-  //   reduced_tree.Branch("fatpT25_jet2_mJ", &fatpT25_jet2_mJ);
-  //   reduced_tree.Branch("fatpT25_jet3_mJ", &fatpT25_jet3_mJ);
-  //   reduced_tree.Branch("fatpT25_jet4_mJ", &fatpT25_jet4_mJ);
-  //   reduced_tree.Branch("fatpT25_jet1_nConst", &fatpT25_jet1_nConst);
-  //   reduced_tree.Branch("fatpT25_jet2_nConst", &fatpT25_jet2_nConst);
-  //   reduced_tree.Branch("fatpT25_jet3_nConst", &fatpT25_jet3_nConst);
-  //   reduced_tree.Branch("fatpT25_jet4_nConst", &fatpT25_jet4_nConst);
-  //   reduced_tree.Branch("num_fatpT25_jets", &num_fatpT25_jets);
-  //   reduced_tree.Branch("num_fatpT25_jets_pt100", &num_fatpT25_jets_pt100);
-  //   reduced_tree.Branch("num_fatpT25_jets_pt150", &num_fatpT25_jets_pt150);
-  //   reduced_tree.Branch("num_fatpT25_jets_pt200", &num_fatpT25_jets_pt200);
-  //   reduced_tree.Branch("num_fatpT25_jets_pt300", &num_fatpT25_jets_pt300);
-  //   reduced_tree.Branch("fatpT25_MJ", &fatpT25_MJ);
-  //   reduced_tree.Branch("fatpT25_MJ_pt100", &fatpT25_MJ_pt100);
-  //   reduced_tree.Branch("fatpT25_MJ_pt150", &fatpT25_MJ_pt150);
-  //   reduced_tree.Branch("fatpT25_MJ_pt200", &fatpT25_MJ_pt200);
-  //   reduced_tree.Branch("fatpT25_MJ_pt300", &fatpT25_MJ_pt300);
-  // }
 
   reduced_tree.Branch("fatpT30_jet1_pt", &fatpT30_jet1_pt);
   reduced_tree.Branch("fatpT30_jet2_pt", &fatpT30_jet2_pt);
@@ -659,11 +496,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("gluino1_pt", &gluino1_pt);
   reduced_tree.Branch("gluino2_pt", &gluino2_pt);
 
-  reduced_tree.Branch("num_taus_POG_phys14_ID", &num_taus_POG_phys14_ID);
-  reduced_tree.Branch("num_taus_POG_phys14_ID_againstEMu", &num_taus_POG_phys14_ID_againstEMu);
-  reduced_tree.Branch("num_taus_POG_phys14_ID_mT100", &num_taus_POG_phys14_ID_mT100);
-  reduced_tree.Branch("num_taus_POG_phys14_ID_againstEMu_mT100", &num_taus_POG_phys14_ID_againstEMu_mT100);  
+  reduced_tree.Branch("num_veto_taus_mT", &num_veto_taus_mT);
+  reduced_tree.Branch("tau_loose", &tau_loose);
+  reduced_tree.Branch("tau_medium", &tau_medium);
+  reduced_tree.Branch("tau_tight", &tau_tight);
   reduced_tree.Branch("tau_pt", &tau_pt);
+  reduced_tree.Branch("tau_dB_iso", &tau_dB_iso);
   reduced_tree.Branch("tau_chargedIsoPtSum", &tau_chargedIsoPtSum);
   reduced_tree.Branch("tau_mT", &tau_mT);
 
@@ -671,43 +509,75 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
   reduced_tree.Branch("num_iso_tracks_pt10_mT", &num_iso_tracks_pt10_mT);
   reduced_tree.Branch("num_iso_tracks_pt15", &num_iso_tracks_pt15);
   reduced_tree.Branch("num_iso_tracks_pt15_mT", &num_iso_tracks_pt15_mT);
+   reduced_tree.Branch("num_iso_tracks_mini_mT", &num_iso_tracks_mini_mT);
 
-  reduced_tree.Branch("num_e_iso_tracks", &num_e_iso_tracks);
-  reduced_tree.Branch("num_mu_iso_tracks", &num_mu_iso_tracks);
-  reduced_tree.Branch("num_had_iso_tracks", &num_had_iso_tracks);
-  reduced_tree.Branch("num_e_iso_tracks_mT", &num_e_iso_tracks_mT);
-  reduced_tree.Branch("num_mu_iso_tracks_mT", &num_mu_iso_tracks_mT);
-  reduced_tree.Branch("num_had_iso_tracks_mT", &num_had_iso_tracks_mT);
-  
+  reduced_tree.Branch("num_el_tracks", &num_el_tracks);
+  reduced_tree.Branch("num_mu_tracks", &num_mu_tracks);
+  reduced_tree.Branch("num_had_tracks", &num_had_tracks);
+  reduced_tree.Branch("num_el_tracks_mT", &num_el_tracks_mT);
+  reduced_tree.Branch("num_mu_tracks_mT", &num_mu_tracks_mT);
+  reduced_tree.Branch("num_had_tracks_mT", &num_had_tracks_mT);
+  reduced_tree.Branch("num_el_tracks_mini_mT", &num_el_tracks_mini_mT);
+  reduced_tree.Branch("num_mu_tracks_mini_mT", &num_mu_tracks_mini_mT);
+  reduced_tree.Branch("num_had_tracks_mini_mT", &num_had_tracks_mini_mT);
+  reduced_tree.Branch("num_had_tracks_no_iso", &num_had_tracks_no_iso);
+  reduced_tree.Branch("num_had_tracks_mT_no_iso", &num_had_tracks_mT_no_iso);
+
   reduced_tree.Branch("iso_track_pt", &iso_track_pt);
-  reduced_tree.Branch("iso_track_relIso", &iso_track_relIso);
+  reduced_tree.Branch("iso_track_dB_iso", &iso_track_dB_iso);
+  reduced_tree.Branch("iso_track_mini_iso", &iso_track_mini_iso);
   reduced_tree.Branch("iso_track_mT", &iso_track_mT);
-  reduced_tree.Branch("e_track_pt", &e_track_pt);
-  reduced_tree.Branch("e_track_relIso", &e_track_relIso);
-  reduced_tree.Branch("e_track_mT", &e_track_mT);
+
+  reduced_tree.Branch("el_track_tm", &el_track_tm);
+  reduced_tree.Branch("el_track_truid", &el_track_truid);
+  reduced_tree.Branch("el_track_momid", &el_track_momid);
+  reduced_tree.Branch("el_track_pt", &el_track_pt);
+  reduced_tree.Branch("el_track_ch_iso", &el_track_ch_iso);
+  reduced_tree.Branch("el_track_dB_iso", &el_track_dB_iso);
+  reduced_tree.Branch("el_track_mini_iso", &el_track_mini_iso);
+  reduced_tree.Branch("el_track_mT", &el_track_mT);
+  reduced_tree.Branch("mu_track_tm", &mu_track_tm);
+  reduced_tree.Branch("mu_track_truid", &mu_track_truid);
+  reduced_tree.Branch("mu_track_momid", &mu_track_momid);
   reduced_tree.Branch("mu_track_pt", &mu_track_pt);
-  reduced_tree.Branch("mu_track_relIso", &mu_track_relIso);
+  reduced_tree.Branch("mu_track_ch_iso", &mu_track_ch_iso);
+  reduced_tree.Branch("mu_track_dB_iso", &mu_track_dB_iso);
+  reduced_tree.Branch("mu_track_mini_iso", &mu_track_mini_iso);
   reduced_tree.Branch("mu_track_mT", &mu_track_mT);
+  reduced_tree.Branch("had_track_from_tau", &had_track_from_tau);
+  reduced_tree.Branch("had_track_truid", &had_track_truid);
   reduced_tree.Branch("had_track_pt", &had_track_pt);
-  reduced_tree.Branch("had_track_relIso", &had_track_relIso);
+  reduced_tree.Branch("had_track_ch_iso", &had_track_ch_iso);
+  reduced_tree.Branch("had_track_dB_iso", &had_track_dB_iso);
+  reduced_tree.Branch("had_track_mini_iso", &had_track_mini_iso);
   reduced_tree.Branch("had_track_mT", &had_track_mT);
+  //  cout << "True leptons" << endl;
+  reduced_tree.Branch("num_true_els", &num_true_els);
+  reduced_tree.Branch("true_el_pt", &true_el_pt);
+  reduced_tree.Branch("true_el_eta", &true_el_eta);
+  reduced_tree.Branch("true_el_min_parton_dR", &true_el_min_parton_dR);
+  reduced_tree.Branch("true_el_reco", &true_el_reco);
+  reduced_tree.Branch("true_el_passID", &true_el_passID);
+  reduced_tree.Branch("true_el_rel_iso", &true_el_rel_iso);
+  reduced_tree.Branch("true_el_mini_iso", &true_el_mini_iso);
+  reduced_tree.Branch("true_el_d0", &true_el_d0);
+  reduced_tree.Branch("true_el_track", &true_el_track);
+  reduced_tree.Branch("true_el_tk_pt", &true_el_tk_pt);
+  reduced_tree.Branch("true_el_tk_ch_iso", &true_el_tk_ch_iso);
 
-  reduced_tree.Branch("num_true_electrons", &num_true_electrons);
-  reduced_tree.Branch("true_electron_pt", &true_electron_pt);
-  reduced_tree.Branch("true_electron_eta", &true_electron_eta);
-  reduced_tree.Branch("true_electron_min_parton_dR", &true_electron_min_parton_dR);
-  reduced_tree.Branch("true_electron_passID", &true_electron_passID);
-  reduced_tree.Branch("true_electron_rel_iso", &true_electron_rel_iso);
-  reduced_tree.Branch("true_electron_d0", &true_electron_d0);
-
-  reduced_tree.Branch("num_true_muons", &num_true_muons);
-  reduced_tree.Branch("true_muon_pt", &true_muon_pt);
-  reduced_tree.Branch("true_muon_eta", &true_muon_eta);
-  reduced_tree.Branch("true_muon_min_parton_dR", &true_muon_min_parton_dR);
-  reduced_tree.Branch("true_muon_passID", &true_muon_passID);
-  reduced_tree.Branch("true_muon_rel_iso", &true_muon_rel_iso);
-  reduced_tree.Branch("true_muon_d0", &true_muon_d0);
-
+  reduced_tree.Branch("num_true_mus", &num_true_mus);
+  reduced_tree.Branch("true_mu_pt", &true_mu_pt);
+  reduced_tree.Branch("true_mu_eta", &true_mu_eta);
+  reduced_tree.Branch("true_mu_min_parton_dR", &true_mu_min_parton_dR);
+  reduced_tree.Branch("true_mu_reco", &true_mu_reco);
+  reduced_tree.Branch("true_mu_passID", &true_mu_passID);
+  reduced_tree.Branch("true_mu_rel_iso", &true_mu_rel_iso);
+  reduced_tree.Branch("true_mu_mini_iso", &true_mu_mini_iso);
+  reduced_tree.Branch("true_mu_d0", &true_mu_d0);
+  reduced_tree.Branch("true_mu_track", &true_mu_track);
+  reduced_tree.Branch("true_mu_tk_pt", &true_mu_tk_pt);
+  reduced_tree.Branch("true_mu_tk_ch_iso", &true_mu_tk_ch_iso);
+  
   reduced_tree.Branch("num_true_had_taus", &num_true_had_taus);
   reduced_tree.Branch("true_had_tau_pt", &true_had_tau_pt);
   reduced_tree.Branch("true_had_tau_eta", &true_had_tau_eta);
@@ -715,11 +585,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
   reduced_tree.Branch("num_true_lep_taus", &num_true_lep_taus);
 
+  cout << "Let's go!" << endl;
 
 
 
   int n_to_process(Nentries);
   if(n_to_process<0) n_to_process=GetTotalEntries();
+  if (is_skimmed) n_to_process = cfA::GetChainB()->GetEntries();
+  cout << "to process: " << n_to_process << endl;
   Timer timer(n_to_process);
   timer.Start();
   for(int i(0); i<n_to_process; ++i){
@@ -732,11 +605,14 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     entry=i;
    
     //  if (i<675) continue;
-    //  cout << "*****Event " << i << "*****" << endl;
+    //    cout << "*****Entry " << i << " (event " << event << ")*****" << endl;
+    
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
     if(!returnVal.second) continue;
 
+    vector<mc_particle> parts = GetMCParticles();
+    vector<size_t> moms = GetMoms(parts);
 
     type_code=TypeCode();
 
@@ -767,7 +643,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     eoot_pu=GetEarlyOutOfTimePU(1);
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
-     // cout << "JERR1" << endl;
+    //    cout << "JERR1" << endl;
 
     highest_csv=GetHighestJetCSV(1);
     second_highest_csv=GetHighestJetCSV(2);
@@ -775,7 +651,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     fourth_highest_csv=GetHighestJetCSV(4);
     fifth_highest_csv=GetHighestJetCSV(5);
     sixth_highest_csv=GetHighestJetCSV(6);
-     // cout << "JERR2" << endl;
+    //    cout << "JERR2" << endl;
 
     jet1_pt=GetHighestJetPt(1);
     jet2_pt=GetHighestJetPt(2);
@@ -835,7 +711,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_jets_pt70=GetNumGoodJets(70);
     num_jets_pt100=GetNumGoodJets(100);
     num_jets_pt150=GetNumGoodJets(150);
-    // cout << "num_jets=" << num_jets_pt50 << endl;
+    //cout << "num_jets=" << num_jets_pt50 << endl;
     if (cfAVersion<77) {
     num_csvt_jets=GetNumCSVTJets();
     num_csvm_jets=GetNumCSVMJets();
@@ -927,325 +803,101 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     }
 
 
+    mu_truid.clear(); mu_momid.clear(), mu_tm.clear(); 
+    mu_signal.clear(); mu_veto.clear(); mu_vid.clear();
+    mu_pt.clear(); mu_eta.clear(); mu_phi.clear();
+    mu_dB_iso_R04.clear(); mu_dB_iso_R03.clear(); mu_mini_iso.clear();
+    mu_mT.clear();
 
-    vector<int> reco_muons, reco_veto_muons;
-    vector<int> reco_veto_muons_iso2D, reco_veto_muons_mT, reco_veto_muons_mT_orth;
+    vector<int> mus, mus_mini, veto_mus, veto_mus_mini, mus_save;
     if (cfAVersion>=73&&cfAVersion!=74) {
-      reco_muons = GetRecoMuons(false);
-      reco_veto_muons = GetRecoMuons(true);
-      reco_veto_muons_iso2D = GetRecoMuons(true,true);
-      reco_veto_muons_mT=GetRecoMuons(true,false,true);
-      reco_veto_muons_mT_orth=GetRecoMuons(true,false,true,true);
+      mus = GetRecoMuons(false);
+      //  cout << "Passing signal ID..." << endl;
+      // mus_mini = GetRecoMuons(false, true, true, true);
+      veto_mus = GetRecoMuons(true);
+      // cout << "Passing veto ID..." << endl;
+      // veto_mus_mini = GetRecoMuons(true, true, true, true);
+      mus_save = GetRecoMuons(true, false, false); // these are the ones we'll write to tree
     }
     else {
-      reco_muons = GetRA2bMuons(false);
-      reco_veto_muons = GetRA2bMuons(true);
+      mus = GetRA2bMuons(false);
+      veto_mus = GetRA2bMuons(true);
     }
-    num_reco_muons = reco_muons.size();
-    num_reco_veto_muons = reco_veto_muons.size();
-    num_reco_veto_muons_iso2D = reco_veto_muons_iso2D.size();    
-    num_reco_veto_muons_mT100 = reco_veto_muons_mT.size();
-    num_reco_veto_muons_mT100_orth = reco_veto_muons_mT_orth.size();
+    num_mus = mus.size();
+    num_mus_mini = mus_mini.size();
+    num_veto_mus = veto_mus.size();
+    num_veto_mus_mini = veto_mus_mini.size();
 
-    vector<int> reco_electrons, reco_veto_electrons;
-    vector<int> reco_veto_electrons_iso2D, reco_veto_electrons_mT, reco_veto_electrons_mT_orth;
-    if (cfAVersion>=73&&cfAVersion!=74) {
-      reco_electrons = GetRecoElectrons(false);
-      reco_veto_electrons = GetRecoElectrons(true);
-      // reco_veto_electrons_iso2D=GetRecoElectrons(true,true);
-      // reco_veto_electrons_mT = GetRecoElectrons(true,false,true);
-      // reco_veto_electrons_mT_orth = GetRecoElectrons(true,false,true,true);
+    if (cfAVersion>=73) {
+      for (uint imu(0); imu<mus_save.size(); imu++) {
+	mu_signal.push_back(isRecoMuon(mus_save[imu],1));
+	mu_veto.push_back(isRecoMuon(mus_save[imu],0));
+	mu_vid.push_back(isRecoMuon(mus_save[imu],0,false,false));
+	mu_pt.push_back(mus_pt->at(mus_save[imu]));
+	mu_eta.push_back(mus_eta->at(mus_save[imu]));
+	mu_phi.push_back(mus_phi->at(mus_save[imu])); 
+	mu_dB_iso_R04.push_back(GetMuonRelIso(mus_save[imu],0.4));
+	mu_dB_iso_R03.push_back(GetMuonRelIso(mus_save[imu],0.3));
+	mu_mini_iso.push_back(GetIsolation(mus_save[imu], 13)/mu_pt[imu]); 
+	mu_mT.push_back(GetMTW(mu_pt[imu], met, mu_phi[imu], met_phi));
+	// truth-matching
+	bool fromW(false);
+	int mcID, mcmomID;
+	float deltaR;
+	mcID = GetTrueMuon(mu_pt[imu], mu_eta[imu], mu_phi[imu], mcmomID, fromW, deltaR);
+	mu_truid.push_back(mcID);
+	mu_momid.push_back(mcmomID);
+	mu_tm.push_back(abs(mcID)==13 && fromW);
+      }
+    }
+
+    el_truid.clear(); el_momid.clear(), el_tm.clear();
+    el_signal.clear(); el_veto.clear(); el_sid.clear(); el_vid.clear();
+    el_pt.clear(); el_eta.clear(); el_phi.clear();
+    el_dB_iso_R03.clear(); el_mini_iso.clear();
+    el_mT.clear();
+
+    vector<int> els, els_mini, veto_els, veto_els_mini, els_save;
+    if (cfAVersion>=73) {
+      els = GetRecoElectrons(false);
+      //  els_mini = GetRecoElectrons(false, true, true, true);
+      veto_els = GetRecoElectrons(true);
+      //  veto_els_mini = GetRecoElectrons(true, true, true, true);
+      els_save = GetRecoElectrons(true, false, false);
     }
     else {
-      reco_electrons = GetRA2bElectrons(false);
-      reco_veto_electrons = GetRA2bElectrons(true);
+      els = GetRA2bElectrons(false);
+      veto_els = GetRA2bElectrons(true);
     }
 
-    num_reco_electrons = reco_electrons.size();
-    num_reco_veto_electrons = reco_veto_electrons.size();
-    num_reco_veto_electrons_iso2D = reco_veto_electrons_iso2D.size();
-    num_reco_veto_electrons_mT100 = reco_veto_electrons_mT.size();
-    num_reco_veto_electrons_mT100_orth = reco_veto_electrons_mT_orth.size();
+    num_els = els.size();
+    num_els_mini = els_mini.size();
+    num_veto_els = veto_els.size();
+    num_veto_els_mini = veto_els_mini.size();
 
-
-
-    // muon_gen_mother_id=-999;
-    // muon_gen_pt=-999.;
-    // muon_gen_eta=-999.;
-    // muon_gen_phi=-999.;
-    // muon_reco_match=-1;
-    // muon_PFmatched=-1;
-    // muon_NH_Et=-1.;
-    // muon_CH_pt=-1.;
-    // muon_ph_Et=-1.;
-    // muon_PU_pt=-1.;
-    // muon_minDR_jet=-1;
-    // muon_mT=-1;
-
-    uint muon_index(0);
-    if (cfAVersion>=73&&cfAVersion!=74) {
-      for (uint imu(0); imu<mus_pt->size(); imu++) {
-	if (isRecoMuon(imu,0)) {
-	  muon_index=imu;
-	  break;
-	}
-      }
-    } else {
-      for (uint imu(0); imu<pf_mus_pt->size(); imu++) {
-	if (isRA2bMuon(imu,0)) {
-	  muon_index=imu;
-	  break;
-	}
+    if (cfAVersion>=73) {
+      for (uint iel(0); iel<els_save.size(); iel++) {
+	el_signal.push_back(isRecoElectron(els_save[iel],1));
+	el_veto.push_back(isRecoElectron(els_save[iel],0));
+	el_sid.push_back(isRecoElectron(els_save[iel],1, false, false));
+	el_vid.push_back(isRecoElectron(els_save[iel],0, false, false));
+	el_pt.push_back(els_pt->at(els_save[iel]));
+	el_eta.push_back(els_scEta->at(els_save[iel]));
+	el_phi.push_back(els_phi->at(els_save[iel]));
+	el_dB_iso_R03.push_back(GetCSAElectronIsolation(els_save[iel])); 
+	el_mini_iso.push_back(GetIsolation(els_save[iel], 11)/el_pt[iel]); 
+	el_mT.push_back(GetMTW(el_pt[iel],met,el_phi[iel],met_phi));
+	// truth-matching
+	bool fromW(false);
+	int mcID, mcmomID;
+	float deltaR;
+	mcID = GetTrueElectron(el_pt[iel], el_eta[iel], el_phi[iel], mcmomID, fromW, deltaR);
+	el_truid.push_back(mcID);
+	el_momid.push_back(mcmomID);
+	el_tm.push_back(abs(mcID)==11 && fromW);
       }
     }
-
-    muon_true=-1;
-    muon_b=-1;
-    muon_signal=-1;
-    muon_veto=-1;
-    muon_pt=-1.;
-    muon_eta=-999.;
-    muon_phi=-999.;
-    muon_relIso=-1.;
-    muon_NH_Iso=-1.;
-    muon_CH_Iso=-1.;
-    muon_ph_Iso=-1.;
-    muon_PU_Iso=-1.;  
-    muon_ptRel=-1.;
-    muon_minDR=-1.;
-    muon_mT=-1.;
-    muon_dphi_met=-999.;
-
-    if (cfAVersion>=73&&cfAVersion<=76) {
-      if (mus_pt->size()>0) {
-	muon_signal=isRecoMuon(muon_index,1);
-	muon_veto=isRecoMuon(muon_index,0);
-	muon_pt=mus_pt->at(muon_index);
-	muon_eta=mus_eta->at(muon_index);
-	muon_phi=mus_phi->at(muon_index);
-	muon_true=isTrueMuon(muon_eta, muon_phi);
-	muon_b=isbMuon(muon_eta, muon_phi);
-	muon_NH_Iso=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_index)/muon_pt;
-	muon_CH_Iso=mus_pfIsolationR04_sumChargedHadronPt->at(muon_index)/muon_pt;
-	muon_ph_Iso=mus_pfIsolationR04_sumPhotonEt->at(muon_index)/muon_pt;
-	muon_PU_Iso=mus_pfIsolationR04_sumPUPt->at(muon_index)/muon_pt;  
-	muon_relIso=GetMuonRelIso(muon_index); 
-        TLorentzVector nearestJet(GetNearestJet(TLorentzVector(mus_px->at(muon_index),mus_py->at(muon_index),
-							       mus_pz->at(muon_index),mus_energy->at(muon_index)), mus_jet_ind->at(muon_index)));
-	if (nearestJet.Pt()>0)
-          {
-            TLorentzVector muVec;
-            muVec.SetPtEtaPhiM(muon_pt,muon_eta,muon_phi,mus_energy->at(muon_index));
-            muon_ptRel = TMath::Abs(muVec.Perp(nearestJet.Vect()));
-            muon_minDR = Math::GetDeltaR(muon_phi, muon_eta, nearestJet.Phi(), nearestJet.Eta());
-          }
-	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
-	muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
-      }
-    } else if (cfAVersion<=71&&pf_mus_pt->size()>0) {
-      muon_signal=isRA2bMuon(muon_index,1);
-      //	cout << "JERR4" << endl;
-      muon_veto=isRA2bMuon(muon_index,0);
-      muon_pt=pf_mus_pt->at(muon_index);
-      muon_eta=pf_mus_eta->at(muon_index);
-      muon_phi=pf_mus_phi->at(muon_index);
-      muon_true=isTrueMuon(muon_eta, muon_phi);
-      muon_b=isbMuon(muon_eta, muon_phi);
-      muon_NH_Iso=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_index)/muon_pt;
-      muon_CH_Iso=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_index)/muon_pt;
-      muon_ph_Iso=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_index)/muon_pt;
-      muon_PU_Iso=pf_mus_pfIsolationR04_sumPUPt->at(muon_index)/muon_pt;  
-      muon_relIso=GetRA2bMuonRelIso(muon_index); 
-      muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
-      muon_dphi_met=fabs(Math::GetDeltaPhi(muon_phi,met_phi));
-    }
-    
-
-
-
-    // if (genMuonCache.size()>=1) {
-    //   // cout << "Gen muons..." << endl;
-    //   muon_gen_mother_id=genMuonCache[0].GetMotherId();
-    //   muon_gen_pt=genMuonCache[0].GetLorentzVector().Pt();
-    //   muon_gen_eta=genMuonCache[0].GetLorentzVector().Eta();
-    //   muon_gen_phi=genMuonCache[0].GetLorentzVector().Phi();
-    //   if(genMuonCache[0].GetMusMatch()>=0) {
-    // 	muon_reco_match = genMuonCache[0].GetMusMatch();
-    // 	if (cmEnergy>=13) {
-    // 	  muon_signal=isRecoMuon(muon_reco_match,1);
-    // 	  muon_veto=isRecoMuon(muon_reco_match,0);
-    // 	  muon_PFmatched=mus_isPF->at(muon_reco_match);
-    // 	  muon_pt=mus_pt->at(muon_reco_match);
-    // 	  muon_eta=mus_eta->at(muon_reco_match);
-    // 	  muon_phi=mus_phi->at(muon_reco_match);
-    // 	  muon_NH_Et=mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
-    // 	  muon_CH_pt=mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
-    // 	  muon_ph_Et=mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
-    // 	  muon_PU_pt=mus_pfIsolationR04_sumPUPt->at(muon_reco_match);  
-    // 	  muon_relIso=GetMuonRelIso(muon_reco_match); 
-    // 	}
-    // 	else {
-    // 	  muon_signal=isRA2bMuon(muon_reco_match,1);
-    // 	  muon_veto=isRA2bMuon(muon_reco_match,0);
-    // 	  muon_PFmatched=true;
-    // 	  muon_pt=pf_mus_pt->at(muon_reco_match);
-    // 	  muon_eta=pf_mus_eta->at(muon_reco_match);
-    // 	  muon_phi=pf_mus_phi->at(muon_reco_match);
-    // 	  muon_NH_Et=pf_mus_pfIsolationR04_sumNeutralHadronEt->at(muon_reco_match);
-    // 	  muon_CH_pt=pf_mus_pfIsolationR04_sumChargedHadronPt->at(muon_reco_match);
-    // 	  muon_ph_Et=pf_mus_pfIsolationR04_sumPhotonEt->at(muon_reco_match);
-    // 	  muon_PU_pt=pf_mus_pfIsolationR04_sumPUPt->at(muon_reco_match);
-    // 	  muon_relIso=GetRA2bMuonRelIso(muon_reco_match);
-    // 	}
-    // 	muon_NH_Iso=muon_NH_Et/muon_pt;
-    // 	muon_CH_Iso=muon_CH_pt/muon_pt;
-    // 	muon_ph_Iso=muon_ph_Et/muon_pt;
-    // 	muon_PU_Iso=muon_PU_pt/muon_pt;
-    // 	// cout << "muon_minDR_jet... " << endl;
-    // 	muon_minDR_jet=GetMinDRMuonJet(muon_reco_match); // compatible with both old and new samples
-    // 	muon_mT=GetMTW(muon_pt,met,muon_phi,met_phi);
-    // 	// cout << "... " << muon_minDR_jet << endl;
-    //   }
-    // }
-
-
-    // electron_gen_mother_id=-999;
-    // electron_gen_pt=-999.;
-    // electron_gen_eta=-999.;
-    // electron_gen_phi=-999.;
-    // electron_reco_match=-1;
-    // electron_signal=-1;
-    // electron_veto=-1;
-    // electron_PFmatched=-1;
-    // electron_NH_Et=-1.;
-    // electron_CH_pt=-1.;
-    // electron_ph_Et=-1.;
-    // electron_minDR_jet=-1;
-    // electron_mT=-1;
-
-    uint electron_index(0);
-    if (cfAVersion>=73&&cfAVersion!=74) {
-      for (uint iel(0); iel<els_pt->size(); iel++) {
-	if (isRecoElectron(iel,0)) {
-	  electron_index=iel;
-	  break;
-	}
-      }
-    } else {
-      for (uint iel(0); iel<pf_els_pt->size(); iel++) {
-	if (isRA2bElectron(iel,0)) {
-	  electron_index=iel;
-	  break;
-	}
-      }
-    }
-
-    electron_true=-1;
-    electron_signal=-1;
-    electron_veto=-1;
-    electron_pt=-1.;
-    electron_eta=-999.;
-    electron_phi=-999.;
-    electron_relIso=-1.;
-    electron_NH_Iso=-1.;
-    electron_CH_Iso=-1.;
-    electron_ph_Iso=-1.;
-    electron_ptRel=-1.;
-    electron_minDR=-1.;
-    electron_mT=-1.;
-    electron_dphi_met=-999.;
-
-    if (cfAVersion>=73&&cfAVersion<=76) {
-      if (els_pt->size()>0) {
-	electron_signal=isRecoElectron(electron_index,1);
-	electron_veto=isRecoElectron(electron_index,0);
-	electron_pt=els_pt->at(electron_index);
-	electron_eta=els_scEta->at(electron_index);
-	electron_phi=els_phi->at(electron_index);
-	electron_true=isTrueElectron(electron_eta, electron_phi);
-	electron_NH_Iso=els_pfIsolationR03_sumNeutralHadronEt->at(electron_index);
-	electron_CH_Iso=els_pfIsolationR03_sumChargedHadronPt->at(electron_index);
-	electron_ph_Iso=els_pfIsolationR03_sumPhotonEt->at(electron_index);
-	electron_relIso=GetCSAElectronIsolation(electron_index); 
-	TLorentzVector nearestJet(GetNearestJet(TLorentzVector(els_px->at(electron_index),els_py->at(electron_index),
-							       els_pz->at(electron_index),els_energy->at(electron_index)), els_jet_ind->at(electron_index)));
-	if (nearestJet.Pt()>0)
-	  {
-	    TLorentzVector elVec;
-	    elVec.SetPtEtaPhiM(electron_pt,electron_eta,electron_phi,els_energy->at(electron_index));
-	    electron_ptRel = TMath::Abs(elVec.Perp(nearestJet.Vect()));
-	    electron_minDR = Math::GetDeltaR(els_phi->at(electron_index), els_eta->at(electron_index), nearestJet.Phi(), nearestJet.Eta());
-	  }
-	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
-	electron_dphi_met=fabs(Math::GetDeltaPhi(electron_phi,met_phi));
-      }
-    } else if (cfAVersion<=71){
-      if (pf_els_pt->size()>0) {
-	electron_signal=isRA2bElectron(electron_index,1);
-	electron_veto=isRA2bElectron(electron_index,0);
-	electron_pt=pf_els_pt->at(electron_index);
-	electron_eta=pf_els_scEta->at(electron_index);
-	electron_phi=pf_els_phi->at(electron_index);
-	electron_true=isTrueElectron(electron_eta, electron_phi);
-	electron_NH_Iso=pf_els_PFneutralHadronIsoR03->at(electron_index);
-	electron_CH_Iso=pf_els_PFchargedHadronIsoR03->at(electron_index);
-	electron_ph_Iso=pf_els_PFphotonIsoR03->at(electron_index);
-	electron_relIso=GetElectronRelIso(electron_index); 
-	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
-	electron_dphi_met=fabs(Math::GetDeltaPhi(electron_phi,met_phi));
-      }
-    }
-
-
-
-    // if (genElectronCache.size()>=1) {
-    //   // cout << "Gen electrons..." << endl;
-    //   electron_gen_mother_id=genElectronCache[0].GetMotherId();
-    //   electron_gen_pt=genElectronCache[0].GetLorentzVector().Pt();
-    //   electron_gen_eta=genElectronCache[0].GetLorentzVector().Eta();
-    //   electron_gen_phi=genElectronCache[0].GetLorentzVector().Phi();
-    //   if(genElectronCache[0].GetElsMatch()>=0) {
-    // 	// cout << "Reco electrons..." << endl;
-    // 	electron_reco_match = genElectronCache[0].GetElsMatch();
-    // 	if (cmEnergy<13) { 
-    // 	  // // cout << "electron id..." << endl;
-    // 	  // electron_signal=isRA2bElectron(electron_reco_match,1);
-    // 	  // electron_veto=isRA2bElectron(electron_reco_match,0);
-    // 	  // electron_pt=pf_els_pt->at(electron_reco_match);
-    // 	  // electron_eta=pf_els_eta->at(electron_reco_match);
-    // 	  // electron_phi=pf_els_phi->at(electron_reco_match);
-    // 	  // electron_PFmatched=true;
-    // 	  // // cout << "electron isolation..." << endl;
-    // 	  // electron_relIso=GetElectronRelIso(electron_reco_match);
-    // 	  // electron_NH_Et=els_PFneutralHadronIsoR03->at(electron_reco_match);
-    // 	  // electron_CH_pt=els_PFchargedHadronIsoR03->at(electron_reco_match);
-    // 	  // electron_ph_Et=els_PFphotonIsoR03->at(electron_reco_match);
-    // 	}
-    // 	else {
-    // 	  electron_signal=isRecoElectron(electron_reco_match,1);
-    // 	  electron_veto=isRecoElectron(electron_reco_match,0);
-    // 	  electron_pt=els_pt->at(electron_reco_match);
-    // 	  electron_eta=els_eta->at(electron_reco_match);
-    // 	  electron_phi=els_phi->at(electron_reco_match);
-    // 	  electron_PFmatched=els_isPF->at(electron_reco_match);
-    // 	  electron_relIso=GetCSAElectronIsolation(electron_reco_match);
-    // 	  electron_NH_Et=els_pfIsolationR03_sumNeutralHadronEt->at(electron_reco_match);
-    // 	  electron_CH_pt=els_pfIsolationR03_sumChargedHadronPt->at(electron_reco_match);
-    // 	  electron_ph_Et=els_pfIsolationR03_sumPhotonEt->at(electron_reco_match);
-    // 	}
-    // 	electron_NH_Iso=electron_NH_Et/electron_pt;
-    // 	electron_CH_Iso=electron_CH_pt/electron_pt;
-    // 	electron_ph_Iso=electron_ph_Et/electron_pt;
-    // 	// cout << "electron_minDR_jet... " << endl;
-    // 	electron_minDR_jet=GetMinDRElectronJet(electron_reco_match); // compatible with both old and new samples
-    // 	// cout << "... " << electron_minDR_jet << endl;
-    // 	electron_mT=GetMTW(electron_pt,met,electron_phi,met_phi);
-    //   }
-    // }
-  
-
-
-
+   
     //     cout << "minDeltaPhi..." << endl;
     min_delta_phi_met=GetMinDeltaPhiMET(3,30.);
     min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
@@ -1260,25 +912,54 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     num_iso_tracks_pt10_mT=0;
     num_iso_tracks_pt15=0;
     num_iso_tracks_pt15_mT=0;
-    num_e_iso_tracks=0;
-    num_mu_iso_tracks=0;
-    num_had_iso_tracks=0;
-    num_e_iso_tracks_mT=0;
-    num_mu_iso_tracks_mT=0;
-    num_had_iso_tracks_mT=0;
+    num_iso_tracks_mini_mT=0;
+    num_el_tracks=0;
+    num_mu_tracks=0;
+    num_had_tracks=0;
+    num_el_tracks_mT=0;
+    num_mu_tracks_mT=0;
+    num_had_tracks_mT=0;
+    num_el_tracks_mini_mT=0;
+    num_mu_tracks_mini_mT=0;
+    num_had_tracks_mini_mT=0;
+    num_had_tracks_no_iso=0;
+    num_had_tracks_mT_no_iso=0;
     iso_track_pt=-1;
-    iso_track_relIso=-1;
+    iso_track_dB_iso=-1;
+    iso_track_mini_iso=-1;
     iso_track_mT=-1;
-    e_track_pt=-1;
-    e_track_relIso=-1;
-    e_track_mT=-1;
-    mu_track_pt=-1;
-    mu_track_relIso=-1;
-    mu_track_mT=-1;
-    had_track_pt=-1;
-    had_track_relIso=-1;
-    had_track_mT=-1;
-    vector<std::pair<int, double> > e_tracks, mu_tracks, had_tracks;
+    el_track_tm.clear();
+    el_track_truid.clear();
+    el_track_momid.clear();
+    el_track_pt.clear();
+    el_track_ch_iso.clear();
+    el_track_dB_iso.clear();
+    el_track_mini_iso.clear();
+    el_track_mT.clear();
+    mu_track_tm.clear();
+    mu_track_truid.clear();
+    mu_track_momid.clear();   
+    mu_track_pt.clear();
+    mu_track_ch_iso.clear();
+    mu_track_dB_iso.clear();
+    mu_track_mini_iso.clear();
+    mu_track_mT.clear();
+    had_track_from_tau.clear();
+    had_track_truid.clear();
+    had_track_pt.clear();
+    had_track_ch_iso.clear();
+    had_track_dB_iso.clear();
+    had_track_mini_iso.clear();
+    had_track_mT.clear();
+    // had_track_from_tau=false;
+    // had_track_truid=-999;
+    // had_track_pt=-999.;
+    // had_track_ch_iso=-999.;
+    // had_track_dB_iso=-999.;
+    // had_track_mini_iso=-999.;
+    // had_track_mT=-999.;
+    //   cout << "Look for tracks..." << endl;
+    vector<std::pair<int, double> > el_tracks, mu_tracks, had_tracks;
     if (cfAVersion==71||cfAVersion==74||cfAVersion>=76) {
       num_iso_tracks_pt10=GetNumIsoTracks(10, false);
       num_iso_tracks_pt10_mT=GetNumIsoTracks(10, true);
@@ -1287,74 +968,132 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       num_iso_tracks_pt15=isotracks.size();
       if (num_iso_tracks_pt15>0) {
 	iso_track_pt=isotk_pt->at(isotracks[0].first);
-	iso_track_relIso=isotracks[0].second;
+	iso_track_dB_iso=isotracks[0].second;
+	//	iso_track_miniIso=GetIsolation(isotracks[0].first,0)/iso_track_pt;
 	iso_track_mT=GetMTW(iso_track_pt, met, isotk_phi->at(isotracks[0].first), met_phi);
 	for (uint itk(0); itk<isotracks.size(); itk++) {
 	  if (GetMTW(isotk_pt->at(isotracks[itk].first), met, isotk_phi->at(isotracks[itk].first), met_phi)<100) num_iso_tracks_pt15_mT++;
 	}
       }
       if (cfAVersion>=76) {
-	NewGetIsoTracks(e_tracks, mu_tracks, had_tracks, false);
-	if (e_tracks.size()>0) {
-	  e_track_pt=pfcand_pt->at(e_tracks[0].first);
-	  double e_track_phi=pfcand_phi->at(e_tracks[0].first);
-	  e_track_mT=GetMTW(e_track_pt, met, e_track_phi, met_phi);
-	  e_track_relIso=e_tracks[0].second;
+	//	cout << "Preparing electron tracks..." << endl;
+	NewGetIsoTracks(el_tracks, mu_tracks, had_tracks, false); // pass pt>3, ID
+	for (uint iel(0); iel<el_tracks.size(); iel++) {
+	  el_track_pt.push_back(pfcand_pt->at(el_tracks[iel].first));
+	  double el_track_eta=pfcand_eta->at(el_tracks[iel].first);
+	  double el_track_phi=pfcand_phi->at(el_tracks[iel].first);
+	  el_track_mT.push_back(GetMTW(el_track_pt[iel], met, el_track_phi, met_phi));
+	  el_track_ch_iso.push_back(el_tracks[iel].second);
+	  el_track_dB_iso.push_back(GetPFCandIsolationDeltaBetaCorr(el_tracks[iel].first)/el_track_pt[iel]);
+	  el_track_mini_iso.push_back(GetIsolation(el_tracks[iel].first,0)/el_track_pt[iel]);
+	  // truth-matching
+	  bool fromW(false);
+	  int mcID, mcmomID;
+	  float deltaR;
+	  mcID = GetTrueElectron(el_track_pt[iel], el_track_eta, el_track_phi, mcmomID, fromW, deltaR);
+	  el_track_truid.push_back(mcID);
+	  el_track_momid.push_back(mcmomID);
+	  el_track_tm.push_back(abs(mcID)==11 && fromW);
+	  // count tracks
+	  if (el_track_pt[iel]<5) continue;
+	  if (el_track_ch_iso[iel]<0.2) num_el_tracks++;
+	  //	  printf("pfcand %d: pdgId=%d, pt=%f, ch_rel_iso=%f, mT=%f\n", el_tracks[iel].first, TMath::Nint(pfcand_pdgId->at(el_tracks[iel].first)), el_track_pt[iel], el_tracks[iel].second, el_track_mT[iel]);
+	  if (el_track_mT[iel]>100) continue;
+	  if (el_track_ch_iso[iel]<0.2) num_el_tracks_mT++;
+	  if (el_track_mini_iso[iel]<0.1) num_el_tracks_mini_mT++;
 	}
-	if (mu_tracks.size()>0) {
-	  mu_track_pt=pfcand_pt->at(mu_tracks[0].first);
-	  double mu_track_phi=pfcand_phi->at(mu_tracks[0].first);
-	  mu_track_mT=GetMTW(mu_track_pt, met, mu_track_phi, met_phi);
-	  mu_track_relIso=mu_tracks[0].second;
+	//	cout << endl << "Preparing muon tracks..." << endl;
+	for (uint imu(0); imu<mu_tracks.size(); imu++) {
+	  mu_track_pt.push_back(pfcand_pt->at(mu_tracks[imu].first));
+	  double mu_track_eta=pfcand_eta->at(mu_tracks[imu].first);
+	  double mu_track_phi=pfcand_phi->at(mu_tracks[imu].first);
+	  mu_track_mT.push_back(GetMTW(mu_track_pt[imu], met, mu_track_phi, met_phi));
+	  mu_track_ch_iso.push_back(mu_tracks[imu].second);
+	  mu_track_dB_iso.push_back(GetPFCandIsolationDeltaBetaCorr(mu_tracks[imu].first)/mu_track_pt[imu]);
+	  mu_track_mini_iso.push_back(GetIsolation(mu_tracks[imu].first,0)/mu_track_pt[imu]);
+	  // truth-matching
+	  bool fromW(false);
+	  int mcID, mcmomID;
+	  float deltaR;
+	  mcID = GetTrueMuon(mu_track_pt[imu], mu_track_eta, mu_track_phi, mcmomID, fromW, deltaR);
+	  mu_track_truid.push_back(mcID);
+	  mu_track_momid.push_back(mcmomID);
+	  mu_track_tm.push_back(abs(mcID)==13 && fromW);
+	  // count tracks
+	  if (mu_track_pt[imu]<5) continue;
+	  //	  printf("pfcand %d: pdgId=%d, pt=%f, ch_rel_iso=%f, mT=%f\n", mu_tracks[imu].first, TMath::Nint(pfcand_pdgId->at(mu_tracks[imu].first)), mu_track_pt[imu], mu_tracks[imu].second, mu_track_mT[imu]);
+	  if (mu_track_ch_iso[imu]<0.2) num_mu_tracks++;
+	  if (mu_track_mT[imu]>100) continue;
+	  if (mu_track_ch_iso[imu]<0.2) num_mu_tracks_mT++;
+	  if (mu_track_mini_iso[imu]<0.1) num_mu_tracks_mini_mT++;	
 	}
-	if (had_tracks.size()>0) {
-	  had_track_pt=pfcand_pt->at(had_tracks[0].first);
-	  double had_track_phi=pfcand_phi->at(had_tracks[0].first);
-	  had_track_mT=GetMTW(had_track_pt, met, had_track_phi, met_phi);
-	  had_track_relIso=had_tracks[0].second;
+	//	cout << endl << "Preparing hadronic tracks..." << endl;
+	for (uint ihad(0); ihad<had_tracks.size(); ihad++) {
+	  float pt=pfcand_pt->at(had_tracks[ihad].first);
+	  float ch_iso=had_tracks[ihad].second;
+	  if (pt<10) continue;
+	  if (!(ch_iso<0.2||ch_iso*pt<10)) continue;
+	  had_track_pt.push_back(pt);
+	  had_track_ch_iso.push_back(ch_iso);
+	  double had_track_phi=pfcand_phi->at(had_tracks[ihad].first);
+	  had_track_mT.push_back(GetMTW(pt, met, had_track_phi, met_phi));
+	  // had_track_dB_iso.push_back(GetPFCandIsolationDeltaBetaCorr(had_tracks[ihad].first)/pt);
+	  // had_track_mini_iso.push_back(GetIsolation(had_tracks[ihad].first,0)/pt);
+	  // truth-matching
+	  size_t ipart = MatchCandToStatus1(had_tracks[ihad].first, parts);
+	  had_track_truid .push_back( ipart<parts.size()?parts.at(ipart).id_:0);
+	  //tree.tks_from_w().push_back(FromW(ipart, parts, moms));
+	  bool tks_from_tau=FromTau(ipart, parts, moms);
+	  bool tks_from_taulep=FromTauLep(ipart, parts, moms);
+	  had_track_from_tau.push_back((tks_from_tau && !tks_from_taulep));
 	}
-	for (uint itk(0); itk<e_tracks.size(); itk++) {
-	  double pt=pfcand_pt->at(e_tracks[itk].first);
-	  double phi=pfcand_phi->at(e_tracks[itk].first);
-	  double mT=GetMTW(pt, met, phi, met_phi);
-	  if (e_tracks[itk].second>0.2) continue;
-	  num_e_iso_tracks++;
-	  if (mT<100)  num_e_iso_tracks_mT++;
-	}
-	for (uint itk(0); itk<mu_tracks.size(); itk++) {
-	  double pt=pfcand_pt->at(mu_tracks[itk].first);
-	  double phi=pfcand_phi->at(mu_tracks[itk].first);
-	  double mT=GetMTW(pt, met, phi, met_phi);
-	  if (mu_tracks[itk].second>0.2) continue;
-	  num_mu_iso_tracks++;
-	  if (mT<100)  num_mu_iso_tracks_mT++;
-	}
+	// if (had_tracks.size()>0) {
+	//   had_track_pt=pfcand_pt->at(had_tracks[0].first);
+	//   double had_track_phi=pfcand_phi->at(had_tracks[0].first);
+	//   had_track_mT=GetMTW(had_track_pt, met, had_track_phi, met_phi);
+	//   had_track_ch_iso=had_tracks[0].second;
+	//   had_track_dB_iso=GetPFCandIsolationDeltaBetaCorr(had_tracks[0].first)/had_track_pt;
+	//   had_track_mini_iso=GetIsolation(had_tracks[0].first,0)/had_track_pt;
+	//   // truth-matching
+	//   size_t ipart = MatchCandToStatus1(had_tracks[0].first, parts);
+	//   had_track_truid = ipart<parts.size()?parts.at(ipart).id_:0;
+	//   //tree.tks_from_w().push_back(FromW(ipart, parts, moms));
+	//   bool tks_from_tau=FromTau(ipart, parts, moms);
+	//   bool tks_from_taulep=FromTauLep(ipart, parts, moms);
+	//   had_track_from_tau=(tks_from_tau && !tks_from_taulep);
+	// }
 	for (uint itk(0); itk<had_tracks.size(); itk++) {
 	  double pt=pfcand_pt->at(had_tracks[itk].first);
 	  if(pt<10) continue;
 	  double phi=pfcand_phi->at(had_tracks[itk].first);
 	  double mT=GetMTW(pt, met, phi, met_phi);
-	  if (had_tracks[itk].second>0.1) continue;
-	  num_had_iso_tracks++;
-	  if (mT<100)  num_had_iso_tracks_mT++;
+	  num_had_tracks_no_iso++;
+	  if (mT<100) num_had_tracks_mT_no_iso++;
+	  //	  printf("pfcand %d: pdgId=%d, pt=%f, ch_rel_iso=%f, mT=%f\n", had_tracks[itk].first, TMath::Nint(pfcand_pdgId->at(had_tracks[itk].first)), pt, had_tracks[itk].second, mT);
+	  if (had_tracks[itk].second<0.1) {
+	    num_had_tracks++;
+	    if (mT<100)  num_had_tracks_mT++;
+	  }
 	}
       }
     }
 
+    //    printf("\nFound %d/%d/%d e/mu/had isolated tracks.\n", num_el_tracks_mT, num_mu_tracks_mT, num_had_tracks_mT);
+    
     // cout << "mT..." << endl;
     mT_mu=GetTransverseMassMu();    
     mT_el=GetTransverseMassEl();
-    if (num_reco_veto_electrons+num_reco_veto_muons!=1) {
+    if (num_veto_els+num_veto_mus!=1) {
       deltaThetaT=-999.;
       W_pT=-999.;
-    } else if (num_reco_veto_electrons==1&&num_reco_veto_muons==0) {
-      deltaThetaT=GetDeltaThetaT(electron_pt, electron_phi);
-      W_pT=GetWpT(electron_pt, electron_phi);
-    } else if (num_reco_veto_muons==1&&num_reco_veto_electrons==0) {
-      deltaThetaT=GetDeltaThetaT(muon_pt, muon_phi);
-      W_pT=GetWpT(muon_pt, muon_phi);
+    } else if (num_veto_els==1&&num_veto_mus==0) {
+      deltaThetaT=GetDeltaThetaT(el_pt[0], el_phi[0]);
+      W_pT=GetWpT(el_pt[0], el_phi[0]);
+    } else if (num_veto_mus==1&&num_veto_els==0) {
+      deltaThetaT=GetDeltaThetaT(mu_pt[0], mu_phi[0]);
+      W_pT=GetWpT(mu_pt[0], mu_phi[0]);
     }
-    SL_control_sample=(num_reco_veto_electrons+num_reco_veto_muons==1)&&(mT_el<100.||mT_mu<100.);
+    SL_control_sample=(num_veto_els+num_veto_mus==1)&&(mT_el<100.||mT_mu<100.);
     QCD_control_sample=(min_delta_phi_met_N<4.);
 
     ht_bin1=(ht50>400&&ht50<500);
@@ -1375,100 +1114,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
     gluino1_pt=GetGluinoPt(1);
     gluino2_pt=GetGluinoPt(2);
 
-    // cout << "Fat jets..." << endl;
-    // if (cfAVersion>=74&&cfAVersion<=76) {
-    //   fatpT10_jet1_pt=GetFatJetPt(0,10);    
-    //   fatpT10_jet2_pt=GetFatJetPt(1,10);
-    //   fatpT10_jet3_pt=GetFatJetPt(2,10);
-    //   fatpT10_jet4_pt=GetFatJetPt(3,10);
-    //   fatpT10_jet1_nConst=GetFatJetnConst(0,10);
-    //   fatpT10_jet2_nConst=GetFatJetnConst(1,10);
-    //   fatpT10_jet3_nConst=GetFatJetnConst(2,10);
-    //   fatpT10_jet4_nConst=GetFatJetnConst(3,10);
-    //   fatpT10_jet1_mJ=GetFatJetmJ(0,10);
-    //   fatpT10_jet2_mJ=GetFatJetmJ(1,10);
-    //   fatpT10_jet3_mJ=GetFatJetmJ(2,10);
-    //   fatpT10_jet4_mJ=GetFatJetmJ(3,10);
-    //   num_fatpT10_jets=GetNFatJets(50.,10);
-    //   num_fatpT10_jets_pt100=GetNFatJets(100.,10);
-    //   num_fatpT10_jets_pt150=GetNFatJets(150.,10);
-    //   num_fatpT10_jets_pt200=GetNFatJets(200.,10);
-    //   num_fatpT10_jets_pt300=GetNFatJets(300.,10);
-    //   fatpT10_MJ=GetMJ(50.,10);
-    //   fatpT10_MJ_pt100=GetMJ(100.,10);
-    //   fatpT10_MJ_pt150=GetMJ(150.,10);
-    //   fatpT10_MJ_pt200=GetMJ(200.,10);
-    //   fatpT10_MJ_pt300=GetMJ(300.,10);
-
-    //   fatpT15_jet1_pt=GetFatJetPt(0,15);    
-    //   fatpT15_jet2_pt=GetFatJetPt(1,15);
-    //   fatpT15_jet3_pt=GetFatJetPt(2,15);
-    //   fatpT15_jet4_pt=GetFatJetPt(3,15);
-    //   fatpT15_jet1_nConst=GetFatJetnConst(0,15);
-    //   fatpT15_jet2_nConst=GetFatJetnConst(1,15);
-    //   fatpT15_jet3_nConst=GetFatJetnConst(2,15);
-    //   fatpT15_jet4_nConst=GetFatJetnConst(3,15);
-    //   fatpT15_jet1_mJ=GetFatJetmJ(0,15);
-    //   fatpT15_jet2_mJ=GetFatJetmJ(1,15);
-    //   fatpT15_jet3_mJ=GetFatJetmJ(2,15);
-    //   fatpT15_jet4_mJ=GetFatJetmJ(3,15);
-    //   num_fatpT15_jets=GetNFatJets(50.,15);
-    //   num_fatpT15_jets_pt100=GetNFatJets(100.,15);
-    //   num_fatpT15_jets_pt150=GetNFatJets(150.,15);
-    //   num_fatpT15_jets_pt200=GetNFatJets(200.,15);
-    //   num_fatpT15_jets_pt300=GetNFatJets(300.,15);
-    //   fatpT15_MJ=GetMJ(50.,15);
-    //   fatpT15_MJ_pt100=GetMJ(100.,15);
-    //   fatpT15_MJ_pt150=GetMJ(150.,15);
-    //   fatpT15_MJ_pt200=GetMJ(200.,15);
-    //   fatpT15_MJ_pt300=GetMJ(300.,15);
-
-    //   fatpT20_jet1_pt=GetFatJetPt(0,20);    
-    //   fatpT20_jet2_pt=GetFatJetPt(1,20);
-    //   fatpT20_jet3_pt=GetFatJetPt(2,20);
-    //   fatpT20_jet4_pt=GetFatJetPt(3,20);
-    //   fatpT20_jet1_nConst=GetFatJetnConst(0,20);
-    //   fatpT20_jet2_nConst=GetFatJetnConst(1,20);
-    //   fatpT20_jet3_nConst=GetFatJetnConst(2,20);
-    //   fatpT20_jet4_nConst=GetFatJetnConst(3,20);
-    //   fatpT20_jet1_mJ=GetFatJetmJ(0,20);
-    //   fatpT20_jet2_mJ=GetFatJetmJ(1,20);
-    //   fatpT20_jet3_mJ=GetFatJetmJ(2,20);
-    //   fatpT20_jet4_mJ=GetFatJetmJ(3,20);
-    //   num_fatpT20_jets=GetNFatJets(50.,20);
-    //   num_fatpT20_jets_pt100=GetNFatJets(100.,20);
-    //   num_fatpT20_jets_pt150=GetNFatJets(150.,20);
-    //   num_fatpT20_jets_pt200=GetNFatJets(200.,20);
-    //   num_fatpT20_jets_pt300=GetNFatJets(300.,20);
-    //   fatpT20_MJ=GetMJ(50.,20);
-    //   fatpT20_MJ_pt100=GetMJ(100.,20);
-    //   fatpT20_MJ_pt150=GetMJ(150.,20);
-    //   fatpT20_MJ_pt200=GetMJ(200.,20);
-    //   fatpT20_MJ_pt300=GetMJ(300.,20);
-
-    //   fatpT25_jet1_pt=GetFatJetPt(0,25);    
-    //   fatpT25_jet2_pt=GetFatJetPt(1,25);
-    //   fatpT25_jet3_pt=GetFatJetPt(2,25);
-    //   fatpT25_jet4_pt=GetFatJetPt(3,25);
-    //   fatpT25_jet1_nConst=GetFatJetnConst(0,25);
-    //   fatpT25_jet2_nConst=GetFatJetnConst(1,25);
-    //   fatpT25_jet3_nConst=GetFatJetnConst(2,25);
-    //   fatpT25_jet4_nConst=GetFatJetnConst(3,25);
-    //   fatpT25_jet1_mJ=GetFatJetmJ(0,25);
-    //   fatpT25_jet2_mJ=GetFatJetmJ(1,25);
-    //   fatpT25_jet3_mJ=GetFatJetmJ(2,25);
-    //   fatpT25_jet4_mJ=GetFatJetmJ(3,25);
-    //   num_fatpT25_jets=GetNFatJets(50.,25);
-    //   num_fatpT25_jets_pt100=GetNFatJets(100.,25);
-    //   num_fatpT25_jets_pt150=GetNFatJets(150.,25);
-    //   num_fatpT25_jets_pt200=GetNFatJets(200.,25);
-    //   num_fatpT25_jets_pt300=GetNFatJets(300.,25);
-    //   fatpT25_MJ=GetMJ(50.,25);
-    //   fatpT25_MJ_pt100=GetMJ(100.,25);
-    //   fatpT25_MJ_pt150=GetMJ(150.,25);
-    //   fatpT25_MJ_pt200=GetMJ(200.,25);
-    //   fatpT25_MJ_pt300=GetMJ(300.,25);
-    // }
+    //   cout << "Cluster fat jets..." << endl;
+    
     fatpT30_jet1_pt=GetFatJetPt(0);    
     fatpT30_jet2_pt=GetFatJetPt(1);
     fatpT30_jet3_pt=GetFatJetPt(2);
@@ -1528,78 +1175,126 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
 
     min_delta_phi_b_met=GetMinDeltaPhibMET();
 
-    num_taus_POG_phys14_ID = GetNumTaus();
-    num_taus_POG_phys14_ID_againstEMu = GetNumTaus(true);
-    num_taus_POG_phys14_ID_mT100 = GetNumTaus(false, true);
-    num_taus_POG_phys14_ID_againstEMu_mT100 = GetNumTaus(true, true);
+    tau_loose.clear();
+    tau_medium.clear();
+    tau_tight.clear();
+    tau_pt.clear();
+    tau_dB_iso.clear();
+    tau_chargedIsoPtSum.clear();
+    tau_mT.clear();
+    
+    std::vector<int> taus_save = GetTaus(); // loose taus, pt >20, eta< 2.3
+    num_veto_taus_mT = 0;
+    for (uint itau(0); itau<taus_save.size(); itau++) {
+      tau_loose.push_back(taus_byLooseCombinedIsolationDeltaBetaCorr3Hits->at(taus_save[itau]));
+      tau_medium.push_back(taus_byMediumCombinedIsolationDeltaBetaCorr3Hits->at(taus_save[itau]));
+      tau_tight.push_back(taus_byTightCombinedIsolationDeltaBetaCorr3Hits->at(taus_save[itau]));
+      tau_pt.push_back(taus_pt->at(taus_save[itau]));
+      tau_dB_iso.push_back(taus_CombinedIsolationDeltaBetaCorrRaw3Hits->at(taus_save[itau]));
+      tau_chargedIsoPtSum.push_back(taus_chargedIsoPtSum->at(taus_save[itau]));
+      tau_mT.push_back(  GetMTW(taus_pt->at(taus_save[itau]), met, taus_phi->at(taus_save[itau]), met_phi)  );
+      if (tau_mT[itau] < 100) num_veto_taus_mT++;
+    }
+    
+    
+    
 
-    tau_pt=-1;
-    tau_chargedIsoPtSum=-1;
-    tau_mT=-1;
-    if (taus_pt->size()>0)
-      {
-	tau_pt=taus_pt->at(0);
-	tau_chargedIsoPtSum=taus_pt->at(0);
-	tau_mT=GetMTW(tau_pt,met,taus_phi->at(0),met_phi);
-      }
-
-      std::vector<int> true_electrons;
-      std::vector<int> true_muons;
+    // cout << "Look for true leptons." << endl;
+      std::vector<int> true_els;
+      std::vector<int> true_mus;
       std::vector<int> true_had_taus;
       std::vector<int> true_lep_taus;
-      GetTrueLeptons(true_electrons, true_muons, true_had_taus, true_lep_taus);
-      //     cout << "Found " << true_electrons.size() << " prompt electrons." << endl;
-      std::vector<int> matched_electrons = MatchElectrons(true_electrons);
-      //      cout << "Found " << true_muons.size() << " prompt muons." << endl;
-      std::vector<int> matched_muons = MatchMuons(true_muons);
+      GetTrueLeptons(true_els, true_mus, true_had_taus, true_lep_taus);
+      //     cout << "Found " << true_els.size() << " prompt els and " << el_tracks.size() << " el tracks." << endl;
+      std::vector<int> matched_els = MatchElectrons(true_els);
+      std::vector<int> matched_el_tks = MatchTks(true_els, el_tracks);
+      //      cout << "Found " << true_mus.size() << " prompt mus and " << mu_tracks.size() << " mu tracks." << endl;
+      std::vector<int> matched_mus = MatchMuons(true_mus);
+      std::vector<int> matched_mu_tks = MatchTks(true_mus, mu_tracks);
 
-      num_true_electrons=true_electrons.size();
-      num_true_muons=true_muons.size();
+      num_true_els=true_els.size();
+      num_true_mus=true_mus.size();
       num_true_had_taus=true_had_taus.size();
       num_true_lep_taus=true_lep_taus.size();
 
-      true_electron_pt.clear();
-      true_electron_eta.clear();
-      true_electron_min_parton_dR.clear();
-      true_electron_passID.clear();
-      true_electron_rel_iso.clear();
-      true_electron_d0.clear();
-      for (uint iel(0); iel<num_true_electrons; iel++) {
-	true_electron_pt.push_back(mc_doc_pt->at(true_electrons[iel]));
-	true_electron_eta.push_back(mc_doc_eta->at(true_electrons[iel]));
-	true_electron_min_parton_dR.push_back(GetDRToClosestParton(true_electrons[iel]));
-	if (matched_electrons[iel]>=0)	{
-	  true_electron_passID.push_back(isRecoElectron(matched_electrons[iel],0));
-	  true_electron_rel_iso.push_back(GetCSAElectronIsolation(matched_electrons[iel]));
-	  true_electron_d0.push_back(GetElectronD0(matched_electrons[iel]));
+      true_el_pt.clear();
+      true_el_eta.clear();
+      true_el_min_parton_dR.clear();
+      true_el_reco.clear();
+      true_el_passID.clear();
+      true_el_rel_iso.clear();
+      true_el_mini_iso.clear();
+      true_el_d0.clear();
+      true_el_track.clear();
+      true_el_tk_pt.clear();
+      true_el_tk_ch_iso.clear();
+      for (uint iel(0); iel<num_true_els; iel++) {
+	true_el_pt.push_back(mc_doc_pt->at(true_els[iel]));
+	true_el_eta.push_back(mc_doc_eta->at(true_els[iel]));
+	true_el_min_parton_dR.push_back(GetDRToClosestParton(true_els[iel]));
+	if (matched_els[iel]>=0)	{
+	  true_el_reco.push_back(true);
+	  true_el_passID.push_back(PassElectronID(matched_els[iel],0));
+	  true_el_rel_iso.push_back(GetCSAElectronIsolation(matched_els[iel]));
+	  true_el_mini_iso.push_back(GetIsolation(matched_els[iel],11)/els_pt->at(matched_els[iel]));
+	  true_el_d0.push_back(GetElectronD0(matched_els[iel]));
 	} else {
-	  true_electron_passID.push_back(-999.);
-	  true_electron_rel_iso.push_back(-999.);
-	  true_electron_d0.push_back(-999.);
+	  true_el_reco.push_back(false);
+	  true_el_passID.push_back(false);
+	  true_el_rel_iso.push_back(-999.);
+	  true_el_mini_iso.push_back(-999.);
+	  true_el_d0.push_back(-999.);
+	}
+	if (matched_el_tks[iel]>=0) {
+	  true_el_track.push_back(true);
+	  true_el_tk_pt.push_back(pfcand_pt->at(matched_el_tks[iel]));
+	  true_el_tk_ch_iso.push_back(GetPFCandIsolation(matched_el_tks[iel])/true_el_tk_pt[iel]);
+	} else {
+	  true_el_track.push_back(false);
+	  true_el_tk_pt.push_back(-999.);
+	  true_el_tk_ch_iso.push_back(-999.);
 	}
       }
       
-      true_muon_pt.clear();
-      true_muon_eta.clear();
-      true_muon_min_parton_dR.clear();
-      true_muon_passID.clear();
-      true_muon_rel_iso.clear();
-      true_muon_d0.clear();
-      for (uint imu(0); imu<num_true_muons; imu++) {
-	true_muon_pt.push_back(mc_doc_pt->at(true_muons[imu]));
-	true_muon_eta.push_back(mc_doc_eta->at(true_muons[imu]));
-	true_muon_min_parton_dR.push_back(GetDRToClosestParton(true_muons[imu]));
+      true_mu_pt.clear();
+      true_mu_eta.clear();
+      true_mu_min_parton_dR.clear();
+      true_mu_reco.clear();
+      true_mu_passID.clear();
+      true_mu_rel_iso.clear();
+      true_mu_mini_iso.clear();
+      true_mu_d0.clear();
+      true_mu_track.clear();
+      true_mu_tk_pt.clear();
+      true_mu_tk_ch_iso.clear();
+      for (uint imu(0); imu<num_true_mus; imu++) {
+	true_mu_pt.push_back(mc_doc_pt->at(true_mus[imu]));
+	true_mu_eta.push_back(mc_doc_eta->at(true_mus[imu]));
+	true_mu_min_parton_dR.push_back(GetDRToClosestParton(true_mus[imu]));
 	//	cout << "True muon " << imu << ": ";
-	if (matched_muons[imu]>=0)	{
-	  //	  cout << "matched to reco muon " << matched_muons[imu] << endl;
-	  true_muon_passID.push_back(isRecoMuon(matched_muons[imu],0));
-	  true_muon_rel_iso.push_back(GetMuonRelIso(matched_muons[imu]));
-	  true_muon_d0.push_back(GetMuonD0(matched_muons[imu]));
+	if (matched_mus[imu]>=0)	{
+	  //	  cout << "matched to reco muon " << matched_mus[imu] << endl;
+	  true_mu_reco.push_back(true);
+	  true_mu_passID.push_back(PassMuonID(matched_mus[imu]));
+	  true_mu_rel_iso.push_back(GetMuonRelIso(matched_mus[imu]));
+	  true_mu_mini_iso.push_back(GetIsolation(matched_mus[imu],13)/mus_pt->at(matched_mus[imu]));
+	  true_mu_d0.push_back(GetMuonD0(matched_mus[imu]));
 	} else {
 	  //	  cout << "not matched." << endl;
-	  true_muon_passID.push_back(-999.);
-	  true_muon_rel_iso.push_back(-999.);
-	  true_muon_d0.push_back(-999.);
+	  true_mu_reco.push_back(false);
+	  true_mu_passID.push_back(false);
+	  true_mu_rel_iso.push_back(-999.);
+	  true_mu_mini_iso.push_back(-999.);
+	  true_mu_d0.push_back(-999.);
+	}
+	if (matched_mu_tks[imu]>=0) {
+	  true_mu_track.push_back(true);
+	  true_mu_tk_pt.push_back(pfcand_pt->at(matched_mu_tks[imu]));
+	  true_mu_tk_ch_iso.push_back(GetPFCandIsolation(matched_mu_tks[imu])/true_mu_tk_pt[imu]);
+	} else {
+	  true_mu_track.push_back(false);
+	  true_mu_tk_pt.push_back(-999.);
+	  true_mu_tk_ch_iso.push_back(-999.);
 	}
       }
       
@@ -1613,7 +1308,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name){
       }
       
     reduced_tree.Fill(); 
-    //    if (i==20) break;
+    //    if (i==10) break;
 
   }
 

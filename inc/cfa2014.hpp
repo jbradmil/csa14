@@ -1509,6 +1509,7 @@ protected:
   std::vector<float> *pfcand_energy;
   std::vector<float> *pfcand_charge;
   std::vector<float> *pfcand_dz;
+  std::vector<float> *pfcand_fromPV;
   UInt_t Npfmets;
   std::vector<float> *pfmets_et;
   std::vector<float> *pfmets_phi;
@@ -2910,6 +2911,7 @@ protected:
   TBranch *b_pfcand_energy;
   TBranch *b_pfcand_charge;
   TBranch *b_pfcand_dz;
+  TBranch *b_pfcand_fromPV;
   TBranch *b_Npfmets;
   TBranch *b_pfmets_et;
   TBranch *b_pfmets_phi;

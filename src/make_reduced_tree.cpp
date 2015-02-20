@@ -7,10 +7,10 @@
 
 int main(int argc, char *argv[]){
   std::string inFilename("");
-  bool iscfA(false), isList(false);
+  bool iscfA(false), isList(false), isSkimmed(false);
   int c(0);
   int Nentries(-1);
-  while((c=getopt(argc, argv, "i:n:cl"))!=-1){
+  while((c=getopt(argc, argv, "i:n:cls"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
@@ -23,6 +23,9 @@ int main(int argc, char *argv[]){
       break;
     case 'l':
       isList=true;
+      break;
+    case 's':
+      isSkimmed=true;
       break;
     default:
       break;
@@ -38,7 +41,19 @@ int main(int argc, char *argv[]){
     dirName=dirName+energy+"/"+inFilename;
     outFilename=dirName+"/"+inFilename+".root";
     inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
-  }else{
+  } else if(isSkimmed) {
+    inFilename=inFilename+"*.root";
+    std::string baseName(inFilename);
+    size_t pos(baseName.find("/*.root"));
+    if(pos!=std::string::npos)  baseName.erase(pos);
+    pos=baseName.rfind("/");
+    if(pos!=std::string::npos){
+      if(pos!=baseName.size()-1){
+        baseName.erase(0,pos+1);
+      }
+    }
+    outFilename = "skims/"+energy+"/reduced_trees/"+baseName+".root";
+  } else{
     std::string baseName(inFilename);
     size_t pos(baseName.find(".root"));
     if(pos!=std::string::npos)  baseName.erase(pos);
@@ -57,8 +72,8 @@ int main(int argc, char *argv[]){
     if(pos!=std::string::npos)  dirName.erase(pos);
     dirName="reduced_trees/"+energy+"/"+dirName;
     outFilename=dirName+"/"+baseName+".root";
-    std::cout << inFilename << "\n" << baseName << "\n" << outFilename << "\n";
   }
+    std::cout << inFilename << "\n" << outFilename << "\n";
 
   if (gSystem->AccessPathName(dirName.c_str())) {
     std::cout << "Making directory " << dirName << std::endl;
@@ -67,5 +82,5 @@ int main(int argc, char *argv[]){
 
   WeightCalculator w(19399,Nentries);
   ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries);
-  rtm.MakeReducedTree(outFilename);
+  rtm.MakeReducedTree(outFilename, isSkimmed);
 }

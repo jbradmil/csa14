@@ -21,12 +21,12 @@ void SkimReducedTree(string inFilename, string outFilename) {
 
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
-  //TCut ht("ht30>500"), njets("jet4_pt>30"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp+nb);
+  TCut ht("ht30>500"), njets("jet4_pt>30"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp+nb);
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   // 13 TeV
-  // TTree *outCh = inCh->CopyTree(ht+njets+mht30+mdp);
+  TTree *outCh = inCh->CopyTree(ht+njets+mht30);
   // 8 TeV  
-  TTree *outCh = inCh->CopyTree("jet4_pt>40&&passesJSONCut&&passesPVCut&&passes2012METCleaningCut&&met>200&&ht40>500&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
+  //  TTree *outCh = inCh->CopyTree("jet4_pt>40&&passesJSONCut&&passesPVCut&&passes2012METCleaningCut&&met>200&&ht40>500&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   cout << "Saved " << outCh->GetEntries() << " events." << endl;
   outCh->Write();
   outfile->Close();
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]){
     baseName.erase(0,pos+1);
   }
   // 13 TeV
-  //outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
+  outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
   // 8 TeV  
-  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
+  //  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
   SkimReducedTree(inFilename,outFilename);
 }

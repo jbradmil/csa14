@@ -36,6 +36,26 @@ namespace particleId {
   };
 }
 
+struct mc_particle{
+  mc_particle(const TLorentzVector &momentum,
+              float charge,
+              int id, int mom, int gmom, int ggmom,
+              int status):
+    momentum_(momentum),
+    charge_(TMath::Nint(3.*charge)),
+    id_(id),
+    mom_(mom),
+    gmom_(gmom),
+    ggmom_(ggmom),
+    status_(status){
+  }
+
+  TLorentzVector momentum_;
+  float charge_;
+  int id_, mom_, gmom_, ggmom_;
+  int status_;
+};
+
 // enum lepton{electron=11, muon=13, tau=15};
 
 class EventHandler : public cfA{
@@ -50,12 +70,6 @@ protected:
   mutable bool bJetsUpToDate;//cached value correct
   mutable std::vector<FatJet> sortedFatJetCache;//caching for efficiency
   mutable bool FatJetsUpToDate;//cached value correct
-  mutable std::vector<GenMuon> genMuonCache;
-  mutable bool genMuonsUpToDate;
-  mutable std::vector<GenElectron> genElectronCache;
-  mutable bool genElectronsUpToDate; 
-  mutable std::vector<GenTau>genTauCache;
-  mutable bool genTausUpToDate;
   mutable std::vector<int> recoMuonCache;
   mutable bool recoMuonsUpToDate;
   mutable std::vector<int> recoElectronCache;
@@ -171,60 +185,33 @@ protected:
 
   int GetJetGenId(const int) const;
 
-  bool isGenMuon(const int) const;
-  bool isIsoGenMuon(const int) const;
-  void GetGenMuons() const;
-  int GetNumIgnoredGenMuons() const;
-  std::pair <int, double> GetGenMuonMinDR(const int, const vector<uint> ) const;
-  std::pair <int, double> GetGenMuonMinDPt(const int, const vector<uint> ) const;
-  std::pair <int, double> GetGenMuonMinDRCSA14(const int, const vector<uint> ) const;
-  std::pair <int, double> GetGenMuonMinDPtCSA14(const int, const vector<uint> ) const;
-  void SetupGenMuons() const;
-  int GetGenMuonLossCode(const int) const;
-  float GetMinDRMuonJet(const int) const;
-
   bool isTrueElectron(const double eta, const double phi) const;
-  bool isGenElectron(const int) const;
-  bool isIsoGenElectron(const int) const;
-  void GetGenElectrons() const;
-  int GetNumIgnoredGenElectrons() const;
-  std::pair <int, double> GetGenElectronMinDR(const int, const vector<uint> ) const;
-  std::pair <int, double> GetGenElectronMinDPt(const int, const vector<uint> ) const;
-  void SetupGenElectrons() const;
-  int GetGenElectronLossCode(const int) const;
-  float GetMinDRElectronJet(const int) const;
-
+ 
   float GetCorrespondingTopPt(const int) const;
   float GetCorrespondingDeltaRWb(const int) const;
   float GetCorrespondingDeltaRlb(const int) const;
-
-  bool isGenTau(const int) const;
-  void GetGenTaus() const;
-  int GetNumIgnoredGenTaus() const;
-  std::pair <int, double> GetGenTauMinDR(const int, const vector<uint> ) const;
-  std::pair <int, double> GetGenTauMinDPt(const int, const vector<uint> ) const;
-  void SetupGenTaus() const;
-  int GetGenTauLossCode(const int) const;
 
   bool hasPFMatch(const int index, const int pdgId) const;
   bool IsFromB(const int, const int, const int) const;
 
   TLorentzVector GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const; 
 
-  vector<int> GetRecoMuons(const bool veto, const bool iso2D=false, const bool mT_cut=false, const bool orth=false) const;
-  bool isRecoMuon(const uint imu, const uint level=0, const bool=false, const bool=false, const bool=false) const;
+  vector<int> GetRecoMuons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool use_mini_iso=false, const double mini_iso_cut=0.1) const;
+  bool PassMuonID(const uint imu) const;
+  bool isRecoMuon(const uint imu, const uint level=0, const bool=true, const bool=true, const bool=false, const double mini_iso_cut=0.1) const;
   double GetMuonD0(const unsigned int imu) const;
   bool isTrueMuon(const double eta, const double phi) const;
   bool isbMuon(const double eta, const double phi) const;
-  double GetMuonRelIso(const unsigned int imu) const;
+  double GetMuonRelIso(const unsigned int imu, const double R=0.4) const;
   bool passedRecoMuonSelection(uint imu, float MuonPTThreshold=20., float MuonETAThreshold=2.4);
   bool passedRecoMuonVeto(uint imu, float MuonPTThreshold=15., float MuonETAThreshold=2.5);
   double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(const bool veto/*, const bool iso2D=false, const bool mT_cut=false, const bool orth=false*/) const;
-  bool isRecoElectron(const uint iel, const uint level=0/*, const bool=false, const bool=false, const bool=false*/) const;
+  vector<int> GetRecoElectrons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool use_mini_iso=false, const double mini_iso_cut=0.1) const;
+  bool PassElectronID(const uint iel, const uint level) const;
+  bool isRecoElectron(const uint iel, const uint level=0, const bool=true, const bool=true, const bool=false, const double mini_iso_cut=0.1) const;
   double GetElectronD0(const unsigned int iel) const;
   
   vector<int> GetRA2bElectrons(const bool veto) const;
@@ -288,6 +275,7 @@ protected:
   void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool mT_cut=true);
   bool PassIsoTrackBaseline(const uint index) const;
   double GetPFCandIsolation(const uint indexA) const;
+  double GetPFCandIsolationDeltaBetaCorr(const uint indexA) const;
 
   double GetTransverseMassMu() const;
   double GetTransverseMassEl() const;
@@ -300,7 +288,7 @@ protected:
   double GetDocMET() const;
   double GetGluinoPt(int=1) const;
 
-  int GetNumTaus(const bool=false, const bool=false) const;
+  std::vector<int> GetTaus(const bool=false, const bool=false) const;
   bool PassPhys14TauID(const int, const bool=false, const bool=false) const;
 
   void GetTrueLeptons(std::vector<int> &true_electrons, std::vector<int> &true_muons, std::vector<int> &true_had_taus, std::vector<int> &true_lep_taus);
@@ -310,7 +298,42 @@ protected:
   std::vector<int> MatchMuons(const std::vector<int> true_muons) const;
   int GetClosestRecoMuon(const uint imc) const;
   void PrintGenParticleInfo(const int imc) const;
+
+  std::vector<int> MatchTks(const std::vector<int> true_leps, const vector<std::pair<int,double> > tracks) const;
+  int GetClosestTk(const uint imc, const vector<std::pair<int,double> > tracks) const;
   
+  double GetIsolation(const int ilep, const int ParticleType, double R=-1., const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
+
+  int GetTrueElectron(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
+  int GetTrueMuon(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
+  int GetTrueParticle(float RecPt, float RecEta, float RecPhi, float &closest_dR, int ID) const;
+  static int GetMom(float id, float mom, float gmom, float ggmom, bool &fromW);
+  size_t MatchCandToStatus1(size_t icand, const std::vector<mc_particle> &parts) const;
+  std::vector<mc_particle> GetMCParticles() const;
+  std::vector<size_t> GetMoms(const std::vector<mc_particle> &parts);
+  static size_t GetMom(size_t index, const std::vector<mc_particle> &parts);
+  static bool FromTau(size_t index,
+                      const std::vector<mc_particle> &parts,
+                      const std::vector<size_t> &moms);
+  static bool FromTauLep(size_t index,
+                         const std::vector<mc_particle> &parts,
+                         const std::vector<size_t> &moms);
+  static bool FromW(size_t index,
+                    const std::vector<mc_particle> &parts,
+                    const std::vector<size_t> &moms);
+  static unsigned NumDescendants(size_t index,
+                                 const std::vector<mc_particle> &parts,
+                                 const std::vector<size_t> &moms,
+                                 bool req_chg=false);
+  static bool IsDescendantOf(size_t descendant, size_t ancestor,
+                             const std::vector<size_t> &moms);
+  static size_t ParentTau(size_t index,
+                          const std::vector<mc_particle> &parts,
+                          const std::vector<size_t> &moms);
+  static bool IsBrem(size_t index,
+                     const std::vector<mc_particle> &parts,
+                     const std::vector<size_t> &moms);
+
 };
 
 #endif

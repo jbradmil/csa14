@@ -12,6 +12,11 @@ namespace Math{
   double GetDeltaPhi(const double, const double);
   double GetAbsDeltaPhi(const double, const double);
   double GetDeltaR(const double, const double, const double, const double);
+  long double AddInQuadrature(long double x, long double y);
+  long double DeltaPhi(long double phi1, long double phi2);
+  float dR(float eta1, float eta2, float phi1, float phi2) ;
+
+  
 
   template<typename T>
   T add_in_quadrature(T x, T y){
