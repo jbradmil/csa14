@@ -291,6 +291,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("jet_mT", &jet_mT);
   reduced_tree.Branch("jet_parton_id", &jet_parton_id);
   reduced_tree.Branch("jet_parton_mother_id", &jet_parton_mother_id);
+  reduced_tree.Branch("jet_mdp_jet", &jet_mdp_jet);
+  reduced_tree.Branch("jet_mdR_jet", &jet_mdR_jet);
   // reduced_tree.Branch("jet_gen_match", &jet_gen_match);
   reduced_tree.Branch("jet_gen_pt", &jet_gen_pt);
   reduced_tree.Branch("jet_blep_tru", &jet_blep_tru);
@@ -612,9 +614,9 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     GetEntry(i);
     entry=i;
    
-    //if (i<675) continue;
+    // if (i<6066) continue;
     // if (!(event==5467)) continue;
-    //  cout << "*****Entry " << i << " (event " << event << ")*****" << endl;
+    // cout << "*****Entry " << i << " (event " << event << ")*****" << endl;
     
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
@@ -713,8 +715,11 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     jet_mu_en_frac.clear(); jet_mu_mult.clear();
     num_truth_matched_b_jets=0;
     num_good_truth_matched_b_jets=0;
+    // cout << "Get jets" << endl;
     std::vector<int> jets = GetJets(false, 30., 5.);
+    // cout << "Found " << jets.size() << " jets" << endl;
     for (uint ijet(0); ijet<jets.size(); ijet++) {
+      // cout << "Jet " << ijet << "(" << jets[ijet] << ")" << endl;
       jet_pt.push_back(jets_AKPF_pt->at(jets[ijet]));
       jet_eta.push_back(jets_AKPF_eta->at(jets[ijet]));
       jet_phi.push_back(jets_AKPF_phi->at(jets[ijet]));
@@ -723,8 +728,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
       jet_delta_phi_met.push_back(Math::GetDeltaPhi(jet_phi[ijet],met_phi));
       jet_delta_T.push_back(getDeltaPhiMETN_deltaT(jets[ijet]));
       int mdR_jet(GetClosestRecoJet(jets[ijet], true)), mdp_jet(GetClosestRecoJet(jets[ijet], false));
-      jet_mdR_jet.push_back(Math::dR(jets_AKPF_eta->at(mdR_jet), jet_eta[ijet], jets_AKPF_phi->at(mdR_jet), jet_phi[ijet]));
-      jet_mdp_jet.push_back(Math::GetDeltaPhi(jet_phi[ijet], jets_AKPF_phi->at(mdp_jet)));
+      if (mdR_jet>=0) jet_mdR_jet.push_back(Math::dR(jets_AKPF_eta->at(mdR_jet), jet_eta[ijet], jets_AKPF_phi->at(mdR_jet), jet_phi[ijet]));
+      else jet_mdR_jet.push_back(-999.);
+      if (mdp_jet>=0) jet_mdp_jet.push_back(Math::GetDeltaPhi(jet_phi[ijet], jets_AKPF_phi->at(mdp_jet)));
+      else jet_mdp_jet.push_back(-999.);
       jet_mT.push_back(GetMTW(jet_pt[ijet], met, jet_phi[ijet], met_phi));
       jet_parton_id.push_back(TMath::Nint(jets_AKPF_partonFlavour->at(jets[ijet])));
       jet_parton_mother_id.push_back(TMath::Nint(jets_AKPF_parton_motherId->at(jets[ijet])));
@@ -849,6 +856,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     CalculateTagProbs(Prob0_pt50, ProbGEQ1_pt50, Prob1_pt50, ProbGEQ2_pt50, Prob2_pt50, ProbGEQ3_pt50, Prob3_pt50, ProbGEQ4_pt50, 50.);
     }
 
+
+    // cout << "Get leptons" << endl;
 
     mu_truid.clear(); mu_momid.clear(), mu_tm.clear(); 
     mu_signal.clear(); mu_veto.clear(); mu_vid.clear();
