@@ -99,6 +99,8 @@ void WeightCalculator::SetCrossSections(){
   const double ttbar_xsec(245.8);
   const double ttbar_norm(ttbar_xsec/(13.43+53.4+53.2));
   const double mysterious_k_factor(1.19);
+  const double wjets_k_factor(1.23);
+  const double zjets_k_factor(1.27);
   crossSectionTable["QCD_HT-250To500_TuneZ2star_8TeV"]=276000.;
   crossSectionTable["QCD_HT-500To1000_TuneZ2star_8TeV"]=8426.;
   crossSectionTable["QCD_HT-1000ToInf_TuneZ2star_8TeV"]=204.;
@@ -180,10 +182,10 @@ void WeightCalculator::SetCrossSections(){
   //  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=818.8;
   // https://twiki.cern.ch/twiki/bin/view/Sandbox/FullNNLOcrossSections#Top_cross_section_for_13_TeV
   crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola"]=806.1;
-  crossSectionTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola"]=1817.0;
-  crossSectionTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola"]=471.6;
-  crossSectionTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola"]=55.61;
-  crossSectionTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola"]=18.81;
+  crossSectionTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola"]=1817.0*wjets_k_factor;
+  crossSectionTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola"]=471.6*wjets_k_factor;
+  crossSectionTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola"]=55.61*wjets_k_factor;
+  crossSectionTable["WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola"]=18.81*wjets_k_factor;
   crossSectionTable["QCD_Pt-5to10_Tune4C_13TeV_pythia8"]=80710000000;
   crossSectionTable["QCD_Pt-10to15_Tune4C_13TeV_pythia8"]=7528000000;
   crossSectionTable["QCD_Pt-15to30_Tune4C_13TeV_pythia8"]=2327000000;
@@ -205,10 +207,10 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["QCD_HT_250To500_13TeV-madgraph"]=670500.;
   crossSectionTable["QCD_HT-500To1000_13TeV-madgraph"]=26740.;
   crossSectionTable["QCD_HT_1000ToInf_13TeV-madgraph"]=769.7;
-  crossSectionTable["ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola"]=372.6;
-  crossSectionTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola"]=100.8;
-  crossSectionTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola"]=11.99;
-  crossSectionTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola"]=4.113;
+  crossSectionTable["ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola"]=372.6*zjets_k_factor;
+  crossSectionTable["ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola"]=100.8*zjets_k_factor;
+  crossSectionTable["ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola"]=11.99*zjets_k_factor;
+  crossSectionTable["ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola"]=4.113*zjets_k_factor;
   crossSectionTable["TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=2.;
   crossSectionTable["TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola"]=103.4;
   crossSectionTable["T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola"]=35.;
@@ -223,8 +225,11 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp"]=0.569*0.2*0.8696;
   crossSectionTable["WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp"]=0.569*0.1086*1.380;
   crossSectionTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola"]=0.5085;
-  crossSectionTable["TTZJets_Tune4C_13TeV-madgraph-tauola"]=2.232;
-  crossSectionTable["TTWJets_Tune4C_13TeV-madgraph-tauola"]=1.152;
+  // crossSectionTable["TTZJets_Tune4C_13TeV-madgraph-tauola"]=2.232;
+  // crossSectionTable["TTWJets_Tune4C_13TeV-madgraph-tauola"]=1.152;
+  // http://arxiv.org/pdf/1405.0301.pdf
+  crossSectionTable["TTZJets_Tune4C_13TeV-madgraph-tauola"]=0.5074;
+  crossSectionTable["TTWJets_Tune4C_13TeV-madgraph-tauola"]=0.3404;
   crossSectionTable["DYJetsToLL_M-50_HT-100to200_Tune4C_13TeV"]=194.3;
   crossSectionTable["DYJetsToLL_M-50_HT-200to400_Tune4C_13TeV"]=52.24;
   crossSectionTable["DYJetsToLL_M-50_HT-400to600_Tune4C_13TeV"]=6.546;

@@ -631,6 +631,10 @@ protected:
   std::vector<float> *mc_doc_mass;
   std::vector<float> *mc_doc_numOfDaughters;
   std::vector<float> *mc_doc_numOfMothers;
+  std::vector<float> *mc_jets_pt;
+  std::vector<float> *mc_jets_eta;
+  std::vector<float> *mc_jets_phi;
+  std::vector<float> *mc_jets_energy;
   UInt_t Nmc_final;
   std::vector<float> *mc_final_id;
   std::vector<float> *mc_final_pt;
@@ -1060,6 +1064,7 @@ protected:
   std::vector<float> *mus_tpfms_phiErr;
   std::vector<float> *mus_tpfms_numvalPixelhits;
   std::vector<float> *mus_dB;
+  std::vector<float> *mus_globalTrack_normalizedChi2;
   std::vector<float> *mus_numberOfMatchedStations;
   UInt_t NpfTypeINoXYCorrmets;
   std::vector<float> *pfTypeINoXYCorrmets_et;
@@ -2034,6 +2039,10 @@ protected:
   TBranch *b_mc_doc_mass;
   TBranch *b_mc_doc_numOfDaughters;
   TBranch *b_mc_doc_numOfMothers;
+  TBranch *b_mc_jets_pt;
+  TBranch *b_mc_jets_eta;
+  TBranch *b_mc_jets_phi;
+  TBranch *b_mc_jets_energy;
   TBranch *b_Nmc_final;   //!
   TBranch *b_mc_final_id;   //!
   TBranch *b_mc_final_pt;   //!
@@ -2462,6 +2471,7 @@ protected:
   TBranch *b_mus_tpfms_phiErr;
   TBranch *b_mus_tpfms_numvalPixelhits;
   TBranch *b_mus_dB;
+  TBranch *b_mus_globalTrack_normalizedChi2;
   TBranch *b_mus_numberOfMatchedStations;
   TBranch *b_NpfTypeINoXYCorrmets;
   TBranch *b_pfTypeINoXYCorrmets_et;

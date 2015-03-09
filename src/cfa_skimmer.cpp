@@ -25,6 +25,7 @@ void CfASkimmer::Skim(const std::string& out_file_name){
   TFile skimFile(out_file_name.c_str(), "RECREATE");
   TDirectory *cfA_dir(skimFile.mkdir("cfA", "cfA"));
   cfA_dir->cd();
+
   TTree *skimTreeA(chainA.CloneTree(0));
   chainA.CopyAddresses(skimTreeA);
   TTree *skimTreeB(chainB.CloneTree(0));
@@ -63,13 +64,14 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     ht500count++;
     // 2 b-tags
     // cout << "b-taqgging" << endl;
-    //  if (GetNumCSVMJets(30.)<2) continue;
-    numCSVMCount++;
+    // if (GetNumCSVMJets(30.)<2) continue;
+    // numCSVMCount++;
     // minDeltaPhi
     // cout << "MDPN" << endl;
-    if (getMinDeltaPhiMETN(3,30,2.4,true,30,2.4,true,true)<4) continue;
-    minDeltaPhiCount++;
+    // if (getMinDeltaPhiMETN(3,30,2.4,true,30,2.4,true,true)<4) continue;
+    // minDeltaPhiCount++;
     // no leptons
+    /*
     vector<int>  reco_veto_muons, reco_veto_electrons;
     if (cfAVersion>=75) {
       // cout << "muons" << endl;
@@ -85,6 +87,7 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     muonVetoCount++;
     if (reco_veto_electrons.size()>0) continue;
     electronVetoCount++;
+    */
 
     skimTreeA->Fill();
     skimTreeB->Fill();

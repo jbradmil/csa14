@@ -610,6 +610,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   mc_doc_mass(0),
   mc_doc_numOfDaughters(0),
   mc_doc_numOfMothers(0),
+  mc_jets_pt(0),
+  mc_jets_eta(0),
+  mc_jets_phi(0),
+  mc_jets_energy(0),
   mc_final_id(0),
   mc_final_pt(0),
   mc_final_px(0),
@@ -1037,6 +1041,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   mus_tpfms_phiErr(0),
   mus_tpfms_numvalPixelhits(0),
   mus_dB(0),
+  mus_globalTrack_normalizedChi2(0),
   mus_numberOfMatchedStations(0),
   NpfTypeINoXYCorrmets(0),
   pfTypeINoXYCorrmets_et(0),
@@ -2008,6 +2013,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_mc_doc_mass(),
   b_mc_doc_numOfDaughters(),
   b_mc_doc_numOfMothers(),
+  b_mc_jets_pt(),
+  b_mc_jets_eta(),
+  b_mc_jets_phi(),
+  b_mc_jets_energy(),
   b_Nmc_final(),
   b_mc_final_id(),
   b_mc_final_pt(),
@@ -2436,6 +2445,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_mus_tpfms_phiErr(),
   b_mus_tpfms_numvalPixelhits(),
   b_mus_dB(),
+  b_mus_globalTrack_normalizedChi2(),
   b_mus_numberOfMatchedStations(),
   b_NpfTypeINoXYCorrmets(),
   b_pfTypeINoXYCorrmets_et(),
@@ -3824,6 +3834,10 @@ void cfA::InitializeB(){
   mc_doc_mass=0;
   mc_doc_numOfDaughters=0;
   mc_doc_numOfMothers=0;
+  mc_jets_pt=0;
+  mc_jets_eta=0;
+  mc_jets_phi=0;
+  mc_jets_energy=0;
   Nmc_final=0;
   mc_final_id=0;
   mc_final_pt=0;
@@ -4252,6 +4266,7 @@ void cfA::InitializeB(){
   mus_tpfms_phiErr=0;
   mus_tpfms_numvalPixelhits=0;
   mus_dB=0;
+  mus_globalTrack_normalizedChi2=0;
   mus_numberOfMatchedStations=0;
   NpfTypeINoXYCorrmets=0;
   pfTypeINoXYCorrmets_et=0;
@@ -5292,6 +5307,10 @@ void cfA::InitializeB(){
   chainB.SetBranchAddress("mc_doc_numOfDaughters", &mc_doc_numOfDaughters, &b_mc_doc_numOfDaughters);
   chainB.SetBranchAddress("mc_doc_numOfMothers", &mc_doc_numOfMothers, &b_mc_doc_numOfMothers);
   if (cfAVersion>=75) {
+    chainB.SetBranchAddress("mc_jets_pt", &mc_jets_pt, &b_mc_jets_pt);
+    chainB.SetBranchAddress("mc_jets_eta", &mc_jets_eta, &b_mc_jets_eta);
+    chainB.SetBranchAddress("mc_jets_phi", &mc_jets_phi, &b_mc_jets_phi);
+    chainB.SetBranchAddress("mc_jets_energy", &mc_jets_energy, &b_mc_jets_energy);
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);
@@ -5728,6 +5747,7 @@ void cfA::InitializeB(){
   // chainB.SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
   chainB.SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
   chainB.SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
+  if (cfAVersion>=77)   chainB.SetBranchAddress("mus_globalTrack_normalizedChi2", &mus_globalTrack_normalizedChi2, &b_mus_globalTrack_normalizedChi2);
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
     chainB.SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);

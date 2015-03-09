@@ -796,16 +796,33 @@ double EventHandler::GetHighestFatJetmJ(unsigned int pos) const{
   }
 }
 
-double EventHandler::GetMHT(const double pt_cut, const double eta_cut) const {
+TVector2 EventHandler::GetMHTVec(const double pt_cut, const double eta_cut, const uint exclude) const {
   double px(0.), py(0.);
   for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-    if(isGoodJet(ijet,true,pt_cut,eta_cut)){
+    if(isGoodJet(ijet,true,pt_cut,eta_cut)&&ijet!=exclude){
       px+=jets_AKPF_px->at(ijet);
       py+=jets_AKPF_py->at(ijet);
     }
   }
-  return TMath::Sqrt(px*px+py*py);
+  TVector2 vec(px, py);
+  return vec;
 }
+
+double EventHandler::GetMHT(const double pt_cut, const double eta_cut) const {
+  // double px(0.), py(0.);
+  // for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+  //   if(isGoodJet(ijet,true,pt_cut,eta_cut)){
+  //     px+=jets_AKPF_px->at(ijet);
+  //     py+=jets_AKPF_py->at(ijet);
+  //   }
+  // }
+  // return TMath::Sqrt(px*px+py*py);
+  TVector2 vec = GetMHTVec(pt_cut, eta_cut);
+  return vec.Mod();
+}
+
+    // if (event==124734&&lumiblock==3248) printf("jet %d: pt %3.2f, eta %3.2f, pass %d\n", ijet, jets_AKPF_pt->at(ijet), jets_AKPF_eta->at(ijet), isGoodJet(ijet,true,pt_cut,eta_cut));
+    // if (event==124734&&lumiblock==3248) printf("Mht %3.2f\n", TMath::Sqrt(px*px+py*py));
 
 double EventHandler::GetMHTPhi(const double pt_cut, const double eta_cut) const {
   double px(0.), py(0.);
@@ -1779,6 +1796,13 @@ vector<int> EventHandler::GetRecoMuons(const bool veto, const bool check_pt, con
   return muons;
 }
 
+  //    if (event==161297&&lumiblock==1613) {
+  // 	printf("mu %d: pt %3.2f, eta %3.2f, iso %3.2f, ID %d, pass %d\n",
+  // 	       index, mus_pt->at(index), mus_eta->at(index), GetMuonRelIso(index), PassMuonID(index), isRecoMuon(index, 1, check_pt, check_iso, use_mini_iso, mini_iso_cut));
+  //     }
+  // if (event==161297&&lumiblock==1613) printf("Found %d muons\n", static_cast<int>(muons.size()));
+
+
 vector<int> EventHandler::GetRA2bMuons(const bool veto) const{
   vector<int> muons;
   for(uint index=0; index<pf_mus_pt->size(); index++)
@@ -1804,6 +1828,7 @@ if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
   if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
   if ( !mus_tk_numvalPixelhits->at(imu)) return false;
   if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
+  if (mus_globalTrack_normalizedChi2->at(imu) > 10) return false;
   if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
 
   return true;
@@ -1857,11 +1882,18 @@ vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool check_pt,
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
       if(isRecoElectron(index, 2, check_pt, check_iso, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
-    }	else {
+    } else {
       if(isRecoElectron(index, 0, check_pt, check_iso, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
     }
   return electrons;
 }
+
+  //     if (event==155393&&lumiblock==1554) {
+  // 	      printf("el %d: pt %3.2f, scEta %3.2f, iso %3.2f, ID %d, pass %d\n",
+  // 		     index, els_pt->at(index), els_scEta->at(index), GetCSAElectronIsolation(index), PassElectronID(index,0), isRecoElectron(index, 0, check_pt, check_iso, use_mini_iso, mini_iso_cut));
+  //     } 
+  // if (event==155393&&lumiblock==1554) printf("Found %d electrons\n", static_cast<int>(electrons.size()));
+
 
 vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
   vector<int> electrons;
@@ -2279,6 +2311,81 @@ unsigned int EventHandler::GetNumGoodJets(const double pt) const{
   return numGoodJets;
 }
 
+std::vector<int> EventHandler::GetJets(const bool checkID, const double pt, const double eta) const{
+  std::vector<int> jets;
+  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    if(isGoodJet(i,checkID,pt,eta)) jets.push_back(i);
+  }
+  return jets;
+}
+
+int EventHandler::GetClosestGenJet(const uint ijet, const double drmax) const {
+  double rjet_eta(jets_AKPF_eta->at(ijet)), rjet_phi(jets_AKPF_phi->at(ijet));
+  int closest_gen_jet = -1;
+  double minDR(DBL_MAX);
+    for(unsigned int i(0); i<mc_jets_pt->size(); ++i){
+      double dR = Math::dR(mc_jets_eta->at(i), rjet_eta, mc_jets_phi->at(i), rjet_phi);
+      if (dR<minDR) {
+	minDR=dR;
+	closest_gen_jet=i;
+      }
+    }
+    if (minDR<drmax) return closest_gen_jet;
+    else return -1;
+}
+
+int EventHandler::GetClosestRecoJet(const uint ijet, const bool use_dR) const {
+  double rjet_eta(jets_AKPF_eta->at(ijet)), rjet_phi(jets_AKPF_phi->at(ijet));
+  int closest_reco_jet = -1;
+  double minDR(DBL_MAX);
+    for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+      if (i==ijet) continue;
+      double dR(DBL_MAX);
+      if (use_dR) dR = Math::dR(jets_AKPF_eta->at(i), rjet_eta, jets_AKPF_phi->at(i), rjet_phi);
+      else dR = Math::GetDeltaPhi(jets_AKPF_phi->at(i), rjet_phi); // sort by delta phi instead of delta R
+      if (dR<minDR) {
+	minDR=dR;
+	closest_reco_jet=i;
+      }
+    }
+    return closest_reco_jet;
+}
+
+double EventHandler::GetGenJetPt(const uint ijet, const double drmax) const {
+  int igjet = GetClosestGenJet(ijet, drmax);
+  if (igjet>=0) return mc_jets_pt->at(igjet);
+  else return -999.;
+}
+
+bool EventHandler::isBLepJet(const uint ijet) const {
+  int parton_id = TMath::Nint(jets_AKPF_partonFlavour->at(ijet));
+  int parton_mom_id = TMath::Nint(jets_AKPF_parton_motherId->at(ijet));
+  // cout << "Jet: " << ijet << ", parton_id: " << parton_id << ", parton_mom_id: " << parton_mom_id << endl;
+  if (abs(parton_id)!=5 || abs(parton_mom_id)!=6) return false;
+  for (uint imc(0); imc<mc_doc_id->size(); imc++) {
+    int status = TMath::Nint(mc_doc_status->at(imc));
+    int mcid = TMath::Nint(mc_doc_id->at(imc));
+    // int mcmomid = TMath::Nint(mc_doc_mother_id->at(imc));
+    // int mcgmomid = TMath::Nint(mc_doc_grandmother_id->at(imc));
+    // int mcggmomid = TMath::Nint(mc_doc_ggrandmother_id->at(imc));
+    if (!(status==3||status==22||status==23)) continue;
+    if (!(abs(mcid)==11||abs(mcid)==13||abs(mcid)==15)) continue;
+    // cout<<imc<<": ID "<<mcid<<", \tMom ID "<< mcmomid <<", \tGMom ID "<< mcgmomid <<", \tGGMom ID "<< mcggmomid
+    //   <<", \tN mothers "<<mc_doc_numOfMothers->at(imc)
+    //   <<", \tN daughters "<<mc_doc_numOfDaughters->at(imc)
+    //   <<",   \tpx "<<mc_doc_px->at(imc)
+    //   <<",   \tpy "<<mc_doc_py->at(imc)
+    //   <<",   \tpz "<<mc_doc_pz->at(imc)
+    //   <<", \tstatus "<< TMath::Nint(mc_doc_status->at(imc)) <<endl;
+    if (mcid*parton_mom_id < 0) { // because l+ is - and t+ is +
+      //  cout << "Matched to blep!." << endl;
+      return true;
+    }
+  }
+  return false;
+}
+
+
 unsigned int EventHandler::GetNumTruthMatchedBJets(const double pt, const bool good) const{
   int numBJets(0);
   for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
@@ -2499,6 +2606,13 @@ std::vector<std::pair<int,double> > EventHandler::GetIsoTracks(const double ptTh
   }
   return isotracks;
 }
+
+    // if (event==5467&&lumiblock==4055) {
+    // 	      printf("tk %d: pt %3.2f, eta %3.2f, chIso %3.2f, dz %3.2f, mT %3.2f, Pass ",
+    // 		     itrack, isotk_pt->at(itrack), isotk_eta->at(itrack), isotk_iso->at(itrack) /isotk_pt->at(itrack), isotk_dzpv->at(itrack),
+    // 		     GetMTW(isotk_pt->at(itrack),pfTypeImets_et->at(0),isotk_phi->at(itrack),pfTypeImets_phi->at(0)));
+    // 	  } 
+    //   if (event==5467&&lumiblock==4055)  printf("1/n");
 
 double EventHandler::GetPFCandIsolation(const uint indexA) const { // absolute, not relative -- charged tracks only
   double isoSum(0);
@@ -2911,7 +3025,7 @@ int EventHandler::GetClosestTk(const uint imc, const vector<std::pair<int,double
   return best_part;
 }
 
-double EventHandler::GetIsolation(const int ilep, const int ParticleType, double R, const bool addCH, const bool addPH, const bool addNH, const bool usePFweight) const { // note: not relative isolation!
+double EventHandler::GetIsolation(const int ilep, const int ParticleType, const double rmax, const bool mini, const bool addCH, const bool addPH, const bool addNH, const bool usePFweight) const { // note: not relative isolation!
 
 
 double ptThresh(0.5);
@@ -2954,8 +3068,11 @@ double ptThresh(0.5);
  // 11, 13, 22 for ele/mu/gamma, 211 for charged hadrons, 130 for neutral hadrons,
  // 1 and 2 for hadronic and em particles in HF
  double iso_nh(0.), iso_ph(0.), iso_ch(0.), iso_pu(0.);
- // default negative value -- use mini isolation
- if (R<0) R=std::max(0.05,std::min(0.3, 10./lep_pt));
+ // get cone size--shrinking if mini, otherwise fixed
+ double R(0);
+ if (mini) R=std::max(0.05,std::min(rmax, 10./lep_pt));
+ else R=rmax;
+
  for (unsigned int icand = 0; icand < pfcand_pt->size(); icand++) {
    if (icand==match_index) continue;
    uint pdgId = TMath::Nint(pfcand_pdgId->at(icand));
@@ -3434,3 +3551,32 @@ bool EventHandler::IsBrem(size_t index,
     return true;
   }
 }
+
+bool EventHandler::TrackIsTrueLepton(const uint itk, const std::vector<int> true_leptons) const {
+
+  if (itk >=pfcand_pt->size()) return false;
+  TVector3 tk3(pfcand_pt->at(itk)*cos(pfcand_phi->at(itk)),
+		  pfcand_pt->at(itk)*sin(pfcand_phi->at(itk)),
+		  pfcand_pt->at(itk)*sinh(pfcand_eta->at(itk)));
+  //  printf("Track: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", tk3.Pt(), tk3.Eta(), tk3.Phi());
+  float best_score = std::numeric_limits<float>::max();
+  for (uint itru(0); itru<true_leptons.size(); itru++) {
+    int imc = true_leptons[itru];
+    TVector3 mc3(mc_doc_pt->at(imc)*cos(mc_doc_phi->at(imc)),
+		 mc_doc_pt->at(imc)*sin(mc_doc_phi->at(imc)),
+		 mc_doc_pt->at(imc)*sinh(mc_doc_eta->at(imc)));
+    float this_score = (tk3-mc3).Mag2();
+    //    float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), tk3.Phi(), tk3.Eta());
+    //    float deltaPt =  (tk3-mc3).Pt();
+    if(this_score < best_score){
+      best_score = this_score;
+      //     printf("True lep: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mc_doc_pt->at(imc), mc_doc_eta->at(imc), mc_doc_phi->at(imc));
+      //     printf("True lep %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", imc, deltaPt, deltaR, this_score);
+    }
+  }
+  //  cout << "Best score: " << best_score << endl;
+  if (best_score<200) return true;
+  //  cout << "No match." << endl;
+  return false;
+}
+

@@ -246,6 +246,11 @@ protected:
   double GetHT(const double=50.) const;
   double GetSumP(const double=50.) const;
   double GetCentrality(const double=50.) const;
+  std::vector<int> GetJets(const bool checkID=true, const double pt=30., const double eta=5.) const;
+  int GetClosestGenJet(const uint ijet, const double=0.1) const;
+  int GetClosestRecoJet(const uint ijet, const bool use_dR=true) const;
+  double GetGenJetPt(const uint ijet, const double=0.1) const;
+  bool isBLepJet(const uint ijet) const;
   unsigned int GetNumGoodJets(const double pt=50.) const;
   unsigned int GetNumTruthMatchedBJets(const double pt=0., bool=false) const;
   unsigned int GetNumCSVTJets(const double=50.) const;
@@ -282,6 +287,7 @@ protected:
   double GetDeltaThetaT(const double, const double) const;
   double GetWpT(const double, const double) const;
 
+  TVector2 GetMHTVec(const double=30., const double=5., const uint=100000) const;
   double GetMHT(const double=30., const double=5.) const;
   double GetMHTPhi(const double=30., const double=5.) const;
 
@@ -302,7 +308,7 @@ protected:
   std::vector<int> MatchTks(const std::vector<int> true_leps, const vector<std::pair<int,double> > tracks) const;
   int GetClosestTk(const uint imc, const vector<std::pair<int,double> > tracks) const;
   
-  double GetIsolation(const int ilep, const int ParticleType, double R=-1., const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
+  double GetIsolation(const int ilep, const int ParticleType, const double rmax=0.3, const bool mini=true, const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
 
   int GetTrueElectron(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
   int GetTrueMuon(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
@@ -333,6 +339,8 @@ protected:
   static bool IsBrem(size_t index,
                      const std::vector<mc_particle> &parts,
                      const std::vector<size_t> &moms);
+
+  bool TrackIsTrueLepton(const uint itk, const std::vector<int> true_leptons) const;
 
 };
 
