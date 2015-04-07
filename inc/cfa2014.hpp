@@ -147,6 +147,7 @@ protected:
   Float_t pfmets_fullSignifCov00_2012_dataRes;
   Float_t pfmets_fullSignifCov10_2012_dataRes;
   Float_t pfmets_fullSignifCov11_2012_dataRes;
+  Float_t fixedGridRhoFastjetAll;
   std::vector<float> *isotk_pt;
   std::vector<float> *isotk_phi;
   std::vector<float> *isotk_eta;
@@ -177,6 +178,9 @@ protected:
   std::vector<int> *mus_jet_ind;
   std::vector<int> *taus_el_ind;
   std::vector<int> *taus_mu_ind;
+  std::vector<float> *jets_AKPF_corL1Fast;
+  std::vector<float> *jets_AKPF_corL2L3;
+  std::vector<float> *jets_AKPF_corL1FastL2L3;
   TBranch *b_trigger_prescalevalue;
   TBranch *b_trigger_name;
   TBranch *b_trigger_decision;
@@ -293,6 +297,7 @@ protected:
   TBranch *b_pfmets_fullSignifCov00_2012_dataRes;
   TBranch *b_pfmets_fullSignifCov10_2012_dataRes;
   TBranch *b_pfmets_fullSignifCov11_2012_dataRes;
+  TBranch *b_fixedGridRhoFastjetAll;
   TBranch *b_isotk_pt;
   TBranch *b_isotk_phi;
   TBranch *b_isotk_eta;
@@ -323,6 +328,9 @@ protected:
   TBranch *b_mus_jet_ind;
   TBranch *b_taus_el_ind;
   TBranch *b_taus_mu_ind;
+  TBranch *b_jets_AKPF_corL1Fast;
+  TBranch *b_jets_AKPF_corL2L3;
+  TBranch *b_jets_AKPF_corL1FastL2L3;
   UInt_t NbeamSpot;
   std::vector<float> *beamSpot_x;
   std::vector<float> *beamSpot_y;
@@ -1097,8 +1105,8 @@ protected:
   std::vector<float> *pfTypeImets_gen_phi;
   std::vector<float> *pfTypeImets_sign;
   std::vector<float> *pfTypeImets_sumEt;
-  std::vector<float> *pfTypeImets_unCPhi;
-  std::vector<float> *pfTypeImets_unCPt;
+  std::vector<float> *raw_met_phi;
+  std::vector<float> *raw_met_pt;
   UInt_t Npf_els;
   std::vector<float> *pf_els_energy;
   std::vector<float> *pf_els_et;
@@ -1583,6 +1591,11 @@ protected:
   std::vector<float> *photons_gen_eta;
   std::vector<float> *photons_gen_phi;
   std::vector<float> *photons_gen_id;
+  std::vector<float> *photons_full5x5sigmaIEtaIEta;
+  std::vector<bool> *photons_pass_el_veto_;
+  std::vector<float> *photons_pf_ch_iso;
+  std::vector<float> *photons_pf_nh_iso;
+  std::vector<float> *photons_pf_ph_iso;
   UInt_t Npv;
   std::vector<float> *pv_x;
   std::vector<float> *pv_y;
@@ -2504,8 +2517,8 @@ protected:
   TBranch *b_pfTypeImets_gen_phi;
   TBranch *b_pfTypeImets_sign;
   TBranch *b_pfTypeImets_sumEt;
-  TBranch *b_pfTypeImets_unCPhi;
-  TBranch *b_pfTypeImets_unCPt;
+  TBranch *b_raw_met_phi;
+  TBranch *b_raw_met_pt;
   TBranch *b_Npf_els;
   TBranch *b_pf_els_energy;
   TBranch *b_pf_els_et;
@@ -2989,6 +3002,11 @@ protected:
   TBranch *b_photons_gen_eta;
   TBranch *b_photons_gen_phi;
   TBranch *b_photons_gen_id;
+  TBranch *b_photons_full5x5sigmaIEtaIEta;
+  TBranch *b_photons_pass_el_veto_;
+  TBranch *b_photons_pf_ch_iso;
+  TBranch *b_photons_pf_nh_iso;
+  TBranch *b_photons_pf_ph_iso;
   TBranch *b_Npv;
   TBranch *b_pv_x;
   TBranch *b_pv_y;

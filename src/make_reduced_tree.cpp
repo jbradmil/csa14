@@ -8,15 +8,24 @@
 int main(int argc, char *argv[]){
   std::string inFilename("");
   bool iscfA(false), isList(false), isSkimmed(false);
+  jec_type_t jec_type(CORR);
+  int i_jec_type(1);
   int c(0);
   int Nentries(-1);
-  while((c=getopt(argc, argv, "i:n:cls"))!=-1){
+  while((c=getopt(argc, argv, "i:n:j:cls"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
       break;
     case 'n':
       Nentries=atoi(optarg);
+      break;
+    case 'j':
+      i_jec_type=atoi(optarg);
+      // there must be a better way to parse enumerated types...
+      if (i_jec_type==-1) jec_type=DEF;
+      else if (i_jec_type==0) jec_type=RAW;
+      else jec_type=CORR;
       break;
     case 'c':
       iscfA=true;
@@ -81,6 +90,6 @@ int main(int argc, char *argv[]){
   }
 
   WeightCalculator w(19399,Nentries);
-  ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries);
+  ReducedTreeMaker rtm(inFilename, isList, w.GetWeightPerPb(inFilename), Nentries, jec_type);
   rtm.MakeReducedTree(outFilename, isSkimmed);
 }

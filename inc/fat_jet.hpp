@@ -13,7 +13,7 @@ public:
   void SetIndex(const double fastjets_AK4_R1p2_R0p5pT30_indexIn);
   void SetmJ();
 
-  TLorentzVector GetLorentzVector() const;
+  TLorentzVector GetTLV() const;
   int GetNConst() const;
   unsigned int GetIndex() const;
   double GetmJ() const;

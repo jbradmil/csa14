@@ -18,7 +18,7 @@ void FatJet::SetmJ(){
   mJ=vec.M();
 }
 
-TLorentzVector FatJet::GetLorentzVector() const{
+TLorentzVector FatJet::GetTLV() const{
   return vec;
 }
 

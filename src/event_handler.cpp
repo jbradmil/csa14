@@ -24,11 +24,6 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TCanvas.h"
-#include "pu_constants.hpp"
-#include "lumi_reweighting_stand_alone.hpp"
-#include "event_number.hpp"
-#include "b_jet.hpp"
-#include "fat_jet.hpp"
 #include "timer.hpp"
 #include "math.hpp"
 #include "in_json_2012.hpp"
@@ -37,6 +32,7 @@
 #include "fastjet/PseudoJet.hh"
 
 #include "BTagWeight2.hpp"
+
 
 const double EventHandler::CSVTCut(0.898);
 const double EventHandler::CSVMCut(0.679);
@@ -51,10 +47,11 @@ const std::vector<std::vector<int> > VRunLumi13Jul(MakeVRunLumi("13Jul"));
 using namespace fastjet;
 
 
-EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode):
+EventHandler::EventHandler(const std::string &fileName, const bool isList, const double scaleFactorIn, const bool fastMode, const jec_type_t jec_type_in):
   cfA(fileName, isList),
-  sortedBJetCache(0),
-  bJetsUpToDate(false),
+  theJESType_(jec_type_in),
+  corrJets(0),
+  JetsUpToDate(false),
   sortedFatJetCache(0),
   FatJetsUpToDate(false),
   recoMuonCache(0),
@@ -90,21 +87,36 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   }
   // if (cfAVersion>=75) chainB.SetBranchStatus("mc_final*",0);
   LoadJetTagEffMaps();
+  LoadJEC();
 }
+
+// EventHandler::~EventHandler(){
+// 	delete f_tageff_;
+// 	delete jet_corrector_pfL1FastJetL2L3_;
+// }
 
 void EventHandler::GetEntry(const unsigned int entry){
   cfA::GetEntry(entry);
   betaUpToDate=false;
-  bJetsUpToDate=false;
+  JetsUpToDate=false;
+  GetSortedJets();
   FatJetsUpToDate=false;
   recoMuonsUpToDate=false;
   recoElectronsUpToDate=false;
   recoTausUpToDate=false;
 }
 
+
+// void EventHandler::initEnumNames() {
+//   theJESNames_[kJESDEF]="JESDEF";
+//   theJESNames_[kJESRAW]="JESRAW";
+//   theJESNames_[kJESCORR]="JESCORR";
+// }
+
 unsigned EventHandler::TypeCode() const{
   // https://github.com/manuelfs/ra4_code/blob/master/src/event_handler.cpp#L606
   const TString sample_name = sampleName;
+  //cout << "Sample name: " << sampleName << endl;
   unsigned sample_code = 0xF;
   if(sample_name.Contains("SMS")){
     sample_code = 0x0;
@@ -251,6 +263,16 @@ double EventHandler::GetTriggerEffWeight(const double pt_cut) const {
 
   return trig_eff_weight;
 }
+
+void EventHandler::LoadJEC() {
+  jetcorr_filenames_pfL1FastJetL2L3_.clear();
+  // files for Phys14 MC -- v4 
+  jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L1FastJet_AK4PFchs.txt");
+  jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L2Relative_AK4PFchs.txt");
+  jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L3Absolute_AK4PFchs.txt");
+  jet_corrector_pfL1FastJetL2L3_ = makeJetCorrector(jetcorr_filenames_pfL1FastJetL2L3_);	
+}
+
 
 void EventHandler::LoadJetTagEffMaps() {
   if (cfAVersion<=71) {
@@ -677,6 +699,12 @@ double EventHandler::Get_AN_12_175_Table18_Value(const double pt) const {
   return values[bin];
 }
 
+// JES stuff
+double EventHandler::GetUncorrectedJetPt(unsigned int ijet) const {
+  return corrJets[ijet].GetPt(RAW);
+}
+
+
 bool EventHandler::PassesJSONCut() const{
   if(sampleName.find("Run2012")!=std::string::npos){
     if(sampleName.find("PromptReco")!=std::string::npos
@@ -716,21 +744,44 @@ bool EventHandler::Passes2012RA2bTrigger() const{
   return false;
 }
 
-void EventHandler::GetSortedBJets() const{
-  if(!bJetsUpToDate){
-    sortedBJetCache.clear();
-    for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-      if(isGoodJet(i,true,20.)){ //lower pt cut
-	double btag_disc(0.);
-	if (cfAVersion<77) btag_disc=jets_AKPF_btag_secVertexCombined->at(i);
-	else btag_disc=jets_AKPF_btag_inc_secVertexCombined->at(i); 
-	sortedBJetCache.push_back(BJet(TLorentzVector(jets_AKPF_px->at(i),jets_AKPF_py->at(i),jets_AKPF_pz->at(i),jets_AKPF_energy->at(i)),btag_disc,i,static_cast<unsigned int>(jets_AKPF_parton_Id->at(i)),static_cast<unsigned int>(jets_AKPF_parton_motherId->at(i))));
-      }
-    }
-    std::sort(sortedBJetCache.begin(),sortedBJetCache.end(), std::greater<BJet>());
-    // Key: we're sorting by pt now, not CSV
-    bJetsUpToDate=true;
-  }
+void EventHandler::GetSortedJets() const{
+	if(!JetsUpToDate){ 
+	//	cout << "GetSortedJets" << endl;
+		corrJets.clear();
+		for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+			// if(isGoodJet(i,true,20.)){ //lower pt cut
+			double btag_disc(0.);
+			if (cfAVersion<77) btag_disc=jets_AKPF_btag_secVertexCombined->at(ijet);
+			else btag_disc=jets_AKPF_btag_inc_secVertexCombined->at(ijet); 
+			// do the JEC here -- store it all in the jet vector
+			TLorentzVector tlvIn(jets_AKPF_px->at(ijet),jets_AKPF_py->at(ijet),jets_AKPF_pz->at(ijet),jets_AKPF_energy->at(ijet));
+			double corrFactorOld = jets_AKPF_corrFactorRaw->at(ijet);
+			TLorentzVector tlvRaw = corrFactorOld * tlvIn;
+			jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
+			jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
+			jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
+			jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
+			double corr(0);
+			TLorentzVector tlvCorr;
+			if (cfAVersion>=78) {
+				corr = jet_corrector_pfL1FastJetL2L3_->getCorrection();
+				tlvCorr = corr*tlvRaw;
+			} else {
+				corr = corrFactorOld;
+				tlvCorr = tlvIn; // for pre-v78 samples, just use the default JEC
+			}
+			corrJets.push_back(Jet(ijet, btag_disc, tlvIn, corrFactorOld, tlvRaw, corr, tlvCorr));
+		}
+    	std::sort(corrJets.begin(),corrJets.end(), std::greater<Jet>());
+		// Key: we're sorting by pt now (corrected if v78+), not CSV
+		JetsUpToDate=true;
+		// cout << "Started with " << jets_AKPF_pt->size() << " jets, now have " << corrJets.size() << endl;
+// 		for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+// 			printf("Input jet %d : pt=%3.2f, rawE=%3.2f\n", ijet, jets_AKPF_pt->at(ijet), jets_AKPF_energy->at(ijet)*jets_AKPF_corrFactorRaw->at(ijet));
+// 			printf("Saved jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(DEF).Pt(), corrJets[ijet].GetTLV(RAW).E());
+// 			printf("Corrected jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(CORR).Pt(), corrJets[ijet].GetTLV(CORR).E()*corrJets[ijet].GetCorr(CORR));
+// 		}
+	}
 }
 
 void EventHandler::ClusterFatJets() const{
@@ -739,11 +790,11 @@ void EventHandler::ClusterFatJets() const{
     //      cout << "ClusterFatJets" << endl;
     vector<PseudoJet> fjets_skinny_30(0);
     vector<PseudoJet> skinny_jets_pt30;
-    for(size_t jet = 0; jet<jets_AKPF_pt->size(); ++jet){
+    for(size_t jet = 0; jet<corrJets.size(); ++jet){
       // if(is_nan(jets_AKPF_px->at(jet)) || is_nan(jets_AKPF_py->at(jet))
       // 	  || is_nan(jets_AKPF_pz->at(jet)) || is_nan(jets_AKPF_energy->at(jet))) continue;
-      const PseudoJet this_pj(jets_AKPF_px->at(jet), jets_AKPF_py->at(jet),
-			      jets_AKPF_pz->at(jet), jets_AKPF_energy->at(jet));
+      TLorentzVector tlv = corrJets[jet].GetTLV(theJESType_);
+      const PseudoJet this_pj(tlv.Px(), tlv.Py(), tlv.Pz(), tlv.E());
       if(this_pj.pt()>30.0&&fabs(this_pj.eta())<5.0) skinny_jets_pt30.push_back(this_pj);
     }
     //  cout << "Found " << skinny_jets_pt30.size() << " skinny jets." << endl;
@@ -756,8 +807,8 @@ void EventHandler::ClusterFatJets() const{
     //   cout << "Found " << cs_skinny_30.inclusive_jets().size() << " fat jets." << endl;
     fjets_skinny_30 = sorted_by_pt(cs_skinny_30.inclusive_jets());
     for(size_t jet = 0; jet<fjets_skinny_30.size(); ++jet){ // now add fat jets to cache
-      // double px = sortedFatJetCache[index].GetLorentzVector().Px();
-      // double py = sortedFatJetCache[index].GetLorentzVector().Py();
+      // double px = sortedFatJetCache[index].GetTLV().Px();
+      // double py = sortedFatJetCache[index].GetTLV().Py();
       // if (TMath::Sqrt(px*px+py*py)>50.)
 	sortedFatJetCache.push_back(FatJet(TLorentzVector(fjets_skinny_30[jet].px(),fjets_skinny_30[jet].py(),fjets_skinny_30[jet].pz(),fjets_skinny_30[jet].E()),fjets_skinny_30[jet].constituents().size(),jet));
     }
@@ -797,122 +848,125 @@ double EventHandler::GetHighestFatJetmJ(unsigned int pos) const{
 }
 
 TVector2 EventHandler::GetMHTVec(const double pt_cut, const double eta_cut, const uint exclude) const {
+  if(!JetsUpToDate) GetSortedJets();
   double px(0.), py(0.);
-  for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-    if(isGoodJet(ijet,true,pt_cut,eta_cut)&&ijet!=exclude){
-      px+=jets_AKPF_px->at(ijet);
-      py+=jets_AKPF_py->at(ijet);
+  for (uint ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(corrJets[ijet].GetIndex(),true,pt_cut,eta_cut)&&ijet!=exclude){
+      px+=corrJets[ijet].GetTLV(theJESType_).Px();
+      py+=corrJets[ijet].GetTLV(theJESType_).Py();
     }
   }
-  TVector2 vec(px, py);
+  TVector2 vec(-1*px, -1*py);
   return vec;
 }
 
 double EventHandler::GetMHT(const double pt_cut, const double eta_cut) const {
-  // double px(0.), py(0.);
-  // for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-  //   if(isGoodJet(ijet,true,pt_cut,eta_cut)){
-  //     px+=jets_AKPF_px->at(ijet);
-  //     py+=jets_AKPF_py->at(ijet);
-  //   }
-  // }
-  // return TMath::Sqrt(px*px+py*py);
   TVector2 vec = GetMHTVec(pt_cut, eta_cut);
   return vec.Mod();
 }
 
-    // if (event==124734&&lumiblock==3248) printf("jet %d: pt %3.2f, eta %3.2f, pass %d\n", ijet, jets_AKPF_pt->at(ijet), jets_AKPF_eta->at(ijet), isGoodJet(ijet,true,pt_cut,eta_cut));
-    // if (event==124734&&lumiblock==3248) printf("Mht %3.2f\n", TMath::Sqrt(px*px+py*py));
-
 double EventHandler::GetMHTPhi(const double pt_cut, const double eta_cut) const {
+  TVector2 vec = GetMHTVec(pt_cut, eta_cut);
+  return TVector2::Phi_mpi_pi(vec.Phi());
+}
+
+TVector2 EventHandler::GetRawMHTVec(const double pt_cut, const double eta_cut, const uint exclude) const {
+  if(!JetsUpToDate) GetSortedJets();
   double px(0.), py(0.);
-  for (uint ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-    if(isGoodJet(ijet,true,pt_cut,eta_cut)){
-      px+=jets_AKPF_px->at(ijet);
-      py+=jets_AKPF_py->at(ijet);
+  for (uint ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(corrJets[ijet].GetIndex(),true,pt_cut,eta_cut)&&ijet!=exclude){
+      px+=corrJets[ijet].GetTLV(RAW).Px();
+      py+=corrJets[ijet].GetTLV(RAW).Py();
     }
   }
-  if (px!=0.) return TMath::ATan(py/px);
-  else return TMath::Pi()/2.;
+  TVector2 vec(-1*px, -1*py);
+  return vec;
+}
+
+double EventHandler::GetRawMHT(const double pt_cut, const double eta_cut) const {
+  TVector2 vec = GetRawMHTVec(pt_cut, eta_cut);
+  return vec.Mod();
+}
+
+double EventHandler::GetRawMHTPhi(const double pt_cut, const double eta_cut) const {
+  TVector2 vec = GetRawMHTVec(pt_cut, eta_cut);
+  return TVector2::Phi_mpi_pi(vec.Phi());
 }
 
 double EventHandler::GetHighestJetPt(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -DBL_MAX;
   }else{
-    return sortedBJetCache.at(pos).GetLorentzVector().Pt();
+    return corrJets.at(pos).GetTLV(theJESType_).Pt();
   }
 }
 
 int EventHandler::GetJetXIndex(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -1;
   }else{
-    return sortedBJetCache.at(pos).GetIndex();
+    return corrJets.at(pos).GetIndex();
   }
 }
 
 double EventHandler::GetJetXEta(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -DBL_MAX;
   }else{
-    return sortedBJetCache.at(pos).GetLorentzVector().Eta();
+    return corrJets.at(pos).GetTLV(theJESType_).Eta();
   }
 }
 
 double EventHandler::GetJetXPhi(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -DBL_MAX;
   }else{
-    return sortedBJetCache.at(pos).GetLorentzVector().Phi();
+    return corrJets.at(pos).GetTLV(theJESType_).Phi();
   }
 }
 
 double EventHandler::GetJetXPartonId(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -DBL_MAX;
   }else{
-    return sortedBJetCache.at(pos).GetPartonId();
+    return jets_AKPF_partonFlavour->at(corrJets[pos].GetIndex());
   }
 }
 
-double EventHandler::GetJetXMotherId(unsigned int pos) const{
-  GetSortedBJets();
-  --pos;
-  if(pos>=sortedBJetCache.size()){
-    return -DBL_MAX;
-  }else{
-    return sortedBJetCache.at(pos).GetMotherId();
-  }
-}
+// double EventHandler::GetJetXMotherId(unsigned int pos) const{
+//   GetSortedJets();
+//   --pos;
+//   if(pos>=corrJets.size()){
+//     return -DBL_MAX;
+//   }else{
+//     return corrJets.at(pos).GetIndex();
+//   }
+// }
 
 double EventHandler::GetJetXCSV(unsigned int pos) const{
-  GetSortedBJets();
+  GetSortedJets();
   --pos;
-  if(pos>=sortedBJetCache.size()){
+  if(pos>=corrJets.size()){
     return -DBL_MAX;
   }else{
-    return sortedBJetCache.at(pos).GetBTag();
+    return corrJets.at(pos).GetBTag();
   }
 }
 
 double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
   std::vector<double> csvs(0);
-  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
-    if(isGoodJet(jet,true,20.)){
-      if (cfAVersion<77) csvs.push_back(jets_AKPF_btag_secVertexCombined->at(jet));
-      else csvs.push_back(jets_AKPF_btag_inc_secVertexCombined->at(jet));
-    }
+  for(unsigned int jet(0); jet<corrJets.size(); ++jet){
+    if(isGoodJet(jet,true,20.)) csvs.push_back(corrJets[jet].GetBTag());
   }
   std::sort(csvs.begin(), csvs.end(), std::greater<double>());
   if(nth_highest<=csvs.size()){
@@ -1084,75 +1138,6 @@ void EventHandler::SetScaleFactor(const double scaleFactorIn){
   scaleFactor=scaleFactorIn;
 }
 
-// void EventHandler::SetFastJetCollection(const unsigned int pt_cut) const{
-//   // pt cut is on the skinny jets we recluster;
-//    fastjets_AKPF_R1p2_R0p5_px->clear();
-//    fastjets_AKPF_R1p2_R0p5_py->clear();
-//    fastjets_AKPF_R1p2_R0p5_pz->clear();
-//    fastjets_AKPF_R1p2_R0p5_energy->clear();
-//    fastjets_AKPF_R1p2_R0p5_phi->clear();
-//    fastjets_AKPF_R1p2_R0p5_eta->clear();
-//    fastjets_AKPF_R1p2_R0p5_index->clear();
-//    fastjets_AKPF_R1p2_R0p5_nconstituents->clear();
-//   switch (pt_cut) {
-//   case 10:
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT10_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT10_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT10_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT10_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT10_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT10_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT10_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT10_nconstituents;
-//   case 15:
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT15_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT15_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT15_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT15_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT15_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT15_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT15_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT15_nconstituents;
-//   case 20:
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT20_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT20_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT20_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT20_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT20_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT20_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT20_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT20_nconstituents;
-//   case 25:
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT25_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT25_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT25_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT25_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT25_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT25_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT25_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT25_nconstituents;
-//   case 30: 
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT30_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT30_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT30_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT30_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT30_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT30_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT30_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT30_nconstituents;
-//     break;
-//   default: // 30 GeV
-//     fastjets_AKPF_R1p2_R0p5_px=fastjets_AKPF_R1p2_R0p5pT30_px;
-//     fastjets_AKPF_R1p2_R0p5_py=fastjets_AKPF_R1p2_R0p5pT30_py;
-//     fastjets_AKPF_R1p2_R0p5_pz=fastjets_AKPF_R1p2_R0p5pT30_pz;
-//     fastjets_AKPF_R1p2_R0p5_energy=fastjets_AKPF_R1p2_R0p5pT30_energy;
-//     fastjets_AKPF_R1p2_R0p5_phi=fastjets_AKPF_R1p2_R0p5pT30_phi;
-//     fastjets_AKPF_R1p2_R0p5_eta=fastjets_AKPF_R1p2_R0p5pT30_eta;
-//     fastjets_AKPF_R1p2_R0p5_index=fastjets_AKPF_R1p2_R0p5pT30_index;
-//     fastjets_AKPF_R1p2_R0p5_nconstituents=fastjets_AKPF_R1p2_R0p5pT30_nconstituents;
-//   }
-
-// }
 
 bool EventHandler::PassesPVCut() const{
   if(beamSpot_x->size()<1 || pv_x->size()<1) return false;
@@ -1163,7 +1148,7 @@ bool EventHandler::PassesPVCut() const{
 }
 
 bool EventHandler::Passes2012METCleaningCut() const{
-  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
+  for(unsigned int jet(0); jet<corrJets.size(); ++jet){
     if(isProblemJet(jet)) return false;
   }
   //if(pfTypeImets_et->at(0)>2.0*pfmets_et->at(0)) return false;
@@ -1183,7 +1168,7 @@ bool EventHandler::Passes2012METCleaningCut() const{
 }
 
 bool EventHandler::PassesCSA14METCleaningCut() const{
-  for(unsigned int jet(0); jet<jets_AKPF_pt->size(); ++jet){
+  for(unsigned int jet(0); jet<corrJets.size(); ++jet){
     if(isProblemJet(jet)) return false;
   }
   //if(pfTypeImets_et->at(0)>2.0*pfmets_et->at(0)) return false;
@@ -1205,14 +1190,14 @@ bool EventHandler::PassesCSA14METCleaningCut() const{
 }
 
 bool EventHandler::isProblemJet(const unsigned int ijet) const{
-  return jets_AKPF_pt->at(ijet)>50.0
-    && fabs(jets_AKPF_eta->at(ijet))>0.9
-    && fabs(jets_AKPF_eta->at(ijet))<1.9
-				     && jets_AKPF_chg_Mult->at(ijet)-jets_AKPF_neutral_Mult->at(ijet)>=40;
+  return corrJets[ijet].GetTLV(theJESType_).Pt()>50.0
+    && fabs(corrJets[ijet].GetTLV(theJESType_).Eta())>0.9
+    && fabs(corrJets[ijet].GetTLV(theJESType_).Eta())<1.9
+						      && jets_AKPF_chg_Mult->at(corrJets[ijet].GetIndex())-jets_AKPF_neutral_Mult->at(corrJets[ijet].GetIndex())>=40;
 }
 
 bool EventHandler::PassesBadJetFilter() const{
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+  for(unsigned int i(0); i<corrJets.size(); ++i){
     if(isGoodJet(i,false,30.0,DBL_MAX) && !isGoodJet(i,true,30.0,DBL_MAX)) return false;
   }
   return true;
@@ -1223,10 +1208,10 @@ int EventHandler::GetPBNR() const{
 
   bool nhBad=false;
   bool phBad=false;
-  for (unsigned int it = 0; it<jets_AKPF_pt->size(); it++) {
+  for (unsigned int it = 0; it<corrJets.size(); it++) {
     //cfA version from Keith                                                                                                                                                     
-    double NHF = jets_AKPF_neutralHadE->at(it)/(jets_AKPF_energy->at(it)*jets_AKPF_corrFactorRaw->at(it));
-    double PEF = jets_AKPF_photonEnergy->at(it)/(jets_AKPF_energy->at(it)*jets_AKPF_corrFactorRaw->at(it));
+    double NHF = jets_AKPF_neutralHadE->at(corrJets[it].GetIndex())/corrJets[it].GetTLV(RAW).E();
+    double PEF = jets_AKPF_photonEnergy->at(corrJets[it].GetIndex())/corrJets[it].GetTLV(RAW).E();
     if (NHF > 0.9)  nhBad = true;
     if (PEF > 0.95) phBad = true;
   }
@@ -1237,12 +1222,22 @@ int EventHandler::GetPBNR() const{
   return 1;
 }
 
-// isGoodJet(jet, false, 20.0, 5.0, false)
-bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh/*, const bool doBeta*/) const{
+bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool veto_negative_JEC/*, const bool doBeta*/) const{
+	// note: ijet is now the index is the corrJets vector (should be the same for v77 and earlier...)
+	TLorentzVector tlv = corrJets[ijet].GetTLV(theJESType_);
+	if(tlv.Pt()<ptThresh || fabs(tlv.Eta())>etaThresh) return false;
+	if( jetid && !jetPassLooseID(ijet)) return false;
+	if (veto_negative_JEC&&corrJets[ijet].GetCorr(theJESType_)<0) return false;
+	// if(!betaUpToDate) GetBeta();
+	//  if(beta.at(ijet)<0.2 && doBeta) return false;
+	return true;
+}
+
+bool EventHandler::isGoodJet_Old(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh/*, const bool doBeta*/) const{
   if(jets_AKPF_pt->at(ijet)<ptThresh || fabs(jets_AKPF_eta->at(ijet))>etaThresh) return false;
-  if( jetid && !jetPassLooseID(ijet) ) return false;
+  if( jetid && !jetPassLooseID_Old(ijet) ) return false;
   // if(!betaUpToDate) GetBeta();
-  //  if(beta.at(ijet)<0.2 && doBeta) return false;
+  // if(beta.at(ijet)<0.2 && doBeta) return false;
   if (cfAVersion>=75&&cfAVersion<=76) { // overlap removal
     if (jetHasEMu(ijet)) return false;
   }
@@ -1250,7 +1245,7 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
 }
 
 bool EventHandler::isCleanJet(const unsigned int ijet, const int pdgId) const{ // remove overlap, based on pfcand hypothesis
-  double jet_eta(jets_AKPF_eta->at(ijet)), jet_phi(jets_AKPF_phi->at(ijet));
+  double jet_eta(corrJets[ijet].GetTLV(theJESType_).Eta()), jet_phi(corrJets[ijet].GetTLV(theJESType_).Phi());
   for (unsigned int it = 0; it<pfcand_pt->size(); it++) {
     if (static_cast<int>(fabs(pfcand_pdgId->at(it)))!=pdgId) continue;
     double dR = Math::GetDeltaR(jet_phi, jet_eta, pfcand_phi->at(it), pfcand_eta->at(it));
@@ -1261,23 +1256,43 @@ bool EventHandler::isCleanJet(const unsigned int ijet, const int pdgId) const{ /
 
 bool EventHandler::jetPassLooseID(const unsigned int ijet) const{
   //want the uncorrected energy
-  const double jetenergy = jets_AKPF_energy->at(ijet) * jets_AKPF_corrFactorRaw->at(ijet);
-  const int numConst = static_cast<int>(jets_AKPF_mu_Mult->at(ijet)+jets_AKPF_neutral_Mult->at(ijet)+jets_AKPF_chg_Mult->at(ijet)); //stealing from Keith
+  const double raw_jet_energy = corrJets[ijet].GetTLV(RAW).E();
+  const int numConst = static_cast<int>(jets_AKPF_mu_Mult->at(corrJets[ijet].GetIndex())+jets_AKPF_neutral_Mult->at(corrJets[ijet].GetIndex())+jets_AKPF_chg_Mult->at(corrJets[ijet].GetIndex())); //stealing from Keith
   
-  if (jetenergy>0.0) {
-    if (jets_AKPF_neutralHadE->at(ijet) /jetenergy <= 0.99
-        && jets_AKPF_neutralEmE->at(ijet) / jetenergy <= 0.99
+  if (raw_jet_energy>0.0) {
+    if (jets_AKPF_neutralHadE->at(corrJets[ijet].GetIndex()) /raw_jet_energy <= 0.99
+        && jets_AKPF_neutralEmE->at(corrJets[ijet].GetIndex()) / raw_jet_energy <= 0.99
         && numConst >= 2
-        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
-             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgHadE->at(ijet)/jetenergy>0))
-        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
-             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgEmE->at(ijet)/jetenergy<0.99))
-        && ( fabs(jets_AKPF_eta->at(ijet))>=2.4
-             || (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chg_Mult->at(ijet)>0))){
+        && ( fabs(corrJets[ijet].GetTLV(theJESType_).Eta())>=2.4
+             || (fabs(corrJets[ijet].GetTLV(theJESType_).Eta())<2.4 && jets_AKPF_chgHadE->at(corrJets[ijet].GetIndex())/raw_jet_energy>0))
+        && ( fabs(corrJets[ijet].GetTLV(theJESType_).Eta())>=2.4
+             || (fabs(corrJets[ijet].GetTLV(theJESType_).Eta())<2.4 && jets_AKPF_chgEmE->at(corrJets[ijet].GetIndex())/raw_jet_energy<0.99))
+        && ( fabs(corrJets[ijet].GetTLV(theJESType_).Eta())>=2.4
+             || (fabs(corrJets[ijet].GetTLV(theJESType_).Eta())<2.4 && jets_AKPF_chg_Mult->at(corrJets[ijet].GetIndex())>0))){
       return true;
     }
   }
   return false;
+}
+
+bool EventHandler::jetPassLooseID_Old(const unsigned int ijet) const{
+	//want the uncorrected energy
+	const double jetenergy = jets_AKPF_energy->at(ijet) * jets_AKPF_corrFactorRaw->at(ijet);
+	const int numConst = static_cast<int>(jets_AKPF_mu_Mult->at(ijet)+jets_AKPF_neutral_Mult->at(ijet)+jets_AKPF_chg_Mult->at(ijet)); //stealing from Keith
+	if (jetenergy>0.0) {
+		if (jets_AKPF_neutralHadE->at(ijet) /jetenergy <= 0.99
+			&& jets_AKPF_neutralEmE->at(ijet) / jetenergy <= 0.99
+				&& numConst >= 2
+					&& ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+						|| (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgHadE->at(ijet)/jetenergy>0))
+							&& ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+								|| (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chgEmE->at(ijet)/jetenergy<0.99))
+									&& ( fabs(jets_AKPF_eta->at(ijet))>=2.4
+		|| (fabs(jets_AKPF_eta->at(ijet))<2.4 && jets_AKPF_chg_Mult->at(ijet)>0))){
+			return true;
+		}
+	}
+	return false;
 }
 
 bool EventHandler::isRA2bElectron(const unsigned int k,
@@ -1719,7 +1734,7 @@ bool EventHandler::isTrueElectron(const double eta, const double phi) const{
 int EventHandler::GetJetGenId(const int jet) const{
   float minDR(999.);
   int pdgID(-999);
-  float jet_eta(jets_AKPF_eta->at(jet)), jet_phi(jets_AKPF_phi->at(jet));
+  float jet_eta(corrJets[jet].GetTLV(theJESType_).Eta()), jet_phi(corrJets[jet].GetTLV(theJESType_).Phi());
   float thisDR(999.);
   for (int mc(0); mc<static_cast<int>(mc_doc_id->size()); mc++) {
     int status = static_cast<int>(mc_doc_status->at(mc));
@@ -2195,9 +2210,9 @@ TLorentzVector EventHandler::GetNearestJet(const TLorentzVector lepton, const ui
   double minDR(DBL_MAX);
   TLorentzVector TLV(0,0,0,0), TLV_out(0,0,0,0);
   // printf("lepton: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",lepton.Px(),lepton.Py(),lepton.Pz(),lepton.E());
-  for(unsigned int ijet(0); ijet<jets_AKPF_phi->size(); ++ijet){
-    if(jets_AKPF_pt->at(ijet)<30.) continue;
-    TLV.SetPxPyPzE(jets_AKPF_px->at(ijet), jets_AKPF_py->at(ijet), jets_AKPF_pz->at(ijet), jets_AKPF_energy->at(ijet));
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(corrJets[ijet].GetTLV(theJESType_).Pt()<30.) continue;
+    TLV=corrJets[ijet].GetTLV(theJESType_);
     // printf("jet: px=%3.2f\tpy=%3.2f\tpz=%3.2f\tenergy=%3.2f\n",TLV.Px(),TLV.Py(),TLV.Pz(),TLV.E());
     if (jet_ind==ijet) {
       TLV-=lepton;
@@ -2223,26 +2238,26 @@ double EventHandler::GetFatJetPt(const unsigned int index/*, const unsigned int 
   GetSortedFatJets();
   if (index+1>sortedFatJetCache.size()) return -1;
   //  cout << "GetFatJetPt()" << endl;
-  return sortedFatJetCache[index].GetLorentzVector().Pt();
+  return sortedFatJetCache[index].GetTLV().Pt();
 }
 
 double EventHandler::GetFatJetEta(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   if (index+1>sortedFatJetCache.size()) return -999;
   //  cout << "GetFatJetEta()" << endl;
-  return sortedFatJetCache[index].GetLorentzVector().Eta();
+  return sortedFatJetCache[index].GetTLV().Eta();
 }
 
 double EventHandler::GetFatJetPhi(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   if (index+1>sortedFatJetCache.size()) return -999;
-  return sortedFatJetCache[index].GetLorentzVector().Phi();
+  return sortedFatJetCache[index].GetTLV().Phi();
 }
 
 double EventHandler::GetFatJetEnergy(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   if (index+1>sortedFatJetCache.size()) return -1;
-  return sortedFatJetCache[index].GetLorentzVector().E();
+  return sortedFatJetCache[index].GetTLV().E();
 }
 
 int EventHandler::GetFatJetnConst(const unsigned int index/*, const unsigned int pt_cut*/) const{
@@ -2254,14 +2269,14 @@ int EventHandler::GetFatJetnConst(const unsigned int index/*, const unsigned int
 double EventHandler::GetFatJetmJ(const unsigned int index/*, const unsigned int pt_cut*/) const{
   GetSortedFatJets();
   if (index+1>sortedFatJetCache.size()) return -1;
-  return sortedFatJetCache[index].GetLorentzVector().M();
+  return sortedFatJetCache[index].GetTLV().M();
 }
 
 int EventHandler::GetNFatJets(const double fat_jet_pt_cut, const double fat_jet_eta_cut/* , const unsigned int skinny_jet_pt_cut*/) const{
   GetSortedFatJets();
   uint nJ(0);
   for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
-    if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut) nJ++;
+    if (sortedFatJetCache[ifj].GetTLV().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetTLV().Eta())<fat_jet_eta_cut) nJ++;
   }
   return nJ;
 }
@@ -2270,57 +2285,67 @@ double EventHandler::GetMJ(const double fat_jet_pt_cut, const double fat_jet_eta
   GetSortedFatJets();
   double MJ(0.);
   for (uint ifj(0); ifj<sortedFatJetCache.size(); ifj++) {
-    //  cout << "Fat jet " << ifj << ": mass = " << sortedFatJetCache[ifj].GetLorentzVector().M() << endl;
-    if (sortedFatJetCache[ifj].GetLorentzVector().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetLorentzVector().Eta())<fat_jet_eta_cut)
-      MJ+=sortedFatJetCache[ifj].GetLorentzVector().M();
+    //  cout << "Fat jet " << ifj << ": mass = " << sortedFatJetCache[ifj].GetTLV().M() << endl;
+    if (sortedFatJetCache[ifj].GetTLV().Pt()>fat_jet_pt_cut&&fabs(sortedFatJetCache[ifj].GetTLV().Eta())<fat_jet_eta_cut)
+      MJ+=sortedFatJetCache[ifj].GetTLV().M();
   }
   return MJ;
 }
 
 double EventHandler::GetHT(const double pt_cut) const{
-  double HT(0.0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i,true,pt_cut)) HT+=jets_AKPF_pt->at(i);
-  }
-  return HT;
+	if (!JetsUpToDate) GetSortedJets();
+	double HT(0.0);
+	for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+		if(isGoodJet(ijet,true,pt_cut,2.4)) HT+=corrJets[ijet].GetPt(theJESType_);
+	}
+	return HT;
 }
 
 double EventHandler::GetSumP(const double pt_cut) const{
-  double px(0.0), py(0.0), pz(0.0), energy(0.0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+  TLorentzVector TLV_out;
+  for(unsigned int i(0); i<corrJets.size(); ++i){
     if(isGoodJet(i,true,pt_cut)) {
-      px+=jets_AKPF_px->at(i);
-      py+=jets_AKPF_py->at(i);
-      pz+=jets_AKPF_pz->at(i);
-      energy+=jets_AKPF_energy->at(i);
+      TLV_out+=corrJets[i].GetTLV(theJESType_);
     }
   }
-  TLorentzVector TLV(px,py,pz,energy);
-  return TLV.M();
+  return TLV_out.P();
 }
 
 double EventHandler::GetCentrality(const double pt_cut) const{
   return GetHT(pt_cut)/GetSumP(pt_cut);
 }
 
-unsigned int EventHandler::GetNumGoodJets(const double pt) const{
-  int numGoodJets(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i,true,pt)) ++numGoodJets;
-  }
-  return numGoodJets;
+unsigned int EventHandler::GetNumGoodJets(const double pt_cut) const{
+	//cout << "GetNumGoodJets" << endl;
+	if(!JetsUpToDate) GetSortedJets();
+	uint numGoodJets(0);
+	for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+		if(isGoodJet(ijet,true,pt_cut,2.4)) ++numGoodJets;
+	}
+	//cout << "Found " << numGoodJets << " good jets" << endl;
+	return numGoodJets;
+}
+
+unsigned int EventHandler::GetNumGoodJets_Old(const double pt) const{
+	//cout << "GetNumGoodJets_Old" << endl;
+	int numGoodJets(0);
+	for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+		if(isGoodJet_Old(i,true,pt)) ++numGoodJets;
+	}
+	//cout << "Found " << numGoodJets << " good jets" << endl;
+	return numGoodJets;
 }
 
 std::vector<int> EventHandler::GetJets(const bool checkID, const double pt, const double eta) const{
   std::vector<int> jets;
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+  for(unsigned int i(0); i<corrJets.size(); ++i){
     if(isGoodJet(i,checkID,pt,eta)) jets.push_back(i);
   }
   return jets;
 }
 
 int EventHandler::GetClosestGenJet(const uint ijet, const double drmax) const {
-  double rjet_eta(jets_AKPF_eta->at(ijet)), rjet_phi(jets_AKPF_phi->at(ijet));
+  double rjet_eta(corrJets[ijet].GetTLV(theJESType_).Eta()), rjet_phi(corrJets[ijet].GetTLV(theJESType_).Phi());
   int closest_gen_jet = -1;
   double minDR(DBL_MAX);
     for(unsigned int i(0); i<mc_jets_pt->size(); ++i){
@@ -2335,14 +2360,14 @@ int EventHandler::GetClosestGenJet(const uint ijet, const double drmax) const {
 }
 
 int EventHandler::GetClosestRecoJet(const uint ijet, const bool use_dR) const {
-  double rjet_eta(jets_AKPF_eta->at(ijet)), rjet_phi(jets_AKPF_phi->at(ijet));
+  double rjet_eta(corrJets[ijet].GetTLV(theJESType_).Eta()), rjet_phi(corrJets[ijet].GetTLV(theJESType_).Phi());
   int closest_reco_jet = -1;
   double minDR(DBL_MAX);
-    for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+    for(unsigned int i(0); i<corrJets.size(); ++i){
       if (i==ijet) continue;
       double dR(DBL_MAX);
-      if (use_dR) dR = Math::dR(jets_AKPF_eta->at(i), rjet_eta, jets_AKPF_phi->at(i), rjet_phi);
-      else dR = Math::GetDeltaPhi(jets_AKPF_phi->at(i), rjet_phi); // sort by delta phi instead of delta R
+      if (use_dR) dR = Math::dR(corrJets[i].GetTLV(theJESType_).Eta(), rjet_eta, corrJets[i].GetTLV(theJESType_).Phi(), rjet_phi);
+      else dR = fabs(Math::GetDeltaPhi(corrJets[i].GetTLV(theJESType_).Phi(), rjet_phi)); // sort by delta phi instead of delta R
       if (dR<minDR) {
 	minDR=dR;
 	closest_reco_jet=i;
@@ -2358,8 +2383,8 @@ double EventHandler::GetGenJetPt(const uint ijet, const double drmax) const {
 }
 
 bool EventHandler::isBLepJet(const uint ijet) const {
-  int parton_id = TMath::Nint(jets_AKPF_partonFlavour->at(ijet));
-  int parton_mom_id = TMath::Nint(jets_AKPF_parton_motherId->at(ijet));
+  int parton_id = TMath::Nint(jets_AKPF_partonFlavour->at(corrJets[ijet].GetIndex()));
+  int parton_mom_id = TMath::Nint(jets_AKPF_parton_motherId->at(corrJets[ijet].GetIndex()));
   // cout << "Jet: " << ijet << ", parton_id: " << parton_id << ", parton_mom_id: " << parton_mom_id << endl;
   if (abs(parton_id)!=5 || abs(parton_mom_id)!=6) return false;
   for (uint imc(0); imc<mc_doc_id->size(); imc++) {
@@ -2388,17 +2413,17 @@ bool EventHandler::isBLepJet(const uint ijet) const {
 
 unsigned int EventHandler::GetNumTruthMatchedBJets(const double pt, const bool good) const{
   int numBJets(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
+  for(unsigned int i(0); i<corrJets.size(); ++i){
     if(good&&!isGoodJet(i,true,pt)) continue;
-    if (fabs(static_cast<int>(jets_AKPF_partonFlavour->at(i)))==5) numBJets++;
+    if (abs(TMath::Nint(jets_AKPF_partonFlavour->at(corrJets[i].GetIndex())))==5) numBJets++;
   }
   return numBJets;
 }
 
 unsigned int EventHandler::GetNumIncCSVTJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVTCut){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>ICSVTCut){
       ++numPassing;
     }
   }
@@ -2407,8 +2432,8 @@ unsigned int EventHandler::GetNumIncCSVTJets(const double pt_cut) const{
 
 unsigned int EventHandler::GetNumIncCSVMJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVMCut){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>ICSVMCut){
       ++numPassing;
     }
   }
@@ -2417,8 +2442,8 @@ unsigned int EventHandler::GetNumIncCSVMJets(const double pt_cut) const{
 
 unsigned int EventHandler::GetNumIncCSVLJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVLCut){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>ICSVLCut){
       ++numPassing;
     }
   }
@@ -2427,8 +2452,8 @@ unsigned int EventHandler::GetNumIncCSVLJets(const double pt_cut) const{
 
 unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVTCut){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>CSVTCut){
       ++numPassing;
     }
   }
@@ -2437,8 +2462,8 @@ unsigned int EventHandler::GetNumCSVTJets(const double pt_cut) const{
 
 unsigned int EventHandler::GetNumCSVMJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && ((cfAVersion<=76&&jets_AKPF_btag_secVertexCombined->at(i)>CSVMCut)||(cfAVersion>=77&&jets_AKPF_btag_inc_secVertexCombined->at(i)>ICSVMCut))){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>CSVMCut){
       ++numPassing;
     }
   }
@@ -2447,8 +2472,8 @@ unsigned int EventHandler::GetNumCSVMJets(const double pt_cut) const{
 
 unsigned int EventHandler::GetNumCSVLJets(const double pt_cut) const{
   int numPassing(0);
-  for(unsigned int i(0); i<jets_AKPF_pt->size(); ++i){
-    if(isGoodJet(i, true, pt_cut) && jets_AKPF_btag_secVertexCombined->at(i)>CSVLCut){
+  for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(ijet, true, pt_cut, 2.4) && corrJets[ijet].GetBTag()>CSVLCut){
       ++numPassing;
     }
   }
@@ -2466,12 +2491,12 @@ double EventHandler::GetMTWb(const double b_pt, const double MET, const double b
 }
 
 double EventHandler::GetMinMTWb(const double pt, const double bTag, const bool use_W_mass) const{
-  GetSortedBJets();
+  GetSortedJets();
   double min_mT(DBL_MAX);
-  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
-    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
-    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
-    double mT=GetMTWb(sortedBJetCache[jet].GetLorentzVector().Pt(), pfTypeImets_et->at(0), sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0), use_W_mass);
+  for (uint jet(0); jet<corrJets.size(); jet++) {
+    if (corrJets[jet].GetTLV(theJESType_).Pt()<pt) continue;
+    if (corrJets[jet].GetBTag()<bTag) continue;
+    double mT=GetMTWb(corrJets[jet].GetTLV(theJESType_).Pt(), pfTypeImets_et->at(0), corrJets[jet].GetTLV(theJESType_).Phi(), pfTypeImets_phi->at(0), use_W_mass);
     if (mT<min_mT) min_mT=mT;
   }
   if (min_mT==DBL_MAX) return -999.;
@@ -2479,12 +2504,12 @@ double EventHandler::GetMinMTWb(const double pt, const double bTag, const bool u
 }
 
 double EventHandler::GetMinDeltaPhibMET(const double pt, const double bTag) const{
-  GetSortedBJets();
+  GetSortedJets();
   double min_dPhi(DBL_MAX);
-  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
-    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
-    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
-    double dPhi=Math::GetDeltaPhi(sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0));
+  for (uint jet(0); jet<corrJets.size(); jet++) {
+    if (corrJets[jet].GetTLV(theJESType_).Pt()<pt) continue;
+    if (corrJets[jet].GetBTag()<bTag) continue;
+    double dPhi=Math::GetDeltaPhi(corrJets[jet].GetTLV(theJESType_).Phi(), pfTypeImets_phi->at(0));
     if (dPhi<min_dPhi) min_dPhi=dPhi;
   }
   if (min_dPhi==DBL_MAX) return -999.;
@@ -2493,29 +2518,96 @@ double EventHandler::GetMinDeltaPhibMET(const double pt, const double bTag) cons
 
 
 double EventHandler::Get2ndMTWb(const double pt, const double bTag, const bool use_W_mass) const{
-  GetSortedBJets();
+  GetSortedJets();
   double max_mT(-1.);
-  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
-    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
-    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
-    double mT=GetMTWb(sortedBJetCache[jet].GetLorentzVector().Pt(), pfTypeImets_et->at(0), sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0), use_W_mass);
+  for (uint jet(0); jet<corrJets.size(); jet++) {
+    if (corrJets[jet].GetTLV(theJESType_).Pt()<pt) continue;
+    if (corrJets[jet].GetBTag()<bTag) continue;
+    double mT=GetMTWb(corrJets[jet].GetTLV(theJESType_).Pt(), pfTypeImets_et->at(0), corrJets[jet].GetTLV(theJESType_).Phi(), pfTypeImets_phi->at(0), use_W_mass);
     if (mT>max_mT) max_mT=mT;
   }
   // now find 2nd
   double max2_mT(-1.); 
-  for (uint jet(0); jet<sortedBJetCache.size(); jet++) {
-    if (sortedBJetCache[jet].GetLorentzVector().Pt()<pt) continue;
-    if (sortedBJetCache[jet].GetBTag()<bTag) continue;
-    double mT=GetMTWb(sortedBJetCache[jet].GetLorentzVector().Pt(), pfTypeImets_et->at(0), sortedBJetCache[jet].GetLorentzVector().Phi(), pfTypeImets_phi->at(0), use_W_mass);
+  for (uint jet(0); jet<corrJets.size(); jet++) {
+    if (corrJets[jet].GetTLV(theJESType_).Pt()<pt) continue;
+    if (corrJets[jet].GetBTag()<bTag) continue;
+    double mT=GetMTWb(corrJets[jet].GetTLV(theJESType_).Pt(), pfTypeImets_et->at(0), corrJets[jet].GetTLV(theJESType_).Phi(), pfTypeImets_phi->at(0), use_W_mass);
     if (mT==max_mT) continue;
     if (mT>max2_mT) max2_mT=mT;
   }
   return max2_mT;
 }
 
-double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {
-  if (goodJetI>static_cast<int>(jets_AKPF_phi->size())||goodJetI<0) return DBL_MAX;
+double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht) {
+  // cout << "Compute dpN..." << goodJetI << endl;
+  double met(0.), met_phi(0.);
+  if (use_mht) {
+    TVector2 mht_vec = GetMHTVec(theJESType_);
+    met=mht_vec.Mod();
+    met_phi=mht_vec.Phi();
+  } else {
+    met = pfTypeImets_et->at(0);
+    met_phi = pfTypeImets_phi->at(0);
+  }
+  
+  if (goodJetI>static_cast<int>(corrJets.size())||goodJetI<0) return DBL_MAX;
   double deltaT = getDeltaPhiMETN_deltaT(goodJetI, otherpt, othereta, otherid);
+  //calculate deltaPhiMETN
+  double dp = fabs(Math::GetAbsDeltaPhi(corrJets[goodJetI].GetTLV(theJESType_).Phi(), met_phi));
+  double dpN;
+  if(useArcsin) {
+    if( deltaT/met >= 1.0) dpN = dp / (TMath::Pi()/2.0);
+    else dpN = dp / asin(deltaT/met);
+  }
+  else dpN = dp / atan2(deltaT, met);
+   // printf("Jet %d: pt=%3.2f, dp=%3.2f, dpN=%3.2f, deltaT=%3.2f\n",goodJetI,corrJets[goodJetI].GetTLV(theJESType_).Pt(),dp,dpN,deltaT);
+  return dpN;
+}
+
+double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt, float othereta, bool otherid) {
+  // cout << "Compute deltaT..." << endl;
+  if(goodJetI==999999) return -99;
+  TLorentzVector tlv_I = corrJets[goodJetI].GetTLV(theJESType_);
+  //get sum for deltaT
+  double sum = 0;
+  for (unsigned int i=0; i< corrJets.size(); i++) {
+    if(i==goodJetI) continue;
+    if(isGoodJet(i, otherid, otherpt, othereta)){
+      double jetres = 0.1;
+      TLorentzVector tlv_i = corrJets[i].GetTLV(theJESType_);
+      // sum += pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2);
+      sum += pow( jetres*(tlv_I.Px()*tlv_i.Py() - tlv_I.Py()*tlv_i.Px()), 2);
+       // printf("Jet %d, px=%3.2f, py=%3.2f, cont=%3.2f\n",i, tlv_i.Px(), tlv_i.Py(), pow( jetres*(tlv_I.Px()*tlv_i.Py() - tlv_I.Py()*tlv_i.Px()), 2));
+    }//is good jet
+  }//i
+  double deltaT = sqrt(sum)/tlv_I.Pt();
+  return deltaT;
+}
+
+double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
+					float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht, double csv) 
+{
+  if(!JetsUpToDate) GetSortedJets();
+  double mdpN=1E12;
+  unsigned int nGoodJets(0);
+  for (unsigned int i=0; i<corrJets.size(); i++) {
+    if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
+    if (csv>0&&corrJets[i].GetBTag()<csv) continue; // find min among b-jets (not enabled by default) 
+    nGoodJets++;
+    double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin, use_mht);
+    //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
+    // Jack --  might have fixed things above...
+    if (dpN>=0&&dpN<mdpN) mdpN=dpN;
+    if (nGoodJets>=maxjets) break;
+  }
+  // printf("mdpN=%3.2f\n",mdpN);
+  return mdpN;
+}
+
+double EventHandler::getDeltaPhiMETN_Old(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin) {
+  // cout << "Compute dpN..." << goodJetI << endl;
+  if (goodJetI>static_cast<int>(jets_AKPF_phi->size())||goodJetI<0) return DBL_MAX;
+  double deltaT = getDeltaPhiMETN_deltaT_Old(goodJetI, otherpt, othereta, otherid);
   //calculate deltaPhiMETN
   double dp = fabs(Math::GetAbsDeltaPhi(jets_AKPF_phi->at(goodJetI), pfTypeImets_phi->at(0)));
   double dpN;
@@ -2524,52 +2616,63 @@ double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta
     else dpN = dp / asin(deltaT/pfTypeImets_et->at(0));
   }
   else dpN = dp / atan2(deltaT, pfTypeImets_et->at(0));
+  // printf("Jet %d: pt=%3.2f, dp=%3.2f, dpN=%3.2f, deltaT=%3.2f\n",goodJetI,jets_AKPF_pt->at(goodJetI),dp,dpN,deltaT);
   return dpN;
 }
-
-double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt, float othereta, bool otherid) {
+double EventHandler::getDeltaPhiMETN_deltaT_Old(unsigned int goodJetI, float otherpt, float othereta, bool otherid) {
+  // cout << "Compute deltaT..." << endl;
   if(goodJetI==999999) return -99;
   //get sum for deltaT
   double sum = 0;
   for (unsigned int i=0; i< jets_AKPF_pt->size(); i++) {
     if(i==goodJetI) continue;
-    if(isGoodJet(i, otherid, otherpt, othereta)){
+    if(isGoodJet_Old(i, otherid, otherpt, othereta)){
       double jetres = 0.1;
       sum += pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2);
+       // printf("Jet %d, px=%3.2f, py=%3.2f, cont=%3.2f\n",i, jets_AKPF_px->at(i), jets_AKPF_py->at(i), pow( jetres*(jets_AKPF_px->at(goodJetI)*jets_AKPF_py->at(i) - jets_AKPF_py->at(goodJetI)*jets_AKPF_px->at(i)), 2));
     }//is good jet
   }//i
   double deltaT = sqrt(sum)/jets_AKPF_pt->at(goodJetI);
   return deltaT;
 }
-
-double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
-					float otherpt, float othereta, bool otherid, bool useArcsin) 
+double EventHandler::getMinDeltaPhiMETN_Old(unsigned int maxjets, float mainpt, float maineta, bool mainid,
+					    float otherpt, float othereta, bool otherid, bool useArcsin)
 {
   double mdpN=1E12;
   unsigned int nGoodJets(0);
   for (unsigned int i=0; i<jets_AKPF_pt->size(); i++) {
-    if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
+    if (!isGoodJet_Old(i, mainid, mainpt, maineta)) continue;
     nGoodJets++;
-    double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin);
+    double dpN = getDeltaPhiMETN_Old(i, otherpt, othereta, otherid, useArcsin);
     //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
-    // Jack --  might have fixed things above...
+    // Jack -- might have fixed things above...
     if (dpN>=0&&dpN<mdpN) mdpN=dpN;
     if (nGoodJets>=maxjets) break;
   }
+  // printf("mdpN=%3.2f\n",mdpN);
   return mdpN;
 }
 
-double EventHandler::GetMinDeltaPhiMET(const unsigned int maxjets, const double pt_cut, const double eta_cut) const{
+
+double EventHandler::GetMinDeltaPhiMET(const unsigned int maxjets, const double pt_cut, const double eta_cut, const bool use_mht) const{
+
+  double met_phi(0.);
+  if (use_mht) {
+    TVector2 mht_vec = GetMHTVec(theJESType_);
+    met_phi=mht_vec.Phi();
+  } else met_phi = pfTypeImets_phi->at(0);
+
+    
   std::vector<std::pair<double, double> > jets(0);
-  for(unsigned int i(0); i<jets_AKPF_phi->size(); ++i){
+  for(unsigned int i(0); i<corrJets.size(); ++i){
     if(isGoodJet(i, true, pt_cut, eta_cut)){
-      jets.push_back(std::make_pair(jets_AKPF_pt->at(i),jets_AKPF_phi->at(i)));
+      jets.push_back(std::make_pair(corrJets[i].GetTLV(theJESType_).Pt(), corrJets[i].GetTLV(theJESType_).Phi()));
     }
   }
   std::sort(jets.begin(), jets.end(), std::greater<std::pair<double, double> >());
   double mindp(DBL_MAX);
   for(unsigned int i(0); i<jets.size() && i<maxjets; ++i){
-    const double thisdp(fabs((Math::GetAbsDeltaPhi(jets.at(i).second, pfTypeImets_phi->at(0)))));
+    const double thisdp(fabs((Math::GetAbsDeltaPhi(jets.at(i).second, met_phi))));
     if(thisdp<mindp){
       mindp=thisdp;
     }
@@ -3553,7 +3656,6 @@ bool EventHandler::IsBrem(size_t index,
 }
 
 bool EventHandler::TrackIsTrueLepton(const uint itk, const std::vector<int> true_leptons) const {
-
   if (itk >=pfcand_pt->size()) return false;
   TVector3 tk3(pfcand_pt->at(itk)*cos(pfcand_phi->at(itk)),
 		  pfcand_pt->at(itk)*sin(pfcand_phi->at(itk)),
@@ -3580,3 +3682,201 @@ bool EventHandler::TrackIsTrueLepton(const uint itk, const std::vector<int> true
   return false;
 }
 
+std::vector<int> EventHandler::GetNeutrinosInJet(const uint ijet) const {
+  double jet_eta(corrJets[ijet].GetTLV(theJESType_).Eta()), jet_phi(corrJets[ijet].GetTLV(theJESType_).Eta());
+  vector<int> neutrinos;
+  for (uint imc(0); imc<mc_final_id->size(); imc++) {
+    uint id = abs(TMath::Nint(mc_final_id->at(imc)));
+    //  uint momid = abs(TMath::Nint(mc_final_mother_id->at(imc)));
+    if (id==12||id==14||id==16) {
+      if (Math::dR(jet_eta,mc_final_eta->at(imc), jet_phi,mc_final_phi->at(imc))<0.4) neutrinos.push_back(imc);
+    }
+  }
+  return neutrinos;
+}
+
+int EventHandler::GetMaxPtNu(const std::vector<int> nus) const {
+  int lead_nu = -1;
+  double maxpt = 0.;
+  for (uint imc(0); imc<nus.size(); imc++) {
+    double pt = mc_final_pt->at(nus[imc]);
+    if (pt>maxpt) {
+      maxpt=pt;
+      lead_nu=nus[imc];
+    }
+  }
+  return lead_nu;
+}
+
+double EventHandler::GetVectorPtSum(const std::vector<int> nus) const {
+  double px(0.), py(0.);
+  for (uint imc(0); imc<nus.size(); imc++) {
+    px+=mc_final_pt->at(nus[imc])*cos(mc_final_phi->at(nus[imc]));
+    py+=mc_final_pt->at(nus[imc])*sin(mc_final_phi->at(nus[imc]));
+  }
+  return sqrt(px*px+py*py);
+}
+
+double EventHandler::GetSumSkinnyJetMass() const {
+  double sum(0.);
+ for (unsigned int ijet=0; ijet<corrJets.size(); ++ijet) {
+   // must include all of the jets that go into fat jet clustering--only cut is |eta|<5
+   if (fabs(corrJets[ijet].GetTLV(theJESType_).Eta())>5.) continue;
+   sum+=corrJets[ijet].GetTLV(theJESType_).M();
+ }
+ return sum;
+}
+
+unsigned int EventHandler::GetNumPhotons(const double pt_cut, const bool oldID) const {
+  if (cfAVersion<78) return 0;
+  // cout << "GetNumPhotons" << endl;
+  uint nphotons(0);
+  for (uint iph(0); iph<photons_pt->size(); iph++) {
+    if (isGoodPhoton(iph, pt_cut, oldID)) nphotons++;
+  }
+  return nphotons;
+}
+
+double EventHandler::GetPhotonIsolation(const iso_type_t type, const double raw_iso, const double eta, const bool oldID) const {
+  if (type!=CH&&type!=NH&&type!=PH) {
+    cerr << "Error: I don't know which photon isolation to compute." << endl;
+    return -1.;
+  }
+  // cout << "GetPhotonIsolation" << endl;
+  double EA_ch(0.), EA_nh(0.), EA_ph(0.);
+  if (oldID) {
+   // cout << "Using old EAs..." << endl;
+    if (fabs(eta)<1.0) {
+      EA_ch=0.012; EA_nh=0.030; EA_ph=0.148;
+    } else if (fabs(eta)>=1.0&&fabs(eta)<1.479) {
+      EA_ch=0.010; EA_nh=0.057; EA_ph=0.130;
+    }
+    else if (fabs(eta)>=1.479&&fabs(eta)<2.0) {
+      EA_ch=0.014; EA_nh=0.039; EA_ph=0.112;
+    }
+    else if (fabs(eta)>=2.0&&fabs(eta)<2.2) {
+      EA_ch=0.012; EA_nh=0.015; EA_ph=0.216;
+    }
+    else if (fabs(eta)>=2.2&&fabs(eta)<2.3) {
+      EA_ch=0.016; EA_nh=0.024; EA_ph=0.262;
+    }
+    else if (fabs(eta)>=2.3&&fabs(eta)<2.4) {
+      EA_ch=0.020; EA_nh=0.039; EA_ph=0.260;
+    }
+    else if (fabs(eta)>=2.4) {
+      EA_ch=0.012; EA_nh=0.072; EA_ph=0.266;
+    }
+  } else { // new effective areas: https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonIdentificationRun2
+   // cout << "Using new EAs..." << endl;
+   if (fabs(eta)<1.0) {
+      EA_ch=0.013; EA_nh=0.0056; EA_ph=0.0896;
+    } else if (fabs(eta)>=1.0&&fabs(eta)<1.479) {
+      EA_ch=0.0096; EA_nh=0.0107; EA_ph=0.0762;
+    }
+    else if (fabs(eta)>=1.479&&fabs(eta)<2.0) {
+      EA_ch=0.0107; EA_nh=0.0019; EA_ph=0.0383;
+    }
+    else if (fabs(eta)>=2.0&&fabs(eta)<2.2) {
+      EA_ch=0.0077; EA_nh=0.0011; EA_ph=0.0534;
+    }
+    else if (fabs(eta)>=2.2&&fabs(eta)<2.3) {
+      EA_ch=0.0088; EA_nh=0.0077; EA_ph=0.0846;
+    }
+    else if (fabs(eta)>=2.3&&fabs(eta)<2.4) {
+      EA_ch=0.0065; EA_nh=0.0178; EA_ph=0.1032;
+    }
+    else if (fabs(eta)>=2.4) {
+      EA_ch=0.0030; EA_nh=0.1675; EA_ph=0.1598;
+    }
+  }	
+  double EA(0.);
+  switch(type) {
+  case CH : 
+    EA=EA_ch;
+    break;
+  case NH :
+    EA=EA_nh;
+    break;
+  case PH :
+    EA=EA_ph;
+    break;
+  default :
+    EA=0.;
+  }
+  double corr_iso = raw_iso-EA*fixedGridRhoFastjetAll;
+  // printf("type=%d, raw_iso=%3.2f, eta=%3.2f, EA=%3.2f, rho=%3.2f, corr_iso=%3.2f\n",type,raw_iso,eta,EA,fixedGridRhoFastjetAll,corr_iso);
+  if (corr_iso<0.) return 0.;
+  else return corr_iso;
+  //return std::max(corr_iso, 0.);
+  
+}
+
+bool EventHandler::isGoodPhoton(uint iph, const double pt_cut, const bool oldID) const{
+  double sigmaIetaIeta_cut = 0.;
+  double hadTowOverEM_cut = 0.;
+  double max_iso_ch = 0.;
+  double max_iso_nh = 0.;
+  double max_iso_ph = 0.;
+    
+  double pt = photons_pt->at(iph);
+  if (pt<pt_cut) return false;
+  bool isBarrelPhoton(false), isEndcapPhoton(false);
+  double eta=photons_eta->at(iph);
+  if(fabs(eta) < 1.4442 ) isBarrelPhoton=true;
+  else if(fabs(eta)>1.566 && fabs(eta)<2.5) isEndcapPhoton=true;
+  else {
+    isBarrelPhoton=false;
+    isEndcapPhoton=false;
+  }
+  if (!isBarrelPhoton && !isEndcapPhoton) return false;
+  sigmaIetaIeta_cut = isBarrelPhoton ? 0.011 : 0.031;
+  hadTowOverEM_cut = 0.05;
+  max_iso_ch = (isBarrelPhoton) ? 0.7 : 0.5;
+  max_iso_nh = (isBarrelPhoton) ? 0.4 + 0.04*pt : 1.5 + 0.04*pt;
+  max_iso_ph = (isBarrelPhoton) ? 0.5 + 0.005*pt : 1.0 + 0.005*pt;
+  if (!oldID) {
+    sigmaIetaIeta_cut = isBarrelPhoton ? 0.0106 : 0.0266;
+    hadTowOverEM_cut = (isBarrelPhoton) ? 0.048 : 0.069;
+    max_iso_ch = (isBarrelPhoton) ? 2.56 : 3.12;
+    max_iso_nh = (isBarrelPhoton) ? 3.74 + 0.0025*pt : 17.11 + 0.0118*pt;
+    max_iso_ph = (isBarrelPhoton) ? 2.68 + 0.001*pt : 2.7 + 0.0059*pt;
+  }
+  // cout << "Photon " << iph << " isBarrelPhoton? " << isBarrelPhoton << endl;
+  // printf("sigmaIetaIeta_cut/hadTowOverEM_cut/max_iso_ch/max_iso_nh/max_iso_ph=%3.2f/%3.2f/%3.2f/%3.2f/%3.2f\n",sigmaIetaIeta_cut,hadTowOverEM_cut,max_iso_ch,max_iso_nh,max_iso_ph);
+  if (cfAVersion<78&&photons_sigmaIetaIeta->at(iph)>sigmaIetaIeta_cut) return false;
+  if (cfAVersion>=78&&photons_full5x5sigmaIEtaIEta->at(iph)>sigmaIetaIeta_cut) return false;
+  if (photons_hadTowOverEM->at(iph)>hadTowOverEM_cut) return false;
+  // cout << "Pixel seed veto..." << endl;
+  if (oldID&&photons_hasPixelSeed->at(iph)>0) return false;
+  // cout << "Electron veto..." << endl;
+  if (!oldID&&cfAVersion>=78&&!photons_pass_el_veto_->at(iph)) return false;
+  double ch_iso = GetPhotonIsolation(CH, photons_pf_ch_iso->at(iph), eta, oldID);
+  // cout << "Charged isolation cut..." << endl;
+  if (ch_iso>max_iso_ch) return false;
+  // cout << "Get neutral isolation..." << endl;
+  double nh_iso = GetPhotonIsolation(NH, photons_pf_nh_iso->at(iph), eta, oldID);
+  if (nh_iso>max_iso_nh) return false;
+  double ph_iso = GetPhotonIsolation(PH, photons_pf_ph_iso->at(iph), eta, oldID);
+  if (ph_iso>max_iso_ph) return false;
+  return true;
+}
+
+TVector2 EventHandler::GetPhotonMHTVec(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const{
+  TVector2 mht_vec = GetMHTVec(jet_pt_cut, jet_eta_cut);
+  for (uint iph(0); iph<photons_pt->size(); iph++) {
+    if (cfAVersion<78||!isGoodPhoton(iph, ph_pt_cut, oldID)) continue;
+    TVector2 phVec(photons_px->at(iph),photons_py->at(iph));
+    mht_vec+=phVec;
+  }
+  return mht_vec;
+}
+
+double EventHandler::GetPhotonMHT(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const {
+  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut, oldID);
+  return vec.Mod();
+}
+
+double EventHandler::GetPhotonMHTPhi(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const {
+  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut, oldID);
+  return TVector2::Phi_mpi_pi(vec.Phi());
+}
