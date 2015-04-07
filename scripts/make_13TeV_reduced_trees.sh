@@ -40,3 +40,8 @@ JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i QCD_Pt-1400to1800_Tune4C_13T
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v2_MINIAODSIM_UCSB2312_v77
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2314_v77 
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i QCD_Pt-3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2317_v77
+
+JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i GJets_HT-100to200_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2260_v78
+JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i GJets_HT-200to400_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2359_v78
+JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i GJets_HT-400to600_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2358_v78
+JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i GJets_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2357_v78
