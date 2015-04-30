@@ -745,43 +745,51 @@ bool EventHandler::Passes2012RA2bTrigger() const{
 }
 
 void EventHandler::GetSortedJets() const{
-	if(!JetsUpToDate){ 
-	//	cout << "GetSortedJets" << endl;
-		corrJets.clear();
-		for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-			// if(isGoodJet(i,true,20.)){ //lower pt cut
-			double btag_disc(0.);
-			if (cfAVersion<77) btag_disc=jets_AKPF_btag_secVertexCombined->at(ijet);
-			else btag_disc=jets_AKPF_btag_inc_secVertexCombined->at(ijet); 
-			// do the JEC here -- store it all in the jet vector
-			TLorentzVector tlvIn(jets_AKPF_px->at(ijet),jets_AKPF_py->at(ijet),jets_AKPF_pz->at(ijet),jets_AKPF_energy->at(ijet));
-			double corrFactorOld = jets_AKPF_corrFactorRaw->at(ijet);
-			TLorentzVector tlvRaw = corrFactorOld * tlvIn;
-			jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
-			jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
-			jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
-			jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
-			double corr(0);
-			TLorentzVector tlvCorr;
-			if (cfAVersion>=78) {
-				corr = jet_corrector_pfL1FastJetL2L3_->getCorrection();
-				tlvCorr = corr*tlvRaw;
-			} else {
-				corr = corrFactorOld;
-				tlvCorr = tlvIn; // for pre-v78 samples, just use the default JEC
-			}
-			corrJets.push_back(Jet(ijet, btag_disc, tlvIn, corrFactorOld, tlvRaw, corr, tlvCorr));
-		}
-    	std::sort(corrJets.begin(),corrJets.end(), std::greater<Jet>());
-		// Key: we're sorting by pt now (corrected if v78+), not CSV
-		JetsUpToDate=true;
-		// cout << "Started with " << jets_AKPF_pt->size() << " jets, now have " << corrJets.size() << endl;
-// 		for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
-// 			printf("Input jet %d : pt=%3.2f, rawE=%3.2f\n", ijet, jets_AKPF_pt->at(ijet), jets_AKPF_energy->at(ijet)*jets_AKPF_corrFactorRaw->at(ijet));
-// 			printf("Saved jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(DEF).Pt(), corrJets[ijet].GetTLV(RAW).E());
-// 			printf("Corrected jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(CORR).Pt(), corrJets[ijet].GetTLV(CORR).E()*corrJets[ijet].GetCorr(CORR));
-// 		}
-	}
+  if(!JetsUpToDate){ 
+    //	cout << "GetSortedJets" << endl;
+    corrJets.clear();
+    for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+      // if(isGoodJet(i,true,20.)){ //lower pt cut
+      double btag_disc(0.);
+      if (cfAVersion<77) btag_disc=jets_AKPF_btag_secVertexCombined->at(ijet);
+      else btag_disc=jets_AKPF_btag_inc_secVertexCombined->at(ijet); 
+      // do the JEC here -- store it all in the jet vector
+      TLorentzVector tlvIn(jets_AKPF_px->at(ijet),jets_AKPF_py->at(ijet),jets_AKPF_pz->at(ijet),jets_AKPF_energy->at(ijet));
+      double corrFactorOld = jets_AKPF_corrFactorRaw->at(ijet);
+      TLorentzVector tlvRaw = corrFactorOld * tlvIn;
+      double corr(0);
+      std::vector<float> subCorr(0,0);
+      TLorentzVector tlvCorr;
+      if (cfAVersion>=78) {
+	jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
+	jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
+	jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
+	jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
+	corr = jet_corrector_pfL1FastJetL2L3_->getCorrection();
+	// have to reload each time
+	jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
+	jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
+	jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
+	jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
+	subCorr = jet_corrector_pfL1FastJetL2L3_->getSubCorrections();
+	if (corr<0) corr=1.; // don't apply correction if it's negative (known issue with V4)
+	tlvCorr = corr*tlvRaw;
+      } else {
+	corr = 1/corrFactorOld;
+	tlvCorr = tlvIn; // for pre-v78 samples, just use the default JEC
+      }
+      corrJets.push_back(Jet(ijet, btag_disc, tlvIn, 1/corrFactorOld, tlvRaw, corr, tlvCorr, subCorr));
+    }
+    std::sort(corrJets.begin(),corrJets.end(), std::greater<Jet>());
+    // Key: we're sorting by pt now (corrected if v78+), not CSV
+    JetsUpToDate=true;
+    // cout << "Started with " << jets_AKPF_pt->size() << " jets, now have " << corrJets.size() << endl;
+    // 		for(unsigned int ijet(0); ijet<jets_AKPF_pt->size(); ++ijet){
+    // 			printf("Input jet %d : pt=%3.2f, rawE=%3.2f\n", ijet, jets_AKPF_pt->at(ijet), jets_AKPF_energy->at(ijet)*jets_AKPF_corrFactorRaw->at(ijet));
+    // 			printf("Saved jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(DEF).Pt(), corrJets[ijet].GetTLV(RAW).E());
+    // 			printf("Corrected jet %d : pt=%3.2f, rawE=%3.2f\n", corrJets[ijet].GetIndex(), corrJets[ijet].GetTLV(CORR).Pt(), corrJets[ijet].GetTLV(CORR).E()*corrJets[ijet].GetCorr(CORR));
+    // 		}
+  }
 }
 
 void EventHandler::ClusterFatJets() const{
@@ -874,7 +882,7 @@ TVector2 EventHandler::GetRawMHTVec(const double pt_cut, const double eta_cut, c
   if(!JetsUpToDate) GetSortedJets();
   double px(0.), py(0.);
   for (uint ijet(0); ijet<corrJets.size(); ++ijet){
-    if(isGoodJet(corrJets[ijet].GetIndex(),true,pt_cut,eta_cut)&&ijet!=exclude){
+    if(isGoodJet(corrJets[ijet].GetIndex(),true,pt_cut,eta_cut,true)&&ijet!=exclude){
       px+=corrJets[ijet].GetTLV(RAW).Px();
       py+=corrJets[ijet].GetTLV(RAW).Py();
     }
@@ -890,6 +898,55 @@ double EventHandler::GetRawMHT(const double pt_cut, const double eta_cut) const 
 
 double EventHandler::GetRawMHTPhi(const double pt_cut, const double eta_cut) const {
   TVector2 vec = GetRawMHTVec(pt_cut, eta_cut);
+  return TVector2::Phi_mpi_pi(vec.Phi());
+}
+
+TVector2 EventHandler::GetDEFMHTVec(const double pt_cut, const double eta_cut, const uint exclude) const {
+  if(!JetsUpToDate) GetSortedJets();
+  double px(0.), py(0.);
+  for (uint ijet(0); ijet<corrJets.size(); ++ijet){
+    if(isGoodJet(corrJets[ijet].GetIndex(),true,pt_cut,eta_cut,false,true)&&ijet!=exclude){
+      px+=corrJets[ijet].GetTLV(RAW).Px();
+      py+=corrJets[ijet].GetTLV(RAW).Py();
+    }
+  }
+  TVector2 vec(-1*px, -1*py);
+  return vec;
+}
+
+double EventHandler::GetDEFMHT(const double pt_cut, const double eta_cut) const {
+  TVector2 vec = GetDEFMHTVec(pt_cut, eta_cut);
+  return vec.Mod();
+}
+
+double EventHandler::GetDEFMHTPhi(const double pt_cut, const double eta_cut) const {
+  TVector2 vec = GetDEFMHTVec(pt_cut, eta_cut);
+  return TVector2::Phi_mpi_pi(vec.Phi());
+}
+
+TVector2 EventHandler::GetCorrectedMETVec(const uint version) const {
+  if(!JetsUpToDate) GetSortedJets();
+  TVector2 uncl_met_vec(0,0);
+  if (version==1&&cfAVersion>=78) { // method 1: get the raw met, subtract raw jets
+    uncl_met_vec.SetMagPhi(raw_met_et, raw_met_phi);
+    TVector2 raw_mht_vec = GetRawMHTVec(30.,5.);
+    uncl_met_vec-=raw_mht_vec;
+  }
+  else if (version==2) { // method 2: get the default corrected met, subtract default corrected jets
+    uncl_met_vec.SetMagPhi(pfTypeImets_et->at(0),pfTypeImets_phi->at(0));
+    TVector2 def_mht_vec = GetDEFMHTVec(30.,5.);
+    uncl_met_vec-=def_mht_vec;
+  }
+  return uncl_met_vec+GetMHTVec(30.,5.); // now add on the corrected jets
+}
+
+double EventHandler::GetCorrectedMET(const uint version) const {
+  TVector2 vec = GetCorrectedMETVec(version);
+  return vec.Mod();
+}
+
+double EventHandler::GetCorrectedMETPhi(const uint version) const {
+  TVector2 vec = GetCorrectedMETVec(version);
   return TVector2::Phi_mpi_pi(vec.Phi());
 }
 
@@ -1212,6 +1269,8 @@ int EventHandler::GetPBNR() const{
     //cfA version from Keith                                                                                                                                                     
     double NHF = jets_AKPF_neutralHadE->at(corrJets[it].GetIndex())/corrJets[it].GetTLV(RAW).E();
     double PEF = jets_AKPF_photonEnergy->at(corrJets[it].GetIndex())/corrJets[it].GetTLV(RAW).E();
+    // apparently we should cut at pt>30
+    if (corrJets[it].GetPt(theJESType_)<30.) continue;
     if (NHF > 0.9)  nhBad = true;
     if (PEF > 0.95) phBad = true;
   }
@@ -1222,12 +1281,13 @@ int EventHandler::GetPBNR() const{
   return 1;
 }
 
-bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool veto_negative_JEC/*, const bool doBeta*/) const{
+bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const double ptThresh, const double etaThresh, const bool use_raw_pt, const bool use_def_pt/*, const bool doBeta*/) const{
 	// note: ijet is now the index is the corrJets vector (should be the same for v77 and earlier...)
 	TLorentzVector tlv = corrJets[ijet].GetTLV(theJESType_);
+	if (use_raw_pt) tlv = corrJets[ijet].GetTLV(RAW);
+	else if (use_def_pt) tlv = corrJets[ijet].GetTLV(DEF);
 	if(tlv.Pt()<ptThresh || fabs(tlv.Eta())>etaThresh) return false;
 	if( jetid && !jetPassLooseID(ijet)) return false;
-	if (veto_negative_JEC&&corrJets[ijet].GetCorr(theJESType_)<0) return false;
 	// if(!betaUpToDate) GetBeta();
 	//  if(beta.at(ijet)<0.2 && doBeta) return false;
 	return true;
@@ -1800,23 +1860,60 @@ bool EventHandler::hasPFMatch(const int index, const int pdgId) const{
   else return (deltaPT<5);
 }
 
-vector<int> EventHandler::GetRecoMuons(const bool veto, const bool check_pt, const bool check_iso, const bool use_mini_iso, const double mini_iso_cut) const{
+vector<int> EventHandler::GetRecoMuons(const bool veto, const bool check_pt, const bool check_iso, bool check_id, const bool use_mini_iso, const double mini_iso_cut) const{
   vector<int> muons;
   for(uint index=0; index<mus_pt->size(); index++)
     if(veto){
-      if(isRecoMuon(index, 0, check_pt, check_iso, use_mini_iso, mini_iso_cut)) muons.push_back(index);
+      if(isRecoMuon(index, 0, check_pt, check_iso, check_id, use_mini_iso, mini_iso_cut)) muons.push_back(index);
     }	else {
-      if(isRecoMuon(index, 1, check_pt, check_iso, use_mini_iso, mini_iso_cut)) muons.push_back(index);
+      if(isRecoMuon(index, 1, check_pt, check_iso, check_id, use_mini_iso, mini_iso_cut)) muons.push_back(index);
     }
   return muons;
 }
 
-  //    if (event==161297&&lumiblock==1613) {
-  // 	printf("mu %d: pt %3.2f, eta %3.2f, iso %3.2f, ID %d, pass %d\n",
-  // 	       index, mus_pt->at(index), mus_eta->at(index), GetMuonRelIso(index), PassMuonID(index), isRecoMuon(index, 1, check_pt, check_iso, use_mini_iso, mini_iso_cut));
-  //     }
-  // if (event==161297&&lumiblock==1613) printf("Found %d muons\n", static_cast<int>(muons.size()));
 
+double EventHandler::getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex){
+  return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
+}
+
+bool EventHandler::PassMuonID(const uint imu) const{ // does not include pt or isolation
+  if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
+  if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
+  const double d0 = GetMuonD0(imu);
+  const double mus_vz = mus_tk_vz->at(imu);
+  const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
+  if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
+  if ( !mus_tk_numvalPixelhits->at(imu)) return false;
+  if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
+  if (cfAVersion>=77&&mus_globalTrack_normalizedChi2->at(imu) > 10) return false;
+  if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
+
+  return true;
+}
+
+bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool check_pt, const bool check_iso, const bool check_id, const bool use_mini_iso, const double mini_iso_cut) const{
+  if (imu>mus_pt->size()) return false;
+  if (fabs(mus_eta->at(imu)) >= 2.4 ) return false;
+  if (check_id&&!PassMuonID(imu)) return false; 
+  double pt_thresh(10.0);
+  if(level>=1) pt_thresh=20.0;
+  double relIso_cut=0.2;
+  if(level>=1) relIso_cut=0.12;
+  if (check_pt && mus_pt->at(imu) < pt_thresh) return false;
+  if (check_iso) {
+    if (use_mini_iso) {
+      // double mini_iso = GetIsolation(imu, 13);
+      //      if (mini_iso/mus_pt->at(imu)>mini_iso_cut) return false;
+      double mini_iso = mus_miniso->at(imu);
+       if (mini_iso>mini_iso_cut) return false;
+    } else if (GetMuonRelIso(imu) > relIso_cut) return false;
+  }
+  return true;
+}
+
+double EventHandler::GetMuonD0(const unsigned int imu) const{
+  return mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
+}
 
 vector<int> EventHandler::GetRA2bMuons(const bool veto) const{
   vector<int> muons;
@@ -1827,47 +1924,6 @@ vector<int> EventHandler::GetRA2bMuons(const bool veto) const{
       if(isRA2bMuon(index, 1)) muons.push_back(index);
     }
   return muons;
-}
-
-double EventHandler::getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex){
-  return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
-}
-
-bool EventHandler::PassMuonID(const uint imu) const{ // does not include pt or isolation
-  if (fabs(mus_eta->at(imu)) >= 2.4 ) return false;
-if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
-  if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
-  const double d0 = GetMuonD0(imu);
-  const double mus_vz = mus_tk_vz->at(imu);
-  const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
-  if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
-  if ( !mus_tk_numvalPixelhits->at(imu)) return false;
-  if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
-  if (mus_globalTrack_normalizedChi2->at(imu) > 10) return false;
-  if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
-
-  return true;
-}
-
-bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool check_pt, const bool check_iso, const bool use_mini_iso, const double mini_iso_cut) const{
-  if (imu>mus_pt->size()) return false;
-  if (!PassMuonID(imu)) return false; 
-  double pt_thresh(10.0);
-  if(level>=1) pt_thresh=20.0;
-  double relIso_cut=0.2;
-  if(level>=1) relIso_cut=0.12;
-  if (check_pt && mus_pt->at(imu) < pt_thresh) return false;
-  if (check_iso) {
-    if (use_mini_iso) {
-      double mini_iso = GetIsolation(imu, 13);
-      if (mini_iso/mus_pt->at(imu)>mini_iso_cut) return false;
-    } else if (GetMuonRelIso(imu) > relIso_cut) return false;
-  }
-  return true;
-}
-
-double EventHandler::GetMuonD0(const unsigned int imu) const{
-  return mus_tk_d0dum->at(imu)-pv_x->at(0)*sin(mus_tk_phi->at(imu))+pv_y->at(0)*cos(mus_tk_phi->at(imu));
 }
 
 double EventHandler::GetMuonRelIso(const unsigned int imu, const double R) const{
@@ -1892,23 +1948,16 @@ vector<int> EventHandler::GetRecoTaus() const{
   return taus;
 }
 
-vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool check_pt, const bool check_iso, const bool use_mini_iso, const double mini_iso_cut) const{
+vector<int> EventHandler::GetRecoElectrons(const bool veto, const bool check_pt, const bool check_iso, const bool check_id, const bool use_mini_iso, const double mini_iso_cut) const{
   vector<int> electrons;
   for(uint index=0; index<els_pt->size(); index++)
     if(!veto){
-      if(isRecoElectron(index, 2, check_pt, check_iso, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
+      if(isRecoElectron(index, 2, check_pt, check_iso, check_id, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
     } else {
-      if(isRecoElectron(index, 0, check_pt, check_iso, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
+      if(isRecoElectron(index, 0, check_pt, check_iso, check_id, use_mini_iso, mini_iso_cut)) electrons.push_back(index);
     }
   return electrons;
 }
-
-  //     if (event==155393&&lumiblock==1554) {
-  // 	      printf("el %d: pt %3.2f, scEta %3.2f, iso %3.2f, ID %d, pass %d\n",
-  // 		     index, els_pt->at(index), els_scEta->at(index), GetCSAElectronIsolation(index), PassElectronID(index,0), isRecoElectron(index, 0, check_pt, check_iso, use_mini_iso, mini_iso_cut));
-  //     } 
-  // if (event==155393&&lumiblock==1554) printf("Found %d electrons\n", static_cast<int>(electrons.size()));
-
 
 vector<int> EventHandler::GetRA2bElectrons(const bool veto) const{
   vector<int> electrons;
@@ -2050,11 +2099,11 @@ bool EventHandler::PassElectronID(const uint iel, const uint level) const { // e
     && ooeminusoop_cut > fabs((1.0-els_eOverPIn->at(iel))/els_caloEnergy->at(iel))
     // && (true || vprob_cut)
     && (els_PATpassConversionVeto->at(iel))
-    && (misshits_cut >= els_expectedMissingInnerHits->at(iel));
+    && (cfAVersion>=77 && misshits_cut >= els_expectedMissingInnerHits->at(iel));
   
 }
 
-bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool check_pt, const bool check_iso, const bool use_mini_iso, const double mini_iso_cut) const{
+bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool check_pt, const bool check_iso, const bool check_id, const bool use_mini_iso, const double mini_iso_cut) const{
 
   if(iel>=els_pt->size()) return false;
   bool barrel;
@@ -2066,7 +2115,7 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool c
     return false;
   }
 
-  if (!PassElectronID(iel, level)) return false;
+  if (check_id&&!PassElectronID(iel, level)) return false;
 
   double pt_cut, reliso_cut;
 
@@ -2118,7 +2167,8 @@ bool EventHandler::isRecoElectron(const uint iel, const uint level, const bool c
   if (check_pt && els_pt->at(iel)<pt_cut) return false;
   if(check_iso) {  
     if (use_mini_iso) {
-      if ((GetIsolation(iel, 11)/els_pt->at(iel))>mini_iso_cut) return false;
+      // if ((GetIsolation(iel, 11)/els_pt->at(iel))>mini_iso_cut) return false;
+      if (els_miniso->at(iel)<mini_iso_cut);
     } else {
       if (GetCSAElectronIsolation(iel)>reliso_cut) return false;
     }
@@ -2292,11 +2342,12 @@ double EventHandler::GetMJ(const double fat_jet_pt_cut, const double fat_jet_eta
   return MJ;
 }
 
-double EventHandler::GetHT(const double pt_cut) const{
+double EventHandler::GetHT(const double pt_cut, const double min_eta) const{
 	if (!JetsUpToDate) GetSortedJets();
 	double HT(0.0);
 	for(unsigned int ijet(0); ijet<corrJets.size(); ++ijet){
-		if(isGoodJet(ijet,true,pt_cut,2.4)) HT+=corrJets[ijet].GetPt(theJESType_);
+	  if (min_eta<-10.) { if(isGoodJet(ijet,true,pt_cut,2.4)) HT+=corrJets[ijet].GetPt(theJESType_); }
+	  else if(isGoodJet(ijet,true,pt_cut,5) && corrJets[ijet].GetTLV(theJESType_).Eta()>min_eta) HT+=corrJets[ijet].GetPt(theJESType_);
 	}
 	return HT;
 }
@@ -2345,6 +2396,7 @@ std::vector<int> EventHandler::GetJets(const bool checkID, const double pt, cons
 }
 
 int EventHandler::GetClosestGenJet(const uint ijet, const double drmax) const {
+  if (cfAVersion<75) return -1;
   double rjet_eta(corrJets[ijet].GetTLV(theJESType_).Eta()), rjet_phi(corrJets[ijet].GetTLV(theJESType_).Phi());
   int closest_gen_jet = -1;
   double minDR(DBL_MAX);
@@ -2538,7 +2590,7 @@ double EventHandler::Get2ndMTWb(const double pt, const double bTag, const bool u
   return max2_mT;
 }
 
-double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht) {
+double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht, uint corrVersion) {
   // cout << "Compute dpN..." << goodJetI << endl;
   double met(0.), met_phi(0.);
   if (use_mht) {
@@ -2548,6 +2600,10 @@ double EventHandler::getDeltaPhiMETN(int goodJetI, float otherpt, float othereta
   } else {
     met = pfTypeImets_et->at(0);
     met_phi = pfTypeImets_phi->at(0);
+    if (corrVersion>0) {
+      met=GetCorrectedMET(corrVersion);
+      met_phi=GetCorrectedMETPhi(corrVersion);
+    }
   }
   
   if (goodJetI>static_cast<int>(corrJets.size())||goodJetI<0) return DBL_MAX;
@@ -2585,7 +2641,7 @@ double EventHandler::getDeltaPhiMETN_deltaT(unsigned int goodJetI, float otherpt
 }
 
 double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid,
-					float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht, double csv) 
+					float otherpt, float othereta, bool otherid, bool useArcsin, bool use_mht, uint corrVersion, double csv) 
 {
   if(!JetsUpToDate) GetSortedJets();
   double mdpN=1E12;
@@ -2594,7 +2650,7 @@ double EventHandler::getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, floa
     if (!isGoodJet(i, mainid, mainpt, maineta)) continue;
     if (csv>0&&corrJets[i].GetBTag()<csv) continue; // find min among b-jets (not enabled by default) 
     nGoodJets++;
-    double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin, use_mht);
+    double dpN = getDeltaPhiMETN(i, otherpt, othereta, otherid, useArcsin, use_mht, corrVersion);
     //i is for i'th *good* jet, starting at i=0. returns -99 if bad jet--but then i still increases by one
     // Jack --  might have fixed things above...
     if (dpN>=0&&dpN<mdpN) mdpN=dpN;
@@ -3849,6 +3905,7 @@ bool EventHandler::isGoodPhoton(uint iph, const double pt_cut, const bool oldID)
   // cout << "Pixel seed veto..." << endl;
   if (oldID&&photons_hasPixelSeed->at(iph)>0) return false;
   // cout << "Electron veto..." << endl;
+  // skip this until we sort out branch names (4/20)	
   if (!oldID&&cfAVersion>=78&&!photons_pass_el_veto_->at(iph)) return false;
   double ch_iso = GetPhotonIsolation(CH, photons_pf_ch_iso->at(iph), eta, oldID);
   // cout << "Charged isolation cut..." << endl;
@@ -3880,3 +3937,13 @@ double EventHandler::GetPhotonMHTPhi(const double jet_pt_cut, const double jet_e
   TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut, oldID);
   return TVector2::Phi_mpi_pi(vec.Phi());
 }
+
+std::vector<int> EventHandler::GetPhotons(double pt_cut) const {
+  std::vector<int> photons;
+  if (cfAVersion<78) return photons;
+  for (uint iph(0); iph<photons_pt->size(); iph++) {
+    if (photons_pt->at(iph)>pt_cut) photons.push_back(iph);
+  }
+  return photons;
+}
+

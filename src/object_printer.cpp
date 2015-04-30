@@ -16,28 +16,65 @@ ObjectPrinter::ObjectPrinter(const std::string& in_file_name, const bool is_list
 
 void ObjectPrinter::PrintObjects(const unsigned int nentries) {
 
-  // cout << "Jet Corrector Paramters?..." << endl;
- //  JetCorrectorParameters *L1JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V3_MC/PHYS14_V3_MC_L1FastJet_AK4PFchs.txt");
- //  JetCorrectorParameters *L2JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V3_MC/PHYS14_V3_MC_L2Relative_AK4PFchs.txt");
- //  JetCorrectorParameters *L3JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V3_MC/PHYS14_V3_MC_L3Absolute_AK4PFchs.txt");
- //
- //  cout << "Level 1: " << endl;
- //  L1JetParameters->printScreen();
- //  cout << "Level 2: " << endl;
- //  L2JetParameters->printScreen();
- //  cout << "Level 3: " << endl;
- //  L3JetParameters->printScreen();
- //
+  // cout << "Jet Corrector Parameters?..." << endl;
+  // JetCorrectorParameters *L1JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L1FastJet_AK4PFchs.txt");
+  // JetCorrectorParameters *L2JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L2Relative_AK4PFchs.txt");
+  // JetCorrectorParameters *L3JetParameters = new JetCorrectorParameters("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L3Absolute_AK4PFchs.txt");
+ 
+  // cout << endl << "Level 1: " << endl;
+  // L1JetParameters->printScreen();
+  // cout << endl << "Level 2: " << endl;
+  // L2JetParameters->printScreen();
+  // cout << endl<< "Level 3: " << endl;
+  // L3JetParameters->printScreen();
+
+
+  // // // files for Phys14 MC -- v4 
+  // // jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L1FastJet_AK4PFchs.txt");
+  // // jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L2Relative_AK4PFchs.txt");
+  // // jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L3Absolute_AK4PFchs.txt");
+  // // // jet_corrector_pfL1FastJetL2L3_ = makeJetCorrector(jetcorr_filenames_pfL1FastJetL2L3_);
+  // std::vector<JetCorrectorParameters> vPar_;
+  // vPar_.push_back(*L1JetParameters);
+  // vPar_.push_back(*L2JetParameters);
+  // vPar_.push_back(*L3JetParameters);
+  
+  // FactorizedJetCorrector* jet_corrector_old = new FactorizedJetCorrector(vPar_);
+  
+  //  TFormula* mFunc = new TFormula("function","max(0.0001,1-z*([0]+([1]*x)*(1+[2]*log(y)))/y");
+  
   //Loop over events
   for(unsigned int i(0); i<nentries; ++i){
     GetEntry(i);
 
     cout << "*****Event " << event << "*****" << endl;
 
-    // for (uint ijet(0); ijet<jets_AKPF_pt->size(); ijet++) {
-    //   bool blep = isBLepJet(ijet);
-    //   cout << "blep? " << blep << endl;
-    // }
+    for (uint ijet(0); ijet</*jets_AKPF_pt->size()*/3; ijet++) {
+      TLorentzVector tlvIn(jets_AKPF_px->at(ijet),jets_AKPF_py->at(ijet),jets_AKPF_pz->at(ijet),jets_AKPF_energy->at(ijet));
+      printf("Input jet %d--(pt, eta, area, rho) = (%3.2f,%3.2f,%3.2f,%3.2f)\n",ijet,tlvIn.Pt(),tlvIn.Eta(),jets_AKPF_area->at(ijet), fixedGridRhoFastjetAll);
+      double corrFactorOld = jets_AKPF_corrFactorRaw->at(ijet);
+      TLorentzVector tlvRaw = corrFactorOld * tlvIn;
+      printf("Raw jet %d--(pt, eta, area, rho) = (%3.2f,%3.2f,%3.2f,%3.2f)\n",ijet,tlvRaw.Pt(),tlvRaw.Eta(),jets_AKPF_area->at(ijet), fixedGridRhoFastjetAll);
+      jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
+      jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
+      jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
+      jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
+      cout << "sub corrections: ";
+      std::vector<float> subCorr = jet_corrector_pfL1FastJetL2L3_->getSubCorrections();
+      for (unsigned int icorr(0); icorr<subCorr.size(); icorr++) {
+	cout << subCorr[icorr] << " ";
+      }
+      cout << endl;
+      jet_corrector_pfL1FastJetL2L3_->setRho(fixedGridRhoFastjetAll);
+      jet_corrector_pfL1FastJetL2L3_->setJetA(jets_AKPF_area->at(ijet));
+      jet_corrector_pfL1FastJetL2L3_->setJetPt (tlvRaw.Pt());
+      jet_corrector_pfL1FastJetL2L3_->setJetEta(tlvRaw.Eta());
+      double corr = jet_corrector_pfL1FastJetL2L3_->getCorrection();
+      printf("Old correction: %3.2f\n", 1/corrFactorOld);
+      printf("New correction: %3.2f\n", corr);
+      TLorentzVector tlvCorr = corr*tlvRaw;
+      printf("Corrected jet %d--(pt, eta, area, rho) = (%3.2f,%3.2f,%3.2f,%3.2f)\n",ijet,tlvCorr.Pt(),tlvCorr.Eta(),jets_AKPF_area->at(ijet), fixedGridRhoFastjetAll);
+    }
     
     //cout << "Printing contents of mc_doc..." << endl;
   //   for(unsigned int imcf = 0; imcf < mc_doc_id->size(); imcf++){

@@ -35,6 +35,7 @@ SimpleJetCorrector::SimpleJetCorrector(const std::string& fDataFile, const std::
 SimpleJetCorrector::SimpleJetCorrector(const JetCorrectorParameters& fParameters)
 {
   mParameters      = new JetCorrectorParameters(fParameters);
+  // printf("Correction formula: %s\n",((mParameters->definitions()).formula()).c_str());
   mFunc            = new TFormula("function",((mParameters->definitions()).formula()).c_str());
   mDoInterpolation = false;
   if (mParameters->definitions().isResponse())
@@ -57,10 +58,13 @@ float SimpleJetCorrector::correction(const std::vector<float>& fX,const std::vec
   float tmp    = 0.0;
   float cor    = 0.0;
   int bin = mParameters->binIndex(fX);
+  // printf("Bin index = %d\n", bin);
   if (bin<0) 
     return result;
-  if (!mDoInterpolation)
+  if (!mDoInterpolation) {
     result = correctionBin(bin,fY);
+    // printf("result = %3.2f\n", result);
+  }
   else
     { 
       for(unsigned i=0;i<mParameters->definitions().nBinVar();i++)
@@ -110,8 +114,10 @@ float SimpleJetCorrector::correctionBin(unsigned fBin,const std::vector<float>& 
     } 
   float result = -1;
   const std::vector<float>& par = mParameters->record(fBin).parameters();
-  for(unsigned int i=2*N;i<par.size();i++)
+  for(unsigned int i=2*N;i<par.size();i++) {
     mFunc->SetParameter(i-2*N,par[i]);
+    // printf("Setting parameter %d to %3.2f\n", i-2*N,par[i]);
+  }
   float x[4];
   std::vector<float> tmp;
   for(unsigned i=0;i<N;i++)
@@ -121,8 +127,10 @@ float SimpleJetCorrector::correctionBin(unsigned fBin,const std::vector<float>& 
     }
   if (mParameters->definitions().isResponse())
     result = invert(tmp);
-  else
-    result = mFunc->Eval(x[0],x[1],x[2],x[3]);  
+  else {
+    // printf("x/y/z = %3.2f/%3.2f/%3.2f\n",x[0],x[1],x[2]);
+    result = mFunc->Eval(x[0],x[1],x[2],x[3]);
+  }
   return result;
 }
 //------------------------------------------------------------------------ 

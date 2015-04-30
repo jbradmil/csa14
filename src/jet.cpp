@@ -2,14 +2,15 @@
 #include "jet.hpp"
 
 Jet::Jet(const int jets_AKPF_indexIn, const double bTagIn, const TLorentzVector tlvIn, const double corrOldIn, 
-		 const TLorentzVector tlvRaw, const double corrNewIn, const TLorentzVector tlvCorr) : 
+	 const TLorentzVector tlvRaw, const double corrNewIn, const TLorentzVector tlvCorr, const std::vector<float> vSubCorrIn) : 
 		 jets_AKPF_index_(jets_AKPF_indexIn),
 		 bTag_(bTagIn),
 		 vecIn_(tlvIn),
 		 corrOld_(corrOldIn),
 		 vecRaw_(tlvRaw),
 		 corrNew_(corrNewIn),
-		 vecCorr_(tlvCorr){
+		 vecCorr_(tlvCorr),
+		 vSubCorr_(vSubCorrIn){
 		 }
 
 void Jet::SetBTag(const double bTagIn){
@@ -32,6 +33,12 @@ double Jet::GetCorr(const jec_type_t jec_type) const{
 	if (jec_type==DEF) return corrOld_;
 	else if (jec_type==RAW) return 1.;
 	else return corrNew_; // return latest correction by default
+}
+
+double Jet::GetSubCorr(const unsigned int level) const{
+  if (level>vSubCorr_.size()) return -999.;
+  else if (level==1) return vSubCorr_[0];
+  else return vSubCorr_[level-1]/vSubCorr_[level-2];
 }
 
 double Jet::GetBTag() const{

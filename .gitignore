@@ -31,3 +31,4 @@ bin/*
 !example_root_file.root
 *.log
 *.pdf
+bin/*

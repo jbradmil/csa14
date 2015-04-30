@@ -173,7 +173,7 @@ protected:
   bool PassesPVCut() const;
 
   bool isGoodJet(const unsigned int, const bool=true, const double=50.0,
-		 const double=2.4, const bool=true) const;
+		 const double=2.4, const bool=false, const bool=false) const;
   bool isGoodJet_Old(const unsigned int, const bool=true, const double=50.0,
 		     const double=2.4/*, const bool=true*/) const;
   bool isCleanJet(const unsigned int, const int) const;
@@ -220,9 +220,9 @@ protected:
 
   TLorentzVector GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const; 
 
-  vector<int> GetRecoMuons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool use_mini_iso=false, const double mini_iso_cut=0.1) const;
+  vector<int> GetRecoMuons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.2) const;
   bool PassMuonID(const uint imu) const;
-  bool isRecoMuon(const uint imu, const uint level=0, const bool=true, const bool=true, const bool=false, const double mini_iso_cut=0.1) const;
+  bool isRecoMuon(const uint imu, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double=0.2) const;
   double GetMuonD0(const unsigned int imu) const;
   bool isTrueMuon(const double eta, const double phi) const;
   bool isbMuon(const double eta, const double phi) const;
@@ -233,9 +233,9 @@ protected:
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool use_mini_iso=false, const double mini_iso_cut=0.1) const;
+  vector<int> GetRecoElectrons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.1) const;
   bool PassElectronID(const uint iel, const uint level) const;
-  bool isRecoElectron(const uint iel, const uint level=0, const bool=true, const bool=true, const bool=false, const double mini_iso_cut=0.1) const;
+  bool isRecoElectron(const uint iel, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double mini_iso_cut=0.1) const;
   double GetElectronD0(const unsigned int iel) const;
   
   vector<int> GetRA2bElectrons(const bool veto) const;
@@ -267,7 +267,7 @@ protected:
   int GetNFatJets(const double=50., const double=10./*,  const unsigned int=30*/) const;
   double GetMJ(const double=50., const double=10./*,  const unsigned int=30*/) const;
 
-  double GetHT(const double=50.) const;
+  double GetHT(const double=50., const double=-999.) const;
   double GetSumP(const double=50.) const;
   double GetCentrality(const double=50.) const;
   std::vector<int> GetJets(const bool checkID=true, const double pt=30., const double eta=5.) const;
@@ -291,10 +291,10 @@ protected:
   double Get2ndMTWb(const double=30., const double=0.679, const bool=false) const;
   double GetMinDeltaPhibMET(const double=30., const double=0.679) const;
 
-  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht = false, double csv=-1. );
-  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,30.,2.4,true,30.,2.4,true,true,false,-1.);};
-  double getDeltaPhiMETN(  int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht=false ); //Ben
-  double getDeltaPhiMETN( int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true,false); }; //Ben, overloaded
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht = false, uint corrVersion=0, double csv=-1. );
+  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,30.,2.4,true,30.,2.4,true,true,false,0,-1.);};
+  double getDeltaPhiMETN(  int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht=false, uint corrVersion=0 ); //Ben
+  double getDeltaPhiMETN( int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true,false,0); }; //Ben, overloaded
 
   double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid);
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
@@ -326,6 +326,12 @@ protected:
   TVector2 GetRawMHTVec(const double=30., const double=5., const uint=100000) const;
   double GetRawMHT(const double=30., const double=5.) const;
   double GetRawMHTPhi(const double=30., const double=5.) const;
+  TVector2 GetDEFMHTVec(const double=30., const double=5., const uint=100000) const;
+  double GetDEFMHT(const double=30., const double=5.) const;
+  double GetDEFMHTPhi(const double=30., const double=5.) const;
+  TVector2 GetCorrectedMETVec(const uint=1) const;
+  double GetCorrectedMET(const uint=1) const;
+  double GetCorrectedMETPhi(const uint=1) const;
   
 
   double GetDocMET() const;
@@ -345,7 +351,7 @@ protected:
   std::vector<int> MatchTks(const std::vector<int> true_leps, const vector<std::pair<int,double> > tracks) const;
   int GetClosestTk(const uint imc, const vector<std::pair<int,double> > tracks) const;
   
-  double GetIsolation(const int ilep, const int ParticleType, const double rmax=0.3, const bool mini=true, const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
+  double GetIsolation(const int ilep, const int ParticleType, const double rmax=0.2, const bool mini=true, const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
 
   int GetTrueElectron(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
   int GetTrueMuon(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
@@ -385,6 +391,7 @@ protected:
 
   double GetSumSkinnyJetMass() const;
 
+  std::vector<int> GetPhotons(const double pt_cut=100.) const;
   unsigned int GetNumPhotons(const double=100., bool=false) const;
   bool isGoodPhoton(uint iph, const double pt_cut=100., const bool oldID=false) const;
   double GetPhotonIsolation(const iso_type_t, const double, const double, const bool=false) const;

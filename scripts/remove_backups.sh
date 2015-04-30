@@ -1,7 +1,5 @@
 #! /bin/bash
-
 shopt -s nullglob
-
 clean_recur(){
     cd $1
     rm -f *~ *#
@@ -17,5 +15,4 @@ clean_recur(){
     done
     cd ..
 }
-
 clean_recur $(pwd)

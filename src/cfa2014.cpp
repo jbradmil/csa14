@@ -154,6 +154,8 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   fjets30_phi(0),
   fjets30_energy(0),
   fjets30_m(0),
+  els_miniso(0),
+  mus_miniso(0),
   els_isPF(0),
   mus_isPF(0),
   els_jet_ind(0),
@@ -304,6 +306,8 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_fjets30_phi(),
   b_fjets30_energy(),
   b_fjets30_m(),
+  b_els_miniso(),
+  b_mus_miniso(),
   b_els_isPF(),
   b_mus_isPF(),
   b_els_jet_ind(),
@@ -622,6 +626,9 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   mc_jets_eta(0),
   mc_jets_phi(0),
   mc_jets_energy(0),
+  mc_jets_emEnergy(0),
+  mc_jets_hadEnergy(0),
+  mc_jets_invisibleEnergy(0),
   mc_final_id(0),
   mc_final_pt(0),
   mc_final_px(0),
@@ -1083,7 +1090,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   pfTypeImets_sign(0),
   pfTypeImets_sumEt(0),
   raw_met_phi(0),
-  raw_met_pt(0),
+  raw_met_et(0),
   Npf_els(0),
   pf_els_energy(0),
   pf_els_et(0),
@@ -2030,6 +2037,9 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_mc_jets_eta(),
   b_mc_jets_phi(),
   b_mc_jets_energy(),
+  b_mc_jets_emEnergy(),
+  b_mc_jets_hadEnergy(),
+  b_mc_jets_invisibleEnergy(),
   b_Nmc_final(),
   b_mc_final_id(),
   b_mc_final_pt(),
@@ -2492,7 +2502,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_pfTypeImets_sign(),
   b_pfTypeImets_sumEt(),
   b_raw_met_phi(),
-  b_raw_met_pt(),
+  b_raw_met_et(),
   b_Npf_els(),
   b_pf_els_energy(),
   b_pf_els_et(),
@@ -3373,6 +3383,8 @@ void cfA::InitializeA(){
   fjets30_phi=0;
   fjets30_energy=0;
   fjets30_m=0;
+  els_miniso=0;
+  mus_miniso=0;
   els_isPF=0;
   mus_isPF=0;
   els_jet_ind=0;
@@ -3549,14 +3561,17 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("fjets30_m",&fjets30_m, &b_fjets30_m);
   }
   if (cfAVersion>=78) {
+    chainA.SetBranchAddress("els_miniso",&els_miniso, &b_els_miniso);
+    chainA.SetBranchAddress("mus_miniso",&mus_miniso, &b_mus_miniso);
     chainA.SetBranchAddress("jets_AK4_corL1Fast",&jets_AKPF_corL1Fast, &b_jets_AKPF_corL1Fast);
     chainA.SetBranchAddress("jets_AK4_corL2L3",&jets_AKPF_corL2L3, &b_jets_AKPF_corL2L3);
     chainA.SetBranchAddress("jets_AK4_corL1FastL2L3",&jets_AKPF_corL1FastL2L3, &b_jets_AKPF_corL1FastL2L3);
     chainA.SetBranchAddress("fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll, &b_fixedGridRhoFastjetAll);
     chainA.SetBranchAddress("raw_met_phi", &raw_met_phi, &b_raw_met_phi);
-    chainA.SetBranchAddress("raw_met_et", &raw_met_pt, &b_raw_met_pt);
+    chainA.SetBranchAddress("raw_met_et", &raw_met_et, &b_raw_met_et);
     chainA.SetBranchAddress("photons_full5x5sigmaIEtaIEta", &photons_full5x5sigmaIEtaIEta, &b_photons_full5x5sigmaIEtaIEta);
-    chainA.SetBranchAddress("photons_pass_el_veto_", &photons_pass_el_veto_, &b_photons_pass_el_veto_);
+	// careful--I messed this one up
+//    chainA.SetBranchAddress("photons_pass_el_veto", &photons_pass_el_veto_, &b_photons_pass_el_veto_);
   }
 }
 
@@ -3873,6 +3888,9 @@ void cfA::InitializeB(){
   mc_jets_eta=0;
   mc_jets_phi=0;
   mc_jets_energy=0;
+  mc_jets_emEnergy=0;
+  mc_jets_hadEnergy=0;
+  mc_jets_invisibleEnergy=0;
   Nmc_final=0;
   mc_final_id=0;
   mc_final_pt=0;
@@ -4335,7 +4353,7 @@ void cfA::InitializeB(){
   pfTypeImets_sign=0;
   pfTypeImets_sumEt=0;
   raw_met_phi=0;
-  raw_met_pt=0;
+  raw_met_et=0;
   Npf_els=0;
   pf_els_energy=0;
   pf_els_et=0;
@@ -5007,8 +5025,8 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("els_pfIsolationR03_sumPhotonEt", &els_pfIsolationR03_sumPhotonEt, &b_els_pfIsolationR03_sumPhotonEt);
     chainB.SetBranchAddress("els_pfIsolationR03_sumPUPt", &els_pfIsolationR03_sumPUPt, &b_els_pfIsolationR03_sumPUPt);
     chainB.SetBranchAddress("els_full5x5_sigmaIetaIeta", &els_full5x5_sigmaIetaIeta, &b_els_full5x5_sigmaIetaIeta);
-    chainB.SetBranchAddress("els_expectedMissingInnerHits", &els_expectedMissingInnerHits, &b_els_expectedMissingInnerHits);
   }
+  if (cfAVersion>=77) chainB.SetBranchAddress("els_expectedMissingInnerHits", &els_expectedMissingInnerHits, &b_els_expectedMissingInnerHits);
   // chainB.SetBranchAddress("els_gen_id", &els_gen_id, &b_els_gen_id);
   // chainB.SetBranchAddress("els_gen_phi", &els_gen_phi, &b_els_gen_phi);
   // chainB.SetBranchAddress("els_gen_pt", &els_gen_pt, &b_els_gen_pt);
@@ -5342,6 +5360,11 @@ void cfA::InitializeB(){
     chainB.SetBranchAddress("mc_jets_eta", &mc_jets_eta, &b_mc_jets_eta);
     chainB.SetBranchAddress("mc_jets_phi", &mc_jets_phi, &b_mc_jets_phi);
     chainB.SetBranchAddress("mc_jets_energy", &mc_jets_energy, &b_mc_jets_energy);
+    if (cfAVersion>=77) {
+    chainB.SetBranchAddress("mc_jets_emEnergy", &mc_jets_emEnergy, &b_mc_jets_emEnergy);
+    chainB.SetBranchAddress("mc_jets_hadEnergy", &mc_jets_hadEnergy, &b_mc_jets_hadEnergy);
+    chainB.SetBranchAddress("mc_jets_invisibleEnergy", &mc_jets_invisibleEnergy, &b_mc_jets_invisibleEnergy);
+    }
     chainB.SetBranchAddress("Nmc_final", &Nmc_final, &b_Nmc_final);
     chainB.SetBranchAddress("mc_final_id", &mc_final_id, &b_mc_final_id);
     chainB.SetBranchAddress("mc_final_pt", &mc_final_pt, &b_mc_final_pt);

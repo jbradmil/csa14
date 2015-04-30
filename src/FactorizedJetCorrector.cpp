@@ -106,6 +106,7 @@ FactorizedJetCorrector::FactorizedJetCorrector(const std::vector<JetCorrectorPar
   for(unsigned i=0;i<fParameters.size();i++)
     {
       std::string ss = fParameters[i].definitions().level();
+      // printf("Found parameters for %s corrections: ", ss.c_str());
       if (ss == "L1Offset")
         mLevels.push_back(kL1);
       else if (ss == "L1JPTOffset")
@@ -127,6 +128,7 @@ FactorizedJetCorrector::FactorizedJetCorrector(const std::vector<JetCorrectorPar
       mCorrectors.push_back(new SimpleJetCorrector(fParameters[i]));
       mBinTypes.push_back(mapping(mCorrectors[i]->parameters().definitions().binVar()));
       mParTypes.push_back(mapping(mCorrectors[i]->parameters().definitions().parVar()));
+      // printf("\n");
     }  
 }
 
@@ -237,6 +239,7 @@ std::vector<FactorizedJetCorrector::VarTypes> FactorizedJetCorrector::mapping(co
            sserr<<"unknown parameter name: "<<ss;
 	   handleError("FactorizedJetCorrector",sserr.str());
 	 }
+      // printf("%s ",ss.c_str());
     }
   return result;  
 }
@@ -347,6 +350,7 @@ float FactorizedJetCorrector::getCorrection()
 //------------------------------------------------------------------------
 std::vector<float> FactorizedJetCorrector::getSubCorrections()
 {
+  // std::string s_VarTypes[10] = {"kJetPt","kJetEta","kJetPhi","kJetE","kJetEMF","kRelLepPt","kPtRel","kNPV","kJetA","kRho"};
   float scale,factor;
   std::vector<float> factors;
   std::vector<float> vx,vy;
@@ -356,10 +360,21 @@ std::vector<float> FactorizedJetCorrector::getSubCorrections()
       vx = fillVector(mBinTypes[i]);
       vy = fillVector(mParTypes[i]);
       //if (mLevels[i]==kL2 || mLevels[i]==kL6)
-        //mCorrectors[i]->setInterpolation(true); 
-      scale = mCorrectors[i]->correction(vx,vy); 	
+        //mCorrectors[i]->setInterpolation(true);
+      // printf("Level %d:\n", i+1);
+      // printf("Bin vals...\n");
+      // for (unsigned int j(0); j<vx.size(); j++) {
+	// printf("%3.2f (%s) ",vx[j],s_VarTypes[static_cast<int>(mBinTypes[i][j])].c_str());
+      // }
+      // printf("\nParam vals...\n");
+      // for (unsigned int j(0); j<vy.size(); j++) {
+      // 	printf("%3.2f (%s) ",vy[j], s_VarTypes[static_cast<int>(mParTypes[i][j])].c_str());
+      // }
+      scale = mCorrectors[i]->correction(vx,vy);
+      // printf("\nscale = %3.2f\n",scale);
       if (mLevels[i]==kL6 && mAddLepToJet) scale *= 1.0 + getLepPt() / mJetPt;
-      factor*=scale; 
+      factor*=scale;
+      // printf("factor =  %3.2f\n",factor);
       factors.push_back(factor);	
       mJetE *=scale;
       mJetPt*=scale;

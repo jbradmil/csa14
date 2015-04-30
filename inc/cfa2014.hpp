@@ -172,6 +172,8 @@ protected:
   std::vector<float> *fjets30_phi;
   std::vector<float> *fjets30_energy;
   std::vector<float> *fjets30_m;
+  std::vector<float> *els_miniso;
+  std::vector<float> *mus_miniso;
   std::vector<bool> *els_isPF;
   std::vector<bool> *mus_isPF;
   std::vector<int> *els_jet_ind;
@@ -322,6 +324,8 @@ protected:
   TBranch *b_fjets30_phi;
   TBranch *b_fjets30_energy;
   TBranch *b_fjets30_m;
+  TBranch *b_els_miniso;
+  TBranch *b_mus_miniso;
   TBranch *b_els_isPF;
   TBranch *b_mus_isPF;
   TBranch *b_els_jet_ind;
@@ -643,6 +647,9 @@ protected:
   std::vector<float> *mc_jets_eta;
   std::vector<float> *mc_jets_phi;
   std::vector<float> *mc_jets_energy;
+  std::vector<float> *mc_jets_emEnergy;
+  std::vector<float> *mc_jets_hadEnergy;
+  std::vector<float> *mc_jets_invisibleEnergy;
   UInt_t Nmc_final;
   std::vector<float> *mc_final_id;
   std::vector<float> *mc_final_pt;
@@ -1105,8 +1112,8 @@ protected:
   std::vector<float> *pfTypeImets_gen_phi;
   std::vector<float> *pfTypeImets_sign;
   std::vector<float> *pfTypeImets_sumEt;
-  std::vector<float> *raw_met_phi;
-  std::vector<float> *raw_met_pt;
+  Float_t raw_met_phi;
+  Float_t raw_met_et;
   UInt_t Npf_els;
   std::vector<float> *pf_els_energy;
   std::vector<float> *pf_els_et;
@@ -2056,6 +2063,9 @@ protected:
   TBranch *b_mc_jets_eta;
   TBranch *b_mc_jets_phi;
   TBranch *b_mc_jets_energy;
+  TBranch *b_mc_jets_emEnergy;
+  TBranch *b_mc_jets_hadEnergy;
+  TBranch *b_mc_jets_invisibleEnergy;
   TBranch *b_Nmc_final;   //!
   TBranch *b_mc_final_id;   //!
   TBranch *b_mc_final_pt;   //!
@@ -2518,7 +2528,7 @@ protected:
   TBranch *b_pfTypeImets_sign;
   TBranch *b_pfTypeImets_sumEt;
   TBranch *b_raw_met_phi;
-  TBranch *b_raw_met_pt;
+  TBranch *b_raw_met_et;
   TBranch *b_Npf_els;
   TBranch *b_pf_els_energy;
   TBranch *b_pf_els_et;

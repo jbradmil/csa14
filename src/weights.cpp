@@ -367,7 +367,7 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T2bb_2J_mStop-900_mLSP-100"]=102661;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25"]=25474122;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=17184825;
-  totalEventsTable["TJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2290"]=25368156/*523803*/;
+  totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM"]=25446993;
   totalEventsTable["WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4087868/*3181078*/;
   totalEventsTable["WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4933933/*3133549*/;
   totalEventsTable["WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Spring14miniaod"]=4642823/*2507939*/;
@@ -395,13 +395,14 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["QCD_Pt-3200_Tune4C_13TeV_pythia8_Spring14miniaod"]=2953151;
   totalEventsTable["QCD_Pt-300to470_Tune4C_13TeV_pythia8_Phys14DR"]=1986177;
   totalEventsTable["QCD_Pt-470to600_Tune4C_13TeV_pythia8_Phys14DR"]=2001071;
-  totalEventsTable["QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR"]=1997744;
+  totalEventsTable["QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM"]=1997744;
   totalEventsTable["QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Phys14DR"]=1000065;
   totalEventsTable["QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Phys14DR"]=500550;
   totalEventsTable["QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Phys14DR"]=199627;
   totalEventsTable["QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Phys14DR"]=200079;
   totalEventsTable["QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Phys14DR"]=200453;
   totalEventsTable["QCD_Pt-3200_Tune4C_13TeV_pythia8_Phys14DR"]=200200;
+  // totalEventsTable["QCD_Pt-600to800_Tune4C_13TeV_pythia8_rs_Phys14DR-AVE20BX25_tsg_castor_PHYS14_25_V3-v1_rs_MINIAODSIM_v78"]=2857014;
   totalEventsTable["QCD_HT_250To500_13TeV-madgraph_Spring14miniaod-PU20bx25_PLS170_V7AN1-v1_MINIAODSIM_UCSB2353_v77"]=655322;
   totalEventsTable["QCD_HT-500To1000_13TeV-madgraph_Spring14miniaod-PU20bx25_PLS170_V7AN1-v1_MINIAODSIM_UCSB2354_v77"]=842193;
   totalEventsTable["QCD_HT_1000ToInf_13TeV-madgraph_Spring14miniaod-PU20bx25_PLS170_V7AN1-v2_MINIAODSIM_UCSB2356_v77"]=333882;
@@ -436,9 +437,9 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp"]=195648;
   totalEventsTable["WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp"]=200000;
   totalEventsTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Spring14miniaod-PU20bx25_POSTLS170_V5-v1_MINIAODSIM_UCSB2152_v75"]=199000;
-  totalEventsTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v2_MINIAODSIM_UCSB2349_v77"]=199700;
-  totalEventsTable["TTZJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2348_v77"]=249275;
-  totalEventsTable["TTWJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2347_v77"]=246521;
+  totalEventsTable["TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v2_MINIAODSIM"]=199700;
+  totalEventsTable["TTZJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM"]=249275;
+  totalEventsTable["TTWJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM"]=246521;
   totalEventsTable["DYJetsToLL_M-50_HT-100to200_Tune4C_13TeV"]=3633185;
   totalEventsTable["DYJetsToLL_M-50_HT-200to400_Tune4C_13TeV"]=4665825;
   totalEventsTable["DYJetsToLL_M-50_HT-400to600_Tune4C_13TeV"]=4944926;
