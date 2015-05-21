@@ -10,6 +10,7 @@
 #include "TChain.h"
 #include "TBranch.h"
 #include "TLorentzVector.h"
+#include "TVector2.h"
 #include "JetCorrector.hpp"
 #include "FactorizedJetCorrector.hpp"
 #include "pu_constants.hpp"
@@ -79,6 +80,7 @@ protected:
   
   mutable std::vector<Jet> corrJets;//caching for efficiency
   mutable bool JetsUpToDate;//cached value correct
+  mutable double theMET_, theMETPhi_;
   mutable std::vector<FatJet> sortedFatJetCache;//caching for efficiency
   mutable bool FatJetsUpToDate;//cached value correct
   mutable std::vector<int> recoMuonCache;
@@ -114,6 +116,11 @@ protected:
   // void initEnumNames();
   // std::map<JESType, TString> theJESNames_;
 
+  // TFile *f_RLF_;
+  // void LoadRLFHist();
+  // double GetRLF(const double ptW, const double ht, const int njets) const;
+  // double GetRLFError(const double ptW, const double ht, const int njets) const;
+
   double GetTriggerEffWeight(const double=50.) const;
   double GetBtagWeight(const double=50.) const;
   double GetPIDBtagWeight(const double=50.) const;
@@ -145,6 +152,8 @@ protected:
   double GetJetXPartonId(const unsigned int=1) const;
   // double GetJetXMotherId(const unsigned int=1) const;
 
+  void SetCorrectedMET();
+  
   void GetEntry(const unsigned int);
   void GetBeta(const std::string which="beta") const;
 
@@ -220,7 +229,7 @@ protected:
 
   TLorentzVector GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const; 
 
-  vector<int> GetRecoMuons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.2) const;
+  vector<int> GetRecoMuons(const uint level=0, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.2) const;
   bool PassMuonID(const uint imu) const;
   bool isRecoMuon(const uint imu, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double=0.2) const;
   double GetMuonD0(const unsigned int imu) const;
@@ -233,7 +242,7 @@ protected:
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
 
-  vector<int> GetRecoElectrons(const bool veto, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.1) const;
+  vector<int> GetRecoElectrons(const uint level=0, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.1) const;
   bool PassElectronID(const uint iel, const uint level) const;
   bool isRecoElectron(const uint iel, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double mini_iso_cut=0.1) const;
   double GetElectronD0(const unsigned int iel) const;
@@ -291,10 +300,10 @@ protected:
   double Get2ndMTWb(const double=30., const double=0.679, const bool=false) const;
   double GetMinDeltaPhibMET(const double=30., const double=0.679) const;
 
-  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht = false, uint corrVersion=0, double csv=-1. );
-  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,30.,2.4,true,30.,2.4,true,true,false,0,-1.);};
-  double getDeltaPhiMETN(  int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht=false, uint corrVersion=0 ); //Ben
-  double getDeltaPhiMETN( int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true,false,0); }; //Ben, overloaded
+  double getMinDeltaPhiMETN(unsigned int maxjets, float mainpt, float maineta, bool mainid, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht = false, double csv=-1. );
+  double getMinDeltaPhiMETN(unsigned int maxjets) {return getMinDeltaPhiMETN(maxjets,30.,2.4,true,30.,2.4,true,true,false,-1.);};
+  double getDeltaPhiMETN(  int goodJetI, float otherpt, float othereta, bool otherid, bool useArcsin=true, bool use_mht=false ); //Ben
+  double getDeltaPhiMETN( int goodJetI ) {return getDeltaPhiMETN(goodJetI,30,2.4,true,true,false); }; //Ben, overloaded
 
   double getDeltaPhiMETN_deltaT(unsigned int ijet, float otherpt, float othereta, bool otherid);
   double getDeltaPhiMETN_deltaT(unsigned int ijet) { return getDeltaPhiMETN_deltaT(ijet,30,2.4,true); } //overloaded
@@ -310,15 +319,15 @@ protected:
 
   int GetNumIsoTracks(const double=15.0, const bool=true) const;
   vector<std::pair<int,double> > GetIsoTracks(const double=15.0, const bool=true) const;
-  void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool mT_cut=true);
+  void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool checkID=true, bool mT_cut=true);
   bool PassIsoTrackBaseline(const uint index) const;
   double GetPFCandIsolation(const uint indexA) const;
   double GetPFCandIsolationDeltaBetaCorr(const uint indexA) const;
 
   double GetTransverseMassMu() const;
   double GetTransverseMassEl() const;
-  double GetDeltaThetaT(const double, const double) const;
-  double GetWpT(const double, const double) const;
+  double GetDeltaThetaT(const double, const double, const bool=false) const;
+  double GetWpT(const double, const double, const bool=false) const;
 
   TVector2 GetMHTVec(const double=30., const double=5., const uint=100000) const;
   double GetMHT(const double=30., const double=5.) const;
@@ -348,9 +357,13 @@ protected:
   int GetClosestRecoMuon(const uint imc) const;
   void PrintGenParticleInfo(const int imc) const;
 
+  std::vector<int> GetGenWs() const;
+  bool DecaysToLeptons(const uint imc) const;
+
   std::vector<int> MatchTks(const std::vector<int> true_leps, const vector<std::pair<int,double> > tracks) const;
   int GetClosestTk(const uint imc, const vector<std::pair<int,double> > tracks) const;
   
+  double GetSimpleChargedTrackIsolation(const int ilep, const int ParticleType, const double rmax=0.3) const;
   double GetIsolation(const int ilep, const int ParticleType, const double rmax=0.2, const bool mini=true, const bool addCH=true, const bool addPH=true, const bool addNH=true, const bool usePFweight=false) const;
 
   int GetTrueElectron(float RecPt, float RecEta, float RecPhi, int &momID, bool &fromW, float &closest_dR) const;
@@ -391,9 +404,10 @@ protected:
 
   double GetSumSkinnyJetMass() const;
 
-  std::vector<int> GetPhotons(const double pt_cut=100.) const;
+  std::vector<int> GetPhotons(const double pt_cut=100., const bool checkID=true) const;
   unsigned int GetNumPhotons(const double=100., bool=false) const;
   bool isGoodPhoton(uint iph, const double pt_cut=100., const bool oldID=false) const;
+  bool PassPhotonID(uint iph, const bool oldID=false) const;
   double GetPhotonIsolation(const iso_type_t, const double, const double, const bool=false) const;
   TVector2 GetPhotonMHTVec(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
   double GetPhotonMHT(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;

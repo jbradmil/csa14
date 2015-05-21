@@ -1599,7 +1599,7 @@ protected:
   std::vector<float> *photons_gen_phi;
   std::vector<float> *photons_gen_id;
   std::vector<float> *photons_full5x5sigmaIEtaIEta;
-  std::vector<bool> *photons_pass_el_veto_;
+  std::vector<bool> *photons_pass_el_veto;
   std::vector<float> *photons_pf_ch_iso;
   std::vector<float> *photons_pf_nh_iso;
   std::vector<float> *photons_pf_ph_iso;
@@ -3013,7 +3013,7 @@ protected:
   TBranch *b_photons_gen_phi;
   TBranch *b_photons_gen_id;
   TBranch *b_photons_full5x5sigmaIEtaIEta;
-  TBranch *b_photons_pass_el_veto_;
+  TBranch *b_photons_pass_el_veto;
   TBranch *b_photons_pf_ch_iso;
   TBranch *b_photons_pf_nh_iso;
   TBranch *b_photons_pf_ph_iso;

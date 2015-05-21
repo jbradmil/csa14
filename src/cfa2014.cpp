@@ -1575,7 +1575,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   photons_gen_phi(0),
   photons_gen_id(0),
   photons_full5x5sigmaIEtaIEta(0),
-  photons_pass_el_veto_(0),
+  photons_pass_el_veto(0),
   photons_pf_ch_iso(0),
   photons_pf_nh_iso(0),
   photons_pf_ph_iso(0),
@@ -2987,7 +2987,7 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_photons_gen_phi(),
   b_photons_gen_id(),
   b_photons_full5x5sigmaIEtaIEta(),
-  b_photons_pass_el_veto_(),
+  b_photons_pass_el_veto(),
   b_photons_pf_ch_iso(),
   b_photons_pf_nh_iso(),
   b_photons_pf_ph_iso(),
@@ -3571,7 +3571,7 @@ void cfA::InitializeA(){
     chainA.SetBranchAddress("raw_met_et", &raw_met_et, &b_raw_met_et);
     chainA.SetBranchAddress("photons_full5x5sigmaIEtaIEta", &photons_full5x5sigmaIEtaIEta, &b_photons_full5x5sigmaIEtaIEta);
 	// careful--I messed this one up
-//    chainA.SetBranchAddress("photons_pass_el_veto", &photons_pass_el_veto_, &b_photons_pass_el_veto_);
+    chainA.SetBranchAddress("photons_pass_el_veto", &photons_pass_el_veto, &b_photons_pass_el_veto);
   }
 }
 
@@ -4838,7 +4838,7 @@ void cfA::InitializeB(){
   photons_gen_phi=0;
   photons_gen_id=0;
   photons_full5x5sigmaIEtaIEta=0;
-  photons_pass_el_veto_=0;
+  photons_pass_el_veto=0;
   photons_pf_ch_iso=0;
   photons_pf_nh_iso=0;
   photons_pf_ph_iso=0;

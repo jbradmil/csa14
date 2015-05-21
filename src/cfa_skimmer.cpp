@@ -54,6 +54,10 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     // cout << "MHT" << endl;
     if (GetMHT(30.)<200.) continue;
     mht200Count++;
+    // 2 b-tags
+    // cout << "b-taqgging" << endl;
+    if (GetNumCSVMJets(30.)<2) continue;
+    numCSVMCount++;
     // 4 good jets
     // cout << "njets" << endl;
     if (GetNumGoodJets(30.)<4) continue;
@@ -62,14 +66,10 @@ void CfASkimmer::Skim(const std::string& out_file_name){
     // cout << "ht" << endl;
     if (GetHT(30.)<500) continue;
     ht500count++;
-    // 2 b-tags
-    // cout << "b-taqgging" << endl;
-    // if (GetNumCSVMJets(30.)<2) continue;
-    // numCSVMCount++;
     // minDeltaPhi
     // cout << "MDPN" << endl;
     // if (getMinDeltaPhiMETN(3,30,2.4,true,30,2.4,true,true)<4) continue;
-    // minDeltaPhiCount++;
+    minDeltaPhiCount++;
     // no leptons
     /*
     vector<int>  reco_veto_muons, reco_veto_electrons;
@@ -107,9 +107,9 @@ void CfASkimmer::Skim(const std::string& out_file_name){
 
   std::cout << "startCount " << startCount << std::endl;
   std::cout << "mht200Count " << mht200Count << std::endl;
+  std::cout << "numCSVMCount " << numCSVMCount << std::endl;
   std::cout << "numJetsCount " << numJetsCount << std::endl;
   std::cout << "ht500count " << ht500count << std::endl;
-  std::cout << "numCSVMCount " << numCSVMCount << std::endl;
   std::cout << "minDeltaPhiCount " << minDeltaPhiCount << std::endl;
   std::cout << "muonVetoCount " << muonVetoCount << std::endl;
   std::cout << "electronVetoCount " << electronVetoCount << std::endl;

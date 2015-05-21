@@ -9,7 +9,10 @@
 #include "TSystem.h"
 #include "TCanvas.h"
 #include "TLegend.h"
+#include "TPaveText.h"
 #include "macros/include/my_style.hpp"
+#include "macros/junews/lostleptons/RatioError.h"
+
 
 void MakeDTTPDFPlot(TH1D* hLost, TH1D* hFound, TString hname, TString plotdir) {
 
@@ -44,22 +47,42 @@ void MakeDTTPDFPlot(TH1D* hLost, TH1D* hFound, TString hname, TString plotdir) {
   
 }
 
-void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, bool logy=true) {
+void MakeClosurePlot(RatioError* pred, TH1D* hTrue, TString hname, TString plotdir, int max_norm_bin=2, bool logy=true, bool verbose=false) {
 
+  TH1D* hPred = pred->GetPrediction();
+  vector<double> RHL = pred->GetRHL();
+  vector<double> eRHL = pred->GetRHLError();
+  
   set_style(hTrue, "data_obs");
   set_style(hPred, "ttbar");
   hPred->SetFillColor(1007);
-  
-  double SF = hTrue->GetBinContent(1)/hPred->GetBinContent(1);
+
+  Double_t low_mht_pred(0.), e_low_mht_pred(0.);
+  low_mht_pred = hTrue->IntegralAndError(1, max_norm_bin, e_low_mht_pred);
+  double SF = (hPred->Integral(1, max_norm_bin)>0.) ? low_mht_pred/hPred->Integral(1, max_norm_bin) : 1.;
   hPred->Scale(SF);
 
-   // Setup canvas and pads  
+  double f_low_mht = e_low_mht_pred/low_mht_pred;
+  if (verbose) printf("LOW MHT Pred.: %3.3f +/- %3.3f\n",low_mht_pred, e_low_mht_pred);
+  for (int bin(0); bin<hPred->GetNbinsX(); bin++) {
+    double f_eRHL = (RHL[bin]>0.) ? eRHL[bin]/RHL[bin] : 0.;
+    double f_ePred = sqrt(pow(f_low_mht, 2.)+pow(f_eRHL, 2.));
+    if (bin>max_norm_bin+1) hPred->SetBinError(bin+1, f_ePred*hPred->GetBinContent(bin+1));
+    if (verbose) {
+      printf("Bin %d: RHL = %3.3f +/- %3.3f\n", bin+1, RHL[bin], eRHL[bin]);
+      printf("\t fSyst = sqrt(pow(%3.3f, 2.)+pow(%3.3f, 2.)) = %3.3f \n", f_low_mht, f_eRHL, f_ePred);
+    }
+  }
+  
+  // Setup canvas and pads  
   TCanvas * c1 = new TCanvas("c1", "c1", 700, 700);
   c1->SetFillStyle(4000);
   TPad * pad1 = new TPad("pad1", "top pad" , 0.0, 0.3, 1.0, 1.0);
+  pad1->SetFillStyle(4000);
   pad1->SetBottomMargin(0.0);
   pad1->Draw();
   TPad * pad2 = new TPad("pad2", "bottom pad", 0.0, 0.0, 1.0, 0.3);
+  pad2->SetFillStyle(4000);
   pad2->SetTopMargin(0.0);
   pad2->SetBottomMargin(0.35);
   pad2->Draw();
@@ -79,7 +102,7 @@ void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, b
   ratio->SetMarkerSize(0.8);
   ratio->SetMarkerColor(1);
   //ratio->SetMarkerSize(0.5);
-  ratio->Divide(hTrue, hPred, 1., 1., "");
+  ratio->Divide(hTrue, hPred, 1., 1., "B");
   TH1D * ratiostaterr = (TH1D *) hTrue->Clone("ratiostaterr");
   ratiostaterr->Sumw2();
   ratiostaterr->SetStats(0);
@@ -101,6 +124,7 @@ void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, b
   TLine* ratiounity = new TLine(hPred->GetBinLowEdge(1),1,hPred->GetBinLowEdge(hPred->GetNbinsX()+1),1);
   ratiounity->SetLineStyle(2);
   for (Int_t i = 0; i < hPred->GetNbinsX()+2; i++) {
+    // if (hTrue->GetBinContent(i)>0.) ratio->SetBinError(i, hTrue->GetBinError(i)/hTrue->GetBinContent(i)); // just the fractional uncertainty on the observation
     ratiostaterr->SetBinContent(i, 1.0);
     if (hPred->GetBinContent(i) > 1e-6) { //< not empty
       double binerror = hPred->GetBinError(i) / hPred->GetBinContent(i);
@@ -122,6 +146,7 @@ void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, b
       ratiosysterr->SetBinError(i, binerror / hPred->GetBinContent(i));
     }
   }
+
 
   double max = hTrue->GetMaximum();
   if (hPred->GetMaximum() > max) max = hPred->GetMaximum();
@@ -165,11 +190,27 @@ void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, b
   ratiostaterr->Draw("e2 same");
   ratiounity->Draw();
   ratio->Draw("e1 same");
-  TLegend * ratioleg = new TLegend(0.72, 0.88, 0.94, 0.96);
-  set_style(ratioleg);
-  ratioleg->SetTextSize(0.07);
-  ratioleg->AddEntry(ratiostaterr, "MC uncert. (stat)", "f");
-  ratioleg->Draw();
+
+  TPaveText * pave = new TPaveText(0.18, 0.86, 0.4, 0.96, "brNDC");
+  pave->SetLineColor(0);
+  pave->SetFillColor(kWhite);
+  pave->SetShadowColor(0);
+  pave->SetBorderSize(1);
+  double nchisq = hTrue->Chi2Test(hPred, "UWCHI2/NDF, P"); // MC uncert. (stat)
+  double p_value = hTrue->Chi2Test(hPred, "UW"); // MC uncert. (stat)
+  // //double kolprob = hdata_obs->KolmogorovTest(hmc_exp); // MC uncert. (stat)
+  TText * text = pave->AddText(Form("#chi_{#nu}^{2}/ndf = %.3f, p = %.3f", nchisq, p_value));
+  // //TText * text = pave->AddText(Form("#chi_{#nu}^{2} = %.3f, K_{s} = %.3f", nchisq, kolprob));
+  text->SetTextFont(62);
+  text->SetTextSize(0.07);
+  // text->SetTextSize(0.06);
+  pave->Draw();
+  
+  /* TLegend * ratioleg = new TLegend(0.72, 0.88, 0.94, 0.96); */
+  /* set_style(ratioleg); */
+  /* ratioleg->SetTextSize(0.07); */
+  /* ratioleg->AddEntry(ratiostaterr, "MC uncert. (stat)", "f"); */
+  /* ratioleg->Draw(); */
 
   pad1->cd();
   gPad->RedrawAxis();
@@ -189,7 +230,7 @@ void MakeClosurePlot(TH1D* hPred, TH1D* hTrue, TString hname, TString plotdir, b
   delete ratiostaterr;
   delete ratiosysterr;
   delete leg2;
-  delete ratioleg;
+  // delete ratioleg;
   delete pad1;
   delete pad2;
   delete c1;

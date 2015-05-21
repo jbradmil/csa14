@@ -18,8 +18,8 @@ JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i QCD_Pt-800to1000_Tune4C_13Te
 ./scripts/make_lists_and_trees.sh QCD_Pt-470to600_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2375_v78
 ./scripts/make_lists_and_trees.sh QCD_Pt-300to470_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2376_v78 
 
-JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2409_v78
-JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2412_v78 
+./scripts/make_lists_and_trees.sh TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2409_v78
+./scripts/make_lists_and_trees.sh TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2412_v78 
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2410_v78
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2411_v78
 JobSubmit.csh ./scripts/make_reduced_tree.exe -c -i T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2393_v78

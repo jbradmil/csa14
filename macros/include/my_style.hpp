@@ -11,12 +11,14 @@
 TColor uscb_blue(1000, 1/255.,57/255.,166/255.);
 TColor uscb_gold(1001, 255/255.,200/255.,47/255);
 TColor penn_red(1002, 149/255.,0/255.,26/255.);
-TColor pantone(1003, 255/255.,88/255.,0/255.);
+TColor ut_orange(1003, 191/255.,87/255.,0/255.);
+//TColor pantone(1003, 255/255.,88/255.,0/255.);
 TColor uo_green(1004, 0/255.,79/255.,39/255.);
 TColor tcu_purple(1005, 52/255.,42/255.,123/255.);
 TColor tar_heel_blue(1006, 86/255.,160/255.,211/255.);
+TColor cool_teal(1007, 2/255.,132/255.,130/255.);
 
-void set_style(TH1 * h, const TString& p) {
+void set_style(TH1 * h, const TString& p, const bool dashes=false) {
 
 
   if (p.Contains("t1bbbb")) {
@@ -28,7 +30,9 @@ void set_style(TH1 * h, const TString& p) {
   }  else if (p == "data_obs") {
     h->SetMarkerSize(0.8);
     h->SetMarkerStyle(20);
+    h->SetLineColor(1);
   } else {
+    if (dashes) h->SetFillStyle(3005);
     h->SetLineColor(kBlack);
     if (p == "znn") {
       h->SetFillColor(1002);
@@ -63,7 +67,7 @@ void set_style(TLegend* leg, float text_size=0.045, bool transparent=false) {
   leg->SetShadowColor(0);
   leg->SetTextFont(62);
   leg->SetTextSize(text_size);
-  leg->SetBorderSize(1);
+  leg->SetBorderSize(0);
   return;
 }
 
@@ -218,3 +222,42 @@ void setTDRStyle(TStyle* tdrStyle) {
   tdrStyle->cd();
 
 }
+
+void set_palette_style()
+{
+  const Int_t NRGBs = 5;
+  const Int_t NCont = 255;
+
+  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
+  TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
+  gStyle->SetNumberContours(NCont);
+}
+
+void set_deep_sea_palette()
+{
+  const Int_t nRGBs = 5;
+  const Int_t NCont = 255;
+
+  Double_t stops[nRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
+  Double_t red[nRGBs]   = { 1.00, 0.09, 0.18, 0.09, 0.00 };
+  // Double_t green[nRGBs] = { 0.97, 0.68, 0.39, 0.02, 0.01 };
+  // Double_t blue[nRGBs]  = { 0.97, 0.79, 0.62, 0.39, 0.17 };
+  Double_t green[nRGBs] = { 1.00, 0.97, 0.57, 0.20, 0.10 };
+  Double_t blue[nRGBs]  = { 1.00, 0.97, 0.80, 0.57, 0.47 };
+  TColor::CreateGradientColorTable(nRGBs, stops, red, green, blue, NCont);
+  gStyle->SetNumberContours(NCont);
+}
+
+void Pal1()
+{
+  gStyle->SetPalette(51);
+}
+
+void Pal2()
+{
+  gStyle->SetPalette(53);
+}
+

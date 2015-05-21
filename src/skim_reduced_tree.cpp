@@ -25,6 +25,7 @@ void SkimReducedTree(string inFilename, string outFilename) {
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   // 13 TeV
   TTree *outCh = inCh->CopyTree(ht+njets+mht30);
+  //  TTree *outCh = inCh->CopyTree(ht+njets+"num_csvm_jets30>=2&&min_delta_phi_met_N>6&&lumiblock<400000");
   // 8 TeV  
   //  TTree *outCh = inCh->CopyTree("jet4_pt>40&&passesJSONCut&&passesPVCut&&passes2012METCleaningCut&&met>200&&ht40>500&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   cout << "Saved " << outCh->GetEntries() << " events." << endl;
@@ -58,6 +59,8 @@ int main(int argc, char *argv[]){
   }
   // 13 TeV
   outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
+  //outFilename="reduced_trees/13TeV/skimmed/test_dataset/"+baseName+"_skimmed.root";
+  //outFilename="reduced_trees/13TeV/skimmed/test_mc/"+baseName+"_skimmed.root";
   // 8 TeV  
   //  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
   SkimReducedTree(inFilename,outFilename);
