@@ -1,0 +1,158 @@
+\documentclass[11pt]{amsart}
+ \usepackage[landscape, paperwidth=8.5in, paperheight=13.5in]{geometry}               
+%\usepackage{geometry}                            % ... or a4paper or a5paper or ... 
+% \geometry{landscape}                % Activate for for rotated page geometry
+% \usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{wasysym}
+
+
+\newcommand{\njets}{N_{\mathrm{jets}}}
+\newcommand{\nbjets}{N_{b-\mathrm{jets}}}
+\newcommand{\HT}{H_{T}}
+\newcommand{\MHT}{H_{T}^{\mathrm{miss}}}
+\newcommand{\MET}{E_{T}^{\mathrm{miss}}}
+\newcommand{\MJ}{\Sigma m_{J}}
+\newcommand{\dphin}{\Delta \hat\phi_{\mathrm{min}}}
+\newcommand{\dphi}{\Delta \phi_{\mathrm{min}}}
+
+\newcommand{\gluino}{\tilde{g}}
+\newcommand{\lsp}{\tilde{\chi}_1^0}
+\newcommand{\ttbar}{t\bar{t}}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{Tables for event selection talk}
+\author{Jack Bradmiller-Feld}
+% \date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccccc}
+\hline
+\hline
+& T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ &$S\;(\epsilon_S)$ \\ \hline
+Start & $141.90\;(1.00)$ & $856.42\;(1.00)$ & $141.90\;(1.00)$ & $3253.88\;(1.00)$ & $252.98\;(1.00)$ & $3253.88\;(1.00)$ \\
+$\HT > 500$ GeV & $141.80\;(1.00)$ & $704.54\;(0.82)$ & $141.81\;(1.00)$ & $714.50\;(0.22)$ & $252.81\;(1.00)$ & $1458.11\;(0.45)$ \\
+$\MHT > 200$ GeV & $125.99\;(0.89)$ & $311.81\;(0.44)$ & $128.48\;(0.91)$ & $591.22\;(0.83)$ & $228.55\;(0.90)$ & $943.95\;(0.65)$ \\\hline
+Combined efficiency & 0.89 & 0.36 & 0.91 & 0.18 & 0.90 & 0.29 \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccccc}
+\hline
+\hline
+& T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ &$S\;(\epsilon_S)$ \\ \hline
+$p_{T}^{j} > 30$ GeV & $141.73\;(1.00)$ & $704.46\;(0.82)$ & $137.32\;(0.97)$ & $654.84\;(0.20)$ & $244.86\;(0.97)$ & $1390.12\;(0.43)$ \\
+$p_{T}^{j} > 40$ GeV & $141.53\;(1.00)$ & $631.42\;(0.74)$ & $134.84\;(0.95)$ & $531.56\;(0.16)$ & $240.54\;(0.95)$ & $1236.85\;(0.38)$ \\
+$p_{T}^{j} > 50$ GeV & $140.97\;(0.99)$ & $549.74\;(0.64)$ & $132.10\;(0.93)$ & $411.33\;(0.13)$ & $235.66\;(0.93)$ & $1074.63\;(0.33)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|c|cccccc}
+\hline
+\hline
+& BG & T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $B\;(\epsilon_B)$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ &$S\;(\epsilon_S/\sqrt(\epsilon_B))$ \\ \hline
+After lepton veto & $36645.25$ & $433.21$ & $103.49$ & $84.18$ & $433.21$ & $151.66$ & $747.63$ \\
+$\mu$ track veto & $34853.02\;(0.95)$ & $421.65\;(1.00)$ & $98.71\;(0.98)$ & $83.54\;(1.02)$ & $421.65\;(1.00)$ & $150.98\;(1.02)$ & $742.28\;(1.02)$ \\
+$e$ track veto & $32943.73\;(0.90)$ & $412.51\;(1.00)$ & $93.68\;(0.95)$ & $82.61\;(1.03)$ & $412.51\;(1.00)$ & $148.96\;(1.04)$ & $727.74\;(1.03)$ \\
+Had. track veto & $32053.58\;(0.87)$ & $425.44\;(1.05)$ & $94.20\;(0.97)$ & $83.38\;(1.06)$ & $425.44\;(1.05)$ & $150.04\;(1.06)$ & $727.44\;(1.04)$ \\\hline
+Combined track veto & $26974.28\;(0.74)$ & $394.85\;(1.06)$ & $81.25\;(0.92)$ & $81.19\;(1.12)$ & $394.85\;(1.06)$ & $146.69\;(1.13)$ & $702.97\;(1.10)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|c|cccccc}
+\hline
+\hline
+& BG & T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $B\;(\epsilon_B)$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ &$S\;(\epsilon_S/\sqrt(\epsilon_B))$ \\ \hline
+Before cut & $114915.89$ & $44.06$ & $104.31$ & $115.79$ & $461.65$ & $207.00$ & $829.11$ \\\hline
+$\dphin(j,\MET)>6$ & $26379.09\;(0.23)$ & $32.35\;(1.53)$ & $79.92\;(1.60)$ & $80.19\;(1.45)$ & $390.73\;(1.77)$ & $144.16\;(1.45)$ & $694.22\;(1.75)$ \\\hline
+$\Delta\phi(j,\MHT)>0.3$ & $30379.71\;(0.26)$ & $38.01\;(1.68)$ & $87.19\;(1.63)$ & $98.93\;(1.66)$ & $384.37\;(1.62)$ & $177.90\;(1.67)$ & $716.73\;(1.68)$ \\
+$\Delta\phi(j,\MHT)>0.37$ & $26189.69\;(0.23)$ & $36.71\;(1.75)$ & $83.28\;(1.67)$ & $95.04\;(1.72)$ & $368.12\;(1.67)$ & $170.96\;(1.73)$ & $691.80\;(1.75)$ \\
+$\Delta\phi(j,\MHT)>0.5$ & $21475.51\;(0.19)$ & $34.08\;(1.79)$ & $76.53\;(1.70)$ & $88.01\;(1.76)$ & $337.57\;(1.69)$ & $158.18\;(1.77)$ & $645.65\;(1.80)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|c|cccccc}
+\hline
+\hline
+& BG & T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $t\bar{t}\;(\epsilon_B)$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ & $S\;(\epsilon_S/\sqrt(\epsilon_B))$ &$S\;(\epsilon_S/\sqrt(\epsilon_B))$ \\ \hline
+Before cut & $11126.44$ & $44.06$ & $104.31$ & $115.79$ & $461.65$ & $207.00$ & $829.11$ \\\hline
+$\dphin(j,\MET)>6$ & $6742.58\;(0.61)$ & $32.35\;(0.94)$ & $79.92\;(0.98)$ & $80.19\;(0.89)$ & $390.73\;(1.09)$ & $144.16\;(0.89)$ & $694.22\;(1.08)$ \\\hline
+$\Delta\phi(j,\MHT)>0.3$ & $7538.96\;(0.68)$ & $38.01\;(1.05)$ & $87.19\;(1.02)$ & $98.93\;(1.04)$ & $384.37\;(1.01)$ & $177.90\;(1.04)$ & $716.73\;(1.05)$ \\
+$\Delta\phi(j,\MHT)>0.37$ & $6805.94\;(0.61)$ & $36.71\;(1.07)$ & $83.28\;(1.02)$ & $95.04\;(1.05)$ & $368.12\;(1.02)$ & $170.96\;(1.06)$ & $691.80\;(1.07)$ \\
+$\Delta\phi(j,\MHT)>0.5$ & $5622.14\;(0.51)$ & $34.08\;(1.09)$ & $76.53\;(1.03)$ & $88.01\;(1.07)$ & $337.57\;(1.03)$ & $158.18\;(1.08)$ & $645.65\;(1.10)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccccc}
+\hline
+\hline
+& T1tttt (NC) & T1tttt (C) & T1bbbb (NC) & T1bbbb (C) & T1qqqq (NC) & T1qqqq (C) \\ \hline
+& $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ & $S\;(\epsilon_S)$ &$S\;(\epsilon_S)$ \\ \hline
+Start & $141.90\;(1.00)$ & $856.42\;(1.00)$ & $141.90\;(1.00)$ & $3253.88\;(1.00)$ & $252.98\;(1.00)$ & $3253.88\;(1.00)$ \\
+$\njets >=4$ & $141.83\;(1.00)$ & $854.69\;(1.00)$ & $137.35\;(0.97)$ & $1624.80\;(0.50)$ & $244.94\;(0.97)$ & $2549.73\;(0.78)$ \\
+$\HT > 500$ GeV & $141.73\;(1.00)$ & $704.46\;(0.82)$ & $137.32\;(1.00)$ & $654.84\;(0.40)$ & $244.86\;(1.00)$ & $1390.12\;(0.55)$ \\
+$\MHT > 200$ GeV & $125.93\;(0.89)$ & $311.76\;(0.44)$ & $124.28\;(0.91)$ & $534.81\;(0.82)$ & $221.25\;(0.90)$ & $904.16\;(0.65)$ \\
+Muon veto & $80.52\;(0.64)$ & $202.40\;(0.65)$ & $123.11\;(0.99)$ & $521.38\;(0.97)$ & $220.83\;(1.00)$ & $902.62\;(1.00)$ \\
+Electron veto & $51.54\;(0.64)$ & $135.14\;(0.67)$ & $121.97\;(0.99)$ & $511.96\;(0.98)$ & $218.57\;(0.99)$ & $894.94\;(0.99)$ \\
+Iso. track veto & $45.09\;(0.87)$ & $106.05\;(0.78)$ & $117.25\;(0.96)$ & $466.47\;(0.91)$ & $210.71\;(0.96)$ & $840.05\;(0.94)$ \\
+$\dphi>0.5$ & $34.88\;(0.77)$ & $77.80\;(0.73)$ & $89.11\;(0.76)$ & $341.39\;(0.73)$ & $161.03\;(0.76)$ & $653.76\;(0.78)$ \\
+Event cleaning & $34.08\;(0.98)$ & $76.53\;(0.98)$ & $88.01\;(0.99)$ & $337.57\;(0.99)$ & $158.18\;(0.98)$ & $645.65\;(0.99)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccccccc}
+\hline
+\hline 
+Cut & $t\bar{t}$ & QCD  & $Z+$jets  & $W+$jets  & Single top & Other & Total\\ \hline
+$\njets,\;\HT,\;\MHT$&  $47394.14\;(1.00)$ & $101065.98\;(1.00)$ & $10709.16\;(1.00)$ & $35980.26\;(1.00)$ & $7022.90\;(1.00)$ & $628.67\;(1.00)$ & $202801.11\;(1.00)$ \\
+Muon veto & $32031.45\;(0.68)$ & $100771.11\;(1.00)$ & $10692.94\;(1.00)$ & $25605.18\;(0.71)$ & $4826.75\;(0.69)$ & $421.52\;(0.67)$ & $174348.96\;(0.86)$ \\
+Electron veto & $19116.81\;(0.60)$ & $99296.67\;(0.99)$ & $10607.60\;(0.99)$ & $15240.75\;(0.60)$ & $2862.62\;(0.59)$ & $270.28\;(0.64)$ & $147394.74\;(0.85)$ \\
+Iso. track veto & $11528.43\;(0.60)$ & $90930.96\;(0.92)$ & $10051.25\;(0.95)$ & $8965.16\;(0.59)$ & $1723.19\;(0.60)$ & $192.98\;(0.71)$ & $123391.98\;(0.84)$ \\
+$\dphi>0.5$ & $5860.99\;(0.51)$ & $7732.36\;(0.09)$ & $7048.73\;(0.70)$ & $4983.17\;(0.56)$ & $709.04\;(0.41)$ & $123.52\;(0.64)$ & $26457.81\;(0.21)$ \\
+Event cleaning & $5622.14\;(0.96)$ & $3312.66\;(0.43)$ & $6987.45\;(0.99)$ & $4748.56\;(0.95)$ & $684.90\;(0.97)$ & $119.80\;(0.97)$ & $21475.51\;(0.81)$ \\
+\hline
+\hline
+\end{tabular}
+\end{table}
+
+
+
+\end{document}
