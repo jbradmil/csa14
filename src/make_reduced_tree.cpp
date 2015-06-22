@@ -7,12 +7,12 @@
 
 int main(int argc, char *argv[]){
   std::string inFilename("");
-  bool iscfA(false), isList(false), isSkimmed(false);
+  bool iscfA(false), isList(false), isSkimmed(false), defaultJEC(true);
   jec_type_t jec_type(CORR);
   int i_jec_type(1);
   int c(0);
   int Nentries(-1);
-  while((c=getopt(argc, argv, "i:n:j:cls"))!=-1){
+  while((c=getopt(argc, argv, "i:n:j:clsd"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
@@ -36,6 +36,10 @@ int main(int argc, char *argv[]){
     case 's':
       isSkimmed=true;
       break;
+    case 'd':
+      defaultJEC=true;
+      jec_type=DEF;
+      break;
     default:
       break;
     }
@@ -48,7 +52,8 @@ int main(int argc, char *argv[]){
   else energy = "13TeV";
   if(iscfA){
     dirName=dirName+energy+"/"+inFilename;
-    outFilename=dirName+"/"+inFilename+".root";
+    if (defaultJEC) outFilename=dirName+"/"+inFilename+"_defaultJEC.root";
+    else outFilename=dirName+"/"+inFilename+".root";
     inFilename="/net/cms2/cms2r0/cfA/"+inFilename+"/cfA_"+inFilename+"*.root";
   } else if(isSkimmed) {
     inFilename=inFilename+"*.root";
@@ -80,7 +85,8 @@ int main(int argc, char *argv[]){
     pos=dirName.find(".part");
     if(pos!=std::string::npos)  dirName.erase(pos);
     dirName="reduced_trees/"+energy+"/"+dirName;
-    outFilename=dirName+"/"+baseName+".root";
+    if (defaultJEC) outFilename=dirName+"/"+baseName+"_defaultJEC.root";
+    else outFilename=dirName+"/"+baseName+".root";
   }
     std::cout << inFilename << "\n" << outFilename << "\n";
 

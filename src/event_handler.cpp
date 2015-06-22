@@ -52,19 +52,27 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   theJESType_(jec_type_in),
   corrJets(0),
   JetsUpToDate(false),
+  JetConeSize_(0.),
   theMET_(0.),
   theMETPhi_(0.),
+  SearchBins_(0),
   sortedFatJetCache(0),
   FatJetsUpToDate(false),
-  recoMuonCache(0),
-  recoMuonsUpToDate(false),
-  recoElectronCache(0),
-  recoElectronsUpToDate(false),
-  recoTauCache(0),
-  recoTausUpToDate(false), 
-  betaUpToDate(false),
+  muons_(0),
+  muonsUpToDate_(false),
+  electrons_(0),
+  electronsUpToDate_(false),
+  photons_(0),
+  photonsUpToDate_(false),
+  muTracks_(0),
+  muTracksUpToDate_(false),
+  elTracks_(0),
+  elTracksUpToDate_(false),
+  hadTracks_(0),
+  hadTracksUpToDate_(false),
   scaleFactor(scaleFactorIn),
-  beta(0),
+  //betaUpToDate(false),
+  //beta(0),
   f_tageff_(0){
   if (fastMode){
     chainB.SetBranchStatus("pfcand*",0);
@@ -91,6 +99,7 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
   LoadJetTagEffMaps();
   // LoadRLFHist();
   LoadJEC();
+  LoadSearchBins();
 }
 
 // EventHandler::~EventHandler(){
@@ -100,14 +109,26 @@ EventHandler::EventHandler(const std::string &fileName, const bool isList, const
 
 void EventHandler::GetEntry(const unsigned int entry){
   cfA::GetEntry(entry);
-  betaUpToDate=false;
+  //  betaUpToDate=false;
+  if (cfAVersion>=75) {
+    //  cout << "Setup leptons & tracks" << endl;
+    muons_ = GetRecoMuons();
+    electrons_ = GetRecoElectrons();
+    photons_ = GetPhotons();
+    GetIsoTracks(muTracks_, elTracks_, hadTracks_, true, true);
+  } else{
+    muons_ = GetRA2bMuons();
+    electrons_ = GetRA2bElectrons();
+  }
   JetsUpToDate=false;
+  JetConeSize_ = (cfAVersion>=75 ? 0.4 : 0.5);
+  //  cout << "GetSortedJets()" << endl;
   GetSortedJets();
   SetCorrectedMET();
   FatJetsUpToDate=false;
-  recoMuonsUpToDate=false;
-  recoElectronsUpToDate=false;
-  recoTausUpToDate=false;
+  muonsUpToDate_=false;
+  electronsUpToDate_=false;
+
 }
 
 
@@ -275,6 +296,10 @@ void EventHandler::LoadJEC() {
   jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L2Relative_AK4PFchs.txt");
   jetcorr_filenames_pfL1FastJetL2L3_.push_back ("JESFiles/PHYS14_V4_MC/PHYS14_V4_MC_L3Absolute_AK4PFchs.txt");
   jet_corrector_pfL1FastJetL2L3_ = makeJetCorrector(jetcorr_filenames_pfL1FastJetL2L3_);	
+}
+
+void EventHandler::LoadSearchBins() {
+  SearchBins_ = new SearchBins();
 }
 
 // void EventHandler::LoadRLFHist() {
@@ -818,6 +843,18 @@ void EventHandler::GetSortedJets() const{
 	tlvCorr = tlvIn; // for pre-v78 samples, just use the default JEC
       }
       corrJets.push_back(Jet(ijet, btag_disc, tlvIn, 1/corrFactorOld, tlvRaw, corr, tlvCorr, subCorr));
+      for (unsigned int imu(0); imu<muons_.size(); imu++) {
+	if (JetOverlaps(ijet, mus_pt->at(muons_[imu]), mus_eta->at(muons_[imu]), mus_phi->at(muons_[imu]))) corrJets.back().SetisLepton(true);
+      }
+      for (unsigned int iel(0); iel<electrons_.size(); iel++) {
+	if (JetOverlaps(ijet, els_pt->at(electrons_[iel]), els_scEta->at(electrons_[iel]), els_phi->at(electrons_[iel]))) corrJets.back().SetisLepton(true);
+      }
+      if (cfAVersion>=78) {
+	for (unsigned int iph(0); iph<photons_.size(); iph++) {
+	  if (JetOverlaps(ijet, photons_pt->at(photons_[iph]), photons_scEta->at(photons_[iph]), photons_phi->at(photons_[iph]))) corrJets.back().SetisPhoton(true);
+	}
+      }
+      //SetupJetOverlaps(corrJets[ijet]);
     }
     std::sort(corrJets.begin(),corrJets.end(), std::greater<Jet>());
     // Key: we're sorting by pt now (corrected if v78+), not CSV
@@ -830,6 +867,12 @@ void EventHandler::GetSortedJets() const{
     // 		}
   }
 }
+
+// void EventHandler::SetupJetOverlaps(int ijet) {
+//   for (unsigned int imu(0); imu<muons_.size(); imu++) {
+//     if (JetOverlaps(ijet, mus_pt->at(muons[imu]), mus_eta->at(muons[imu]), mus_phi->at(muons[imu]))) corrJets[ijet].SetOverlapIndex(MUON, muons_[imu]);
+//   }
+// }
 
 void EventHandler::SetCorrectedMET() {
  // if (cfAVersion<78) {
@@ -1075,38 +1118,38 @@ double EventHandler::GetHighestJetCSV(const unsigned int nth_highest) const{
 
 bool EventHandler::jetHasEMu(const int ijet) const{
   // has an isolated (veto) muon
-  if (!recoMuonsUpToDate) {
-    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
-    else recoMuonCache=GetRA2bMuons(true);
-    recoMuonsUpToDate=true;
+  if (!muonsUpToDate_) {
+    if (cfAVersion>=75) muons_=GetRecoMuons(true);
+    else muons_=GetRA2bMuons(true);
+    muonsUpToDate_=true;
   }
-  for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
-    int mujet = mus_jet_ind->at(recoMuonCache[mu]);
+  for (unsigned int mu(0); mu<muons_.size(); mu++) {
+    int mujet = mus_jet_ind->at(muons_[mu]);
     if (ijet==mujet) return true;
   }
   // has an isolated (veto) electron
-  if (!recoElectronsUpToDate) {
-    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
-    else recoElectronCache=GetRA2bElectrons(true);
-    recoElectronsUpToDate=true;
+  if (!electronsUpToDate_) {
+    if (cfAVersion>=75) electrons_=GetRecoElectrons(true);
+    else electrons_=GetRA2bElectrons(true);
+    electronsUpToDate_=true;
   }
-  for (unsigned int el(0); el<recoElectronCache.size(); el++) {
-    int eljet = els_jet_ind->at(recoElectronCache[el]);
+  for (unsigned int el(0); el<electrons_.size(); el++) {
+    int eljet = els_jet_ind->at(electrons_[el]);
     if (ijet==eljet) return true;
   }
   return false;
 }
 
 bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
-  if (!recoMuonsUpToDate) {
-    if (cfAVersion>=75) recoMuonCache=GetRecoMuons(true);
-    else recoMuonCache=GetRA2bMuons(true);
-    recoMuonsUpToDate=true;
+  if (!muonsUpToDate_) {
+    if (cfAVersion>=75) muons_=GetRecoMuons(true);
+    else muons_=GetRA2bMuons(true);
+    muonsUpToDate_=true;
   }
-  // cout << "Found " << recoMuonCache.size() << " muons." << endl;
-  for (unsigned int mu(0); mu<recoMuonCache.size(); mu++) {
-    double deltaR = Math::GetDeltaR(phi, eta, mus_phi->at(recoMuonCache[mu]), mus_eta->at(recoMuonCache[mu]));
-    //  printf("Muon %d, DeltaR %3.2f\n",recoMuonCache[mu], deltaR);
+  // cout << "Found " << muons_.size() << " muons." << endl;
+  for (unsigned int mu(0); mu<muons_.size(); mu++) {
+    double deltaR = Math::GetDeltaR(phi, eta, mus_phi->at(muons_[mu]), mus_eta->at(muons_[mu]));
+    //  printf("Muon %d, DeltaR %3.2f\n",muons_[mu], deltaR);
     if (deltaR<0.4) {
       return true;
     }
@@ -1115,13 +1158,13 @@ bool EventHandler::isInMuonCollection(const double eta, const double phi) const{
 }
 
 bool EventHandler::isInElectronCollection(const double eta, const double phi) const{
-  if (!recoElectronsUpToDate) {
-    if (cfAVersion>=75) recoElectronCache=GetRecoElectrons(true);
-    else recoElectronCache=GetRA2bElectrons(true);
-    recoElectronsUpToDate=true;
+  if (!electronsUpToDate_) {
+    if (cfAVersion>=75) electrons_=GetRecoElectrons(true);
+    else electrons_=GetRA2bElectrons(true);
+    electronsUpToDate_=true;
   }
-  for (unsigned int el(0); el<recoElectronCache.size(); el++) {
-    double deltaR = Math::GetDeltaR(phi, eta, els_phi->at(recoElectronCache[el]), els_eta->at(recoElectronCache[el]));
+  for (unsigned int el(0); el<electrons_.size(); el++) {
+    double deltaR = Math::GetDeltaR(phi, eta, els_phi->at(electrons_[el]), els_eta->at(electrons_[el]));
     if (deltaR<0.4) {
       return true;
     }
@@ -1129,76 +1172,62 @@ bool EventHandler::isInElectronCollection(const double eta, const double phi) co
   return false;
 }
 
-bool EventHandler::isInTauCollection(const double eta, const double phi) const{
-  if (!recoTausUpToDate) {
-    recoTauCache=GetRecoTaus();
-    recoTausUpToDate=true;
-  }
-  for (unsigned int tau(0); tau<recoTauCache.size(); tau++) {
-    double deltaR = Math::GetDeltaR(phi, eta, taus_phi->at(recoTauCache[tau]), taus_eta->at(recoTauCache[tau]));
-    if (deltaR<0.4) {
-      return true;
-    }
-  }
-  return false;
-}
+// void EventHandler::GetBeta(const std::string which) const{
+//   betaUpToDate=true;
 
-void EventHandler::GetBeta(const std::string which) const{
-  betaUpToDate=true;
+//   //Clear out the vector before starting a new event!
+//   beta.clear();
 
-  //Clear out the vector before starting a new event!
-  beta.clear();
-
-  if (GetcfAVersion()<69){
-    beta.resize(jets_AKPF_pt->size(), 0.0);
-  }else{
-    int totjet = 0;
-    int matches = 0;
-    for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
-      const double pt = jets_AKPF_pt->at(ijet);
-      const double eta = fabs(jets_AKPF_eta->at(ijet));
+//   if (GetcfAVersion()<69){
+//     beta.resize(jets_AKPF_pt->size(), 0.0);
+//   }else{
+//     int totjet = 0;
+//     int matches = 0;
+//     for (unsigned int ijet=0; ijet<jets_AKPF_pt->size(); ++ijet) {
+//       const double pt = jets_AKPF_pt->at(ijet);
+//       const double eta = fabs(jets_AKPF_eta->at(ijet));
       
-      int i = 0;
-      totjet++;
-      for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionBeta->begin(); itr != puJet_rejectionBeta->end(); ++itr, ++i) {
-        int j = 0;
-        double mypt = 0;
-        double myeta = 0;
-        double mybeta = 0;
-        double result = 0;
-        double tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
-        for ( std::vector<float>::const_iterator it = itr->begin(); it != itr->end(); ++it, ++j) {
+//       int i = 0;
+//       totjet++;
+//       for (std::vector<std::vector<float> >::const_iterator itr = puJet_rejectionBeta->begin(); itr != puJet_rejectionBeta->end(); ++itr, ++i) {
+//         int j = 0;
+//         double mypt = 0;
+//         double myeta = 0;
+//         double mybeta = 0;
+//         double result = 0;
+//         double tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0;
+//         for ( std::vector<float>::const_iterator it = itr->begin(); it != itr->end(); ++it, ++j) {
           
-          if ( (j%6)==0 ) mypt = *it;  
-          if ( (j%6)==1 ) myeta = fabs(*it); 
-          if ( (j%6)==2 ) tmp1 = *it;  
-          if ( (j%6)==3 ) tmp2 = *it;  
-          if ( (j%6)==4 ) tmp3 = *it;  
-          if ( (j%6)==5 ) tmp4 = *it;  
+//           if ( (j%6)==0 ) mypt = *it;  
+//           if ( (j%6)==1 ) myeta = fabs(*it); 
+//           if ( (j%6)==2 ) tmp1 = *it;  
+//           if ( (j%6)==3 ) tmp2 = *it;  
+//           if ( (j%6)==4 ) tmp3 = *it;  
+//           if ( (j%6)==5 ) tmp4 = *it;  
           
-          //if ( which == "beta" )                 result = tmp1; 
-          //else if ( which == "betaStar" )        result = tmp2; 
-          //else if ( which == "betaClassic" )     result = tmp3; 
-          //else if ( which == "betaStarClassic" ) result = tmp4; 
-          //else result = -5; //Don't assert..
+//           //if ( which == "beta" )                 result = tmp1; 
+//           //else if ( which == "betaStar" )        result = tmp2; 
+//           //else if ( which == "betaClassic" )     result = tmp3; 
+//           //else if ( which == "betaStarClassic" ) result = tmp4; 
+//           //else result = -5; //Don't assert..
           
-          if ( which.compare("beta")==0 )                 result = tmp1; 
-          else if ( which.compare("betaStar")==0 )        result = tmp2; 
-          else if ( which.compare("betaClassic")==0 )     result = tmp3; 
-          else if ( which.compare("betaStarClassic")==0 ) result = tmp4; 
-          else result = -5; //Don't assert..
+//           if ( which.compare("beta")==0 )                 result = tmp1; 
+//           else if ( which.compare("betaStar")==0 )        result = tmp2; 
+//           else if ( which.compare("betaClassic")==0 )     result = tmp3; 
+//           else if ( which.compare("betaStarClassic")==0 ) result = tmp4; 
+//           else result = -5; //Don't assert..
           
-        }//vector of info of each jet
-        if ( mypt == pt && myeta == eta ) {
-          matches++;
-          mybeta = result;
-          beta.push_back(mybeta);
-          break;
-        }     
-      }//vector of jets
-    } //ijet
-  }
-}
+//         }//vector of info of each jet
+//         if ( mypt == pt && myeta == eta ) {
+//           matches++;
+//           mybeta = result;
+//           beta.push_back(mybeta);
+//           break;
+//         }     
+//       }//vector of jets
+//     } //ijet
+//   }
+// }
 
 void EventHandler::SetScaleFactor(const double crossSection, const double luminosity, int numEntries){
   const int maxEntriesA(chainA.GetEntries()), maxEntriesB(chainB.GetEntries());
@@ -1327,7 +1356,7 @@ bool EventHandler::isGoodJet(const unsigned int ijet, const bool jetid, const do
 	if (use_raw_pt) tlv = corrJets[ijet].GetTLV(RAW);
 	else if (use_def_pt) tlv = corrJets[ijet].GetTLV(DEF);
 	if(tlv.Pt()<ptThresh || fabs(tlv.Eta())>etaThresh) return false;
-	if( jetid && !jetPassLooseID(ijet)) return false;
+	if( jetid && !corrJets[ijet].isLepton() && !jetPassLooseID(ijet)) return false;
 	// if(!betaUpToDate) GetBeta();
 	//  if(beta.at(ijet)<0.2 && doBeta) return false;
 	return true;
@@ -1913,19 +1942,42 @@ double EventHandler::getDZ(double vx, double vy, double vz, double px, double py
   return vz - pv_z->at(firstGoodVertex) -((vx-pv_x->at(firstGoodVertex))*px+(vy-pv_y->at(firstGoodVertex))*py)*pz/(px*px+py*py); 
 }
 
-bool EventHandler::PassMuonID(const uint imu) const{ // does not include pt or isolation
-  if ( !mus_id_GlobalMuonPromptTight->at(imu)) return false;
-  if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
-  const double d0 = GetMuonD0(imu);
-  const double mus_vz = mus_tk_vz->at(imu);
-  const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
-  if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
-  if ( !mus_tk_numvalPixelhits->at(imu)) return false;
-  if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
-  if (cfAVersion>=77&&mus_globalTrack_normalizedChi2->at(imu) > 10) return false;
-  if (cfAVersion>=75&&!mus_isPF->at(imu)) return false;
+bool EventHandler::PassMuonID(const uint imu, const bool tight) const{ // does not include pt or isolation
+  if (tight) {
+    if (!mus_isPF->at(imu)) return false;
+    if (!mus_id_GlobalMuonPromptTight->at(imu)) return false;
+    if ( mus_numberOfMatchedStations->at(imu) <= 1 ) return false;
+    const double d0 = GetMuonD0(imu);
+    const double mus_vz = mus_tk_vz->at(imu);
+    const double mus_dz_vtx = fabs(mus_vz-pv_z->at(0));
+    if (fabs(d0)>=0.2 || mus_dz_vtx>=0.5) return false;
+    if ( mus_tk_numvalPixelhits->at(imu)<1 ) return false;
+    if ( mus_tk_LayersWithMeasurement->at(imu) <= 5 ) return false;
+    if (cfAVersion>=77&&mus_globalTrack_normalizedChi2->at(imu) > 10) return false;
+  } else { // new medium ID? -- https://indico.cern.ch/event/357213/contribution/2/material/slides/0.pdf
+    bool goodGlb=false;
+    if (mus_isGlobalMuon->at(imu) &&
+	mus_globalTrack_normalizedChi2->at(imu) < 3. &&
+	mus_trkPositionMatch->at(imu) < 12. &&
+	mus_trkKink->at(imu) < 20.) goodGlb=true;
+    if (mus_tkHitsFrac->at(imu) < 0.8) return false;
+    double segCompCut = (goodGlb) ? 0.303 : 0.451;
+    if (mus_segmentCompatibility->at(imu) < segCompCut) return false;
+  }
 
   return true;
+}
+
+unsigned int EventHandler::GetNumMediumMuons() const{
+  uint nmus(0);
+  for (uint imu(0); imu<mus_pt->size(); imu++) {
+    if (mus_pt->at(imu)<10.) continue;
+    if (fabs(mus_eta->at(imu)) >= 2.4) continue;
+    if (!PassMuonID(imu, false)) continue;
+    if (mus_miniso->at(imu) > 0.2) continue;
+    nmus++;
+  }
+  return nmus;
 }
 
 bool EventHandler::isRecoMuon(const uint imu, const uint level, const bool check_pt, const bool check_iso, const bool check_id, const bool use_mini_iso, const double mini_iso_cut) const{
@@ -2784,27 +2836,60 @@ int EventHandler::GetNumIsoTracks(const double ptThresh, const bool mT_cut) cons
   return nisotracks;
 }
 
-std::vector<std::pair<int,double> > EventHandler::GetIsoTracks(const double ptThresh, const bool mT_cut) const{
-  std::vector<std::pair<int,double> > isotracks;
-  for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
-    if ( (isotk_pt->at(itrack) >= ptThresh) &&
-	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
-	 ( fabs(isotk_dzpv->at(itrack)) <0.05) &&
-	 ( !mT_cut || GetMTW(isotk_pt->at(itrack),theMET_,isotk_phi->at(itrack),theMETPhi_)<100 ) &&
-	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
-	 ){
-      isotracks.push_back(std::make_pair(itrack, isotk_iso->at(itrack) /isotk_pt->at(itrack)));
-    }
-  }
-  return isotracks;
-}
+// std::vector<std::pair<int,double> > EventHandler::GetIsoTracks(const double ptThresh, const bool mT_cut) const{
+//   std::vector<std::pair<int,double> > isotracks;
+//   for ( unsigned int itrack = 0 ; itrack < isotk_pt->size() ; ++itrack) {
+//     if ( (isotk_pt->at(itrack) >= ptThresh) &&
+// 	 (isotk_iso->at(itrack) /isotk_pt->at(itrack) < 0.1 ) &&
+// 	 ( fabs(isotk_dzpv->at(itrack)) <0.05) &&
+// 	 ( !mT_cut || GetMTW(isotk_pt->at(itrack),theMET_,isotk_phi->at(itrack),theMETPhi_)<100 ) &&
+// 	 ( fabs(isotk_eta->at(itrack)) < 2.4 ) //this is more of a sanity check
+// 	 ){
+//       isotracks.push_back(std::make_pair(itrack, isotk_iso->at(itrack) /isotk_pt->at(itrack)));
+//     }
+//   }
+//   return isotracks;
+// }
 
-    // if (event==5467&&lumiblock==4055) {
-    // 	      printf("tk %d: pt %3.2f, eta %3.2f, chIso %3.2f, dz %3.2f, mT %3.2f, Pass ",
-    // 		     itrack, isotk_pt->at(itrack), isotk_eta->at(itrack), isotk_iso->at(itrack) /isotk_pt->at(itrack), isotk_dzpv->at(itrack),
-    // 		     GetMTW(isotk_pt->at(itrack),theMET_,isotk_phi->at(itrack),theMETPhi_));
-    // 	  } 
-    //   if (event==5467&&lumiblock==4055)  printf("1/n");
+void EventHandler::GetIsoTracks(vector<IsolatedTrack> &muCands, vector<IsolatedTrack> &eCands,vector<IsolatedTrack> &hadCands, bool checkID, bool mT_cut) {
+   if (cfAVersion<77) return;
+   eCands.clear();
+   muCands.clear();
+   hadCands.clear();
+   // cout << "Found " << pfcand_pt->size() << " PFCands." << endl;
+   for (uint itk(0); itk<pfcand_pdgId->size(); itk++) {
+     if (isnan(pfcand_charge->at(itk)) || isnan(pfcand_pt->at(itk))  || isnan(pfcand_dz->at(itk)) || isnan(pfcand_phi->at(itk)) || isnan(pfcand_eta->at(itk)) ) continue;
+     if (static_cast<int>(pfcand_charge->at(itk))==0) continue;
+     double pt = pfcand_pt->at(itk);
+     if (pt<5) continue;
+     int id = abs(TMath::Nint(pfcand_pdgId->at(itk)));
+     if (id==211&&pt<10) continue;
+     double eta = pfcand_eta->at(itk);
+     if (fabs(eta)>2.5) continue;
+     if (checkID&&!PassIsoTrackBaseline(itk)) continue;
+     if (mT_cut && GetMTW(pfcand_pt->at(itk),theMET_,pfcand_phi->at(itk),theMETPhi_)>100) continue;
+     double iso = GetPFCandIsolation(itk);
+     double relIso=iso/pfcand_pt->at(itk);
+     // note: not cutting here on isolation!
+     TLorentzVector tlvIn;
+     tlvIn.SetPtEtaPhiE(pfcand_pt->at(itk), pfcand_eta->at(itk), pfcand_phi->at(itk), pfcand_energy->at(itk));
+     if (id==11) {
+       eCands.push_back(IsolatedTrack(itk, id, tlvIn, relIso));
+       for (unsigned int iel(0); iel<electrons_.size(); iel++) {
+	 if ( TrackOverlaps(itk, els_pt->at(electrons_[iel]), els_scEta->at(electrons_[iel]), els_phi->at(electrons_[iel])) ) eCands.back().SetisLepton(true);
+       }
+     } else if(id==13) {
+       muCands.push_back(IsolatedTrack(itk, id, tlvIn, relIso));
+       for (unsigned int imu(0); imu<muons_.size(); imu++) {
+	 if ( TrackOverlaps(itk, mus_pt->at(muons_[imu]), mus_eta->at(muons_[imu]), mus_phi->at(muons_[imu])) ) muCands.back().SetisLepton(true);
+       }
+     } else if(id==211) {
+       hadCands.push_back(IsolatedTrack(itk, id, tlvIn, relIso));
+     }
+   }
+   return;
+ }
+
 
 double EventHandler::GetPFCandIsolation(const uint indexA) const { // absolute, not relative -- charged tracks only
   double isoSum(0);
@@ -3134,23 +3219,40 @@ int EventHandler::GetClosestRecoElectron(const uint imc) const {
   const int bad_index = -1;
   if(imc >= mc_doc_id->size()) return bad_index;
   TVector3 mc3(mc_doc_pt->at(imc)*cos(mc_doc_phi->at(imc)),
-		  mc_doc_pt->at(imc)*sin(mc_doc_phi->at(imc)),
-		  mc_doc_pt->at(imc)*sinh(mc_doc_eta->at(imc)));
+	       mc_doc_pt->at(imc)*sin(mc_doc_phi->at(imc)),
+	       mc_doc_pt->at(imc)*sinh(mc_doc_eta->at(imc)));
   // printf("True el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mc_doc_pt->at(imc), mc_doc_eta->at(imc), mc_doc_phi->at(imc));
   float best_score = std::numeric_limits<float>::max();
   int best_part = bad_index;
-  for(uint iel(0); iel < els_pt->size(); iel++) {
-    TVector3 el3(els_pt->at(iel)*cos(els_phi->at(iel)),
-		  els_pt->at(iel)*sin(els_phi->at(iel)),
-		  els_pt->at(iel)*sinh(els_scEta->at(iel)));
-    float this_score = (el3-mc3).Mag2();
-    // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), els_phi->at(iel), els_scEta->at(iel));
-    // float deltaPt =  (el3-mc3).Pt();
-    if(this_score < best_score){
-      best_score = this_score;
-      best_part = iel;
-       // printf("Reco el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", els_pt->at(iel), els_scEta->at(iel), els_phi->at(iel));
-       // printf("el %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", iel, deltaPt, deltaR, this_score);
+  if (cfAVersion>=75) {
+    for(uint iel(0); iel < els_pt->size(); iel++) {
+      TVector3 el3(els_pt->at(iel)*cos(els_phi->at(iel)),
+		   els_pt->at(iel)*sin(els_phi->at(iel)),
+		   els_pt->at(iel)*sinh(els_scEta->at(iel)));
+      float this_score = (el3-mc3).Mag2();
+      // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), els_phi->at(iel), els_scEta->at(iel));
+      // float deltaPt =  (el3-mc3).Pt();
+      if(this_score < best_score){
+	best_score = this_score;
+	best_part = iel;
+	// printf("Reco el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", els_pt->at(iel), els_scEta->at(iel), els_phi->at(iel));
+	// printf("el %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", iel, deltaPt, deltaR, this_score);
+      }
+    }
+  } else {
+    for(uint iel(0); iel < pf_els_pt->size(); iel++) {
+      TVector3 el3(pf_els_pt->at(iel)*cos(pf_els_phi->at(iel)),
+		   pf_els_pt->at(iel)*sin(pf_els_phi->at(iel)),
+		   pf_els_pt->at(iel)*sinh(pf_els_scEta->at(iel)));
+      float this_score = (el3-mc3).Mag2();
+      // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), pf_els_phi->at(iel), pf_els_scEta->at(iel));
+      // float deltaPt =  (el3-mc3).Pt();
+      if(this_score < best_score){
+	best_score = this_score;
+	best_part = iel;
+	// printf("Reco el: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", pf_els_pt->at(iel), pf_els_scEta->at(iel), pf_els_phi->at(iel));
+	// printf("el %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", iel, deltaPt, deltaR, this_score);
+      }
     }
   }
   if (best_score>200) return -1;
@@ -3167,7 +3269,7 @@ std::vector<int> EventHandler::MatchMuons(const std::vector<int> true_muons) con
   return reco_muons;
 }
 
-int EventHandler::GetClosestRecoMuon(const uint imc) const {
+int EventHandler::GetClosestRecoMuon(const uint imc/*, const double maxDeltaR, const double maxDeltaPT*/) const {
   const int bad_index = -1;
   if(imc >= mc_doc_id->size()) return bad_index;
   TVector3 mc3(mc_doc_pt->at(imc)*cos(mc_doc_phi->at(imc)),
@@ -3176,18 +3278,35 @@ int EventHandler::GetClosestRecoMuon(const uint imc) const {
   //  printf("True mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mc_doc_pt->at(imc), mc_doc_eta->at(imc), mc_doc_phi->at(imc));
   float best_score = std::numeric_limits<float>::max();
   int best_part = bad_index;
-  for(uint imu(0); imu < mus_pt->size(); imu++) {
-    TVector3 mu3(mus_pt->at(imu)*cos(mus_tk_phi->at(imu)),
-		  mus_pt->at(imu)*sin(mus_tk_phi->at(imu)),
-		  mus_pt->at(imu)*sinh(mus_eta->at(imu)));
-    float this_score = (mu3-mc3).Mag2();
-    // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), mus_tk_phi->at(imu), mus_eta->at(imu));
-    // float deltaPt =  (mu3-mc3).Pt();
-    if(this_score < best_score){
-      best_score = this_score;
-      best_part = imu;
-      //      printf("Reco mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mus_pt->at(imu), mus_eta->at(imu), mus_tk_phi->at(imu));
-      //      printf("mu %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", imu, deltaPt, deltaR, this_score);
+  if (cfAVersion>=75) {
+    for(uint imu(0); imu < mus_pt->size(); imu++) {
+      TVector3 mu3(mus_pt->at(imu)*cos(mus_tk_phi->at(imu)),
+		   mus_pt->at(imu)*sin(mus_tk_phi->at(imu)),
+		   mus_pt->at(imu)*sinh(mus_eta->at(imu)));
+      float this_score = (mu3-mc3).Mag2();
+      // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), mus_tk_phi->at(imu), mus_eta->at(imu));
+      // float deltaPt =  (mu3-mc3).Pt();
+      if(this_score < best_score){
+	best_score = this_score;
+	best_part = imu;
+	//      printf("Reco mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", mus_pt->at(imu), mus_eta->at(imu), mus_tk_phi->at(imu));
+	//      printf("mu %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", imu, deltaPt, deltaR, this_score);
+      }
+    }
+  } else {
+    for(uint imu(0); imu < pf_mus_pt->size(); imu++) {
+      TVector3 mu3(pf_mus_pt->at(imu)*cos(pf_mus_tk_phi->at(imu)),
+		   pf_mus_pt->at(imu)*sin(pf_mus_tk_phi->at(imu)),
+		   pf_mus_pt->at(imu)*sinh(pf_mus_eta->at(imu)));
+      float this_score = (mu3-mc3).Mag2();
+      // float deltaR = Math::GetDeltaR(mc_doc_phi->at(imc), mc_doc_eta->at(imc), pf_mus_tk_phi->at(imu), pf_mus_eta->at(imu));
+      // float deltaPt =  (mu3-mc3).Pt();
+      if(this_score < best_score){
+	best_score = this_score;
+	best_part = imu;
+	//      printf("Reco mu: pt/eta/phi = %3.2f/%3.2f/%3.2f\n", pf_mus_pt->at(imu), pf_mus_eta->at(imu), pf_mus_tk_phi->at(imu));
+	//      printf("mu %d: dPt/dR/score = %3.2f/%3.2f/%3.2f\n", imu, deltaPt, deltaR, this_score);
+      }
     }
   }
   if (best_score>200) return -1;
@@ -4069,4 +4188,27 @@ std::vector<int> EventHandler::GetPhotons(double pt_cut, bool checkID) const {
   }
   return photons;
 }
+
+double EventHandler::GetActivity(const int type, const double eta, const double phi, const double maxDeltaR) const {
+  double activity(0.);
+  for (unsigned int ijet=0; ijet < corrJets.size() ; ijet++)
+	{
+	  TLorentzVector TLV(corrJets[ijet].GetTLV(theJESType_));
+	  if( Math::dR(eta, TLV.Eta(), phi, TLV.Phi()) > maxDeltaR ) continue;
+	  if (type==11) activity+=TLV.Pt() * (jets_AKPF_chgHadE->at(corrJets[ijet].GetIndex()) / TLV.E());
+	  else activity+=TLV.Pt() * ( (jets_AKPF_chgEmE->at(corrJets[ijet].GetIndex())+jets_AKPF_chgHadE->at(corrJets[ijet].GetIndex())) / TLV.E());
+	}
+  return activity;
+ }
+
+bool EventHandler::JetOverlaps(int jet, double ipt, double ieta, double iphi) const {
+  if(fabs(jets_AKPF_pt->at(jet) - ipt ) / ipt <1. && Math::dR(jets_AKPF_eta->at(jet), ieta, jets_AKPF_phi->at(jet), iphi)<JetConeSize_ ) return true;
+  else return false;
+}
+
+bool EventHandler::TrackOverlaps(int tk, double ipt, double ieta, double iphi) const {
+  if(fabs(pfcand_pt->at(tk) - ipt ) / ipt <1. && Math::dR(pfcand_eta->at(tk), ieta, pfcand_phi->at(tk), iphi)<0.1) return true;
+  else return false;
+}
+
 

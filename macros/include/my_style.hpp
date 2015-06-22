@@ -17,6 +17,7 @@ TColor uo_green(1004, 0/255.,79/255.,39/255.);
 TColor tcu_purple(1005, 52/255.,42/255.,123/255.);
 TColor tar_heel_blue(1006, 86/255.,160/255.,211/255.);
 TColor cool_teal(1007, 2/255.,132/255.,130/255.);
+TColor signal_gold(1008, 204/255.,145/255.,38/255.);
 
 void set_style(TH1 * h, const TString& p, const bool dashes=false) {
 
@@ -55,6 +56,12 @@ void set_style(TH1 * h, const TString& p, const bool dashes=false) {
     } else if (p== "bg") {
       h->SetFillColor(kAzure+1);
       h->SetMarkerColor(kAzure+1);
+    } else if (p== "signal") {
+      h->SetFillColor(1008);
+      h->SetMarkerColor(1008);
+    } else if (p== "pred") {
+      h->SetFillColor(1007);
+      h->SetMarkerColor(1007);
     }
   }
   return;

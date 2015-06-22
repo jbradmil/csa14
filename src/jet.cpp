@@ -10,8 +10,11 @@ Jet::Jet(const int jets_AKPF_indexIn, const double bTagIn, const TLorentzVector 
 		 vecRaw_(tlvRaw),
 		 corrNew_(corrNewIn),
 		 vecCorr_(tlvCorr),
-		 vSubCorr_(vSubCorrIn){
-		 }
+		 vSubCorr_(vSubCorrIn),
+		 isLepton_(false),
+		 isPhoton_(false)
+{
+}
 
 void Jet::SetBTag(const double bTagIn){
 	bTag_=bTagIn;
@@ -48,6 +51,29 @@ double Jet::GetBTag() const{
 unsigned int Jet::GetIndex() const{
 	return jets_AKPF_index_;
 }
+
+void Jet::SetisLepton(const bool isLeptonIn) {
+  isLepton_=isLeptonIn;
+}
+
+bool Jet::isLepton() const {
+  return isLepton_;
+}
+
+void Jet::SetisPhoton(const bool isPhotonIn) {
+  isPhoton_=isPhotonIn;
+}
+
+bool Jet::isPhoton() const {
+  return isPhoton_;
+}
+// std::vector<int> Jet::GetOverlaps() const{
+//   return jet_overlaps_;
+// }
+
+// void Jet::SetOverlapIndex(const obj_type_t type, const int index){
+// 	jet_overlaps_[type]=index;
+// }
 
 bool Jet::operator==(const Jet &jet) const{
 	return vecCorr_==jet.vecCorr_ && bTag_==jet.bTag_;

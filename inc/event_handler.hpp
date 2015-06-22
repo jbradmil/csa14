@@ -18,11 +18,13 @@
 #include "cfa2014.hpp"
 #include "jet.hpp"
 #include "fat_jet.hpp"
+#include "itk.hpp"
 #include "event_number.hpp"
 #include "gen_muon.hpp"
 #include "gen_electron.hpp"
 #include "gen_tau.hpp"
 #include "utils.hpp"
+#include "search_bins.hpp"
 
 
 typedef unsigned int uint;
@@ -80,21 +82,30 @@ protected:
   
   mutable std::vector<Jet> corrJets;//caching for efficiency
   mutable bool JetsUpToDate;//cached value correct
+  double JetConeSize_;
   mutable double theMET_, theMETPhi_;
+  mutable SearchBins* SearchBins_;
   mutable std::vector<FatJet> sortedFatJetCache;//caching for efficiency
   mutable bool FatJetsUpToDate;//cached value correct
-  mutable std::vector<int> recoMuonCache;
-  mutable bool recoMuonsUpToDate;
-  mutable std::vector<int> recoElectronCache;
-  mutable bool recoElectronsUpToDate; 
-  mutable std::vector<int>recoTauCache;
-  mutable bool recoTausUpToDate;
-  mutable bool betaUpToDate;
+  // no class for the other objects--just save indices
+  mutable std::vector<int> muons_;
+  mutable bool muonsUpToDate_;
+  mutable std::vector<int> electrons_;
+  mutable bool electronsUpToDate_;
+  mutable std::vector<int> photons_;
+  mutable bool photonsUpToDate_;
+  mutable std::vector<IsolatedTrack> muTracks_;
+  mutable bool muTracksUpToDate_; 
+  mutable std::vector<IsolatedTrack> elTracks_;
+  mutable bool elTracksUpToDate_;
+  mutable std::vector<IsolatedTrack> hadTracks_;
+  mutable bool hadTracksUpToDate_; 
   static const double CSVTCut, CSVMCut, CSVLCut;
   static const double ICSVTCut, ICSVMCut, ICSVLCut;
   double scaleFactor;
   
-  mutable std::vector<double> beta;
+  //  mutable std::vector<double> beta;
+  //  mutable bool betaUpToDate;
 
 
   //stuff for the btag probability
@@ -106,6 +117,8 @@ protected:
   std::vector<std::string> jetcorr_filenames_pfL1FastJetL2L3_;
   FactorizedJetCorrector *jet_corrector_pfL1FastJetL2L3_;
   void LoadJEC();
+
+  void LoadSearchBins();
 
   int GetcfAVersion() const;
   unsigned TypeCode() const;
@@ -169,7 +182,6 @@ protected:
 
   bool isInMuonCollection(const double, const double) const;
   bool isInElectronCollection(const double, const double) const;
-  bool isInTauCollection(const double, const double) const;
 
   double GetTrueNumInteractions() const;
   double GetNumInteractions() const;
@@ -230,7 +242,7 @@ protected:
   TLorentzVector GetNearestJet(const TLorentzVector lepton, const uint jet_ind) const; 
 
   vector<int> GetRecoMuons(const uint level=0, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.2) const;
-  bool PassMuonID(const uint imu) const;
+  bool PassMuonID(const uint imu, const bool tight=true) const;
   bool isRecoMuon(const uint imu, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double=0.2) const;
   double GetMuonD0(const unsigned int imu) const;
   bool isTrueMuon(const double eta, const double phi) const;
@@ -241,14 +253,15 @@ protected:
   double getDZ(double vx, double vy, double vz, double px, double py, double pz, int firstGoodVertex);
   bool passedBaseMuonSelection(uint imu, float MuonPTThreshold=0., float MuonETAThreshold=5.);
   float GetRecoMuonIsolation(uint imu);
+  unsigned int GetNumMediumMuons() const;
 
   vector<int> GetRecoElectrons(const uint level=0, const bool check_pt=true, const bool check_iso=true, const bool check_id=true, const bool use_mini_iso=true, const double mini_iso_cut=0.1) const;
   bool PassElectronID(const uint iel, const uint level) const;
   bool isRecoElectron(const uint iel, const uint level=0, const bool=true, const bool=true, const bool=true, const bool=true, const double mini_iso_cut=0.1) const;
   double GetElectronD0(const unsigned int iel) const;
   
-  vector<int> GetRA2bElectrons(const bool veto) const;
-  vector<int> GetRA2bMuons(const bool veto) const;
+  vector<int> GetRA2bElectrons(const bool veto=true) const;
+  vector<int> GetRA2bMuons(const bool veto=true) const;
 
   vector<int> GetRecoTaus() const;
 
@@ -318,7 +331,8 @@ protected:
   double GetMinDeltaPhiMET(const unsigned int=3, const double=30., const double=2.4, const bool=false) const;
 
   int GetNumIsoTracks(const double=15.0, const bool=true) const;
-  vector<std::pair<int,double> > GetIsoTracks(const double=15.0, const bool=true) const;
+  //vector<std::pair<int,double> > GetIsoTracks(const double=15.0, const bool=true) const;
+  void GetIsoTracks(vector<IsolatedTrack> &muCands, vector<IsolatedTrack> &eCands, vector<IsolatedTrack> &hadCands, bool checkID, bool mT_cut);
   void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool checkID=true, bool mT_cut=true);
   bool PassIsoTrackBaseline(const uint index) const;
   double GetPFCandIsolation(const uint indexA) const;
@@ -412,7 +426,11 @@ protected:
   TVector2 GetPhotonMHTVec(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
   double GetPhotonMHT(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
   double GetPhotonMHTPhi(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
-  
+
+  double GetActivity(const int type, const double eta, const double phi, const double maxDeltaR=1.0) const;
+
+  bool JetOverlaps(int jet, double ipt, double ieta, double iphi) const;
+  bool TrackOverlaps(int tk, double ipt, double ieta, double iphi) const;
 };
 
 #endif

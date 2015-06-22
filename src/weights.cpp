@@ -178,6 +178,8 @@ void WeightCalculator::SetCrossSections(){
   crossSectionTable["SMS-T2tt_2J_mStop-850_mLSP-100"]=0.0189612;
   crossSectionTable["SMS-T2bb_2J_mStop-600_mLSP-580"]=0.174599;
   crossSectionTable["SMS-T2bb_2J_mStop-900_mLSP-100"]=0.0128895;
+  crossSectionTable["SMS-T2qq_2J_mStop-1200_mLSP-100"]=0.0162846;
+  crossSectionTable["SMS-T2qq_2J_mStop-600_mLSP-550"]=1.76645;
   //  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola-Spring14miniaod-PU20bx25"]=818.8;
   //  crossSectionTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=818.8;
   // https://twiki.cern.ch/twiki/bin/view/Sandbox/FullNNLOcrossSections#Top_cross_section_for_13_TeV
@@ -359,12 +361,6 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["SMS-T1bbbb_2J_mGl-1000_mLSP-900_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM"]=97134;
   totalEventsTable["SMS-T1qqqq_2J_mGl-1400_mLSP-100_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM"]=102891;
   totalEventsTable["SMS-T1qqqq_2J_mGl-1000_mLSP-800_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM"]=96681;
-  totalEventsTable["SMS-T2tt_2J_mStop-425_mLSP-325"]=1045470;
-  totalEventsTable["SMS-T2tt_2J_mStop-500_mLSP-325"]=112116;
-  totalEventsTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=107131;
-  totalEventsTable["SMS-T2tt_2J_mStop-850_mLSP-100"]=102839;
-  totalEventsTable["SMS-T2bb_2J_mStop-600_mLSP-580"]=107316;
-  totalEventsTable["SMS-T2bb_2J_mStop-900_mLSP-100"]=102661;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU20bx25"]=25474122;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Spring14miniaod-PU_S14"]=17184825;
   totalEventsTable["TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM"]=25446993;
@@ -450,4 +446,12 @@ void WeightCalculator::SetTotalEvents(){
   totalEventsTable["GJets_HT-200to400_Tune4C_13TeV"]=4533420;
   totalEventsTable["GJets_HT-400to600_Tune4C_13TeV"]=4560801;
   totalEventsTable["GJets_HT-600toInf_Tune4C_13TeV"]=4341179;
+  totalEventsTable["SMS-T2qq_2J_mStop-1200_mLSP-100"]=101155;
+  totalEventsTable["SMS-T2qq_2J_mStop-600_mLSP-550"]=108235;
+  totalEventsTable["SMS-T2tt_2J_mStop-850_mLSP-100"]=102839;
+  totalEventsTable["SMS-T2tt_2J_mStop-425_mLSP-325"]=1039030;
+  totalEventsTable["SMS-T2tt_2J_mStop-500_mLSP-325"]=109591;
+  totalEventsTable["SMS-T2tt_2J_mStop-650_mLSP-325"]=105672;
+  totalEventsTable["SMS-T2bb_2J_mStop-600_mLSP-580"]=107316;
+  totalEventsTable["SMS-T2bb_2J_mStop-900_mLSP-100"]=102661;
 }

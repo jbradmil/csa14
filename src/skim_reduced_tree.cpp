@@ -10,7 +10,7 @@
 
 using namespace std;
 
-void SkimReducedTree(string inFilename, string outFilename) {
+void SkimReducedTree(string inFilename, string outFilename, TString type) {
   TChain *inCh = new TChain("reduced_tree");
   cout << "Input: " << inFilename+"*root" << endl;
   inCh->Add((inFilename+"*root").c_str()); // give it reduced_trees/SAMPLE_NAME/
@@ -21,11 +21,15 @@ void SkimReducedTree(string inFilename, string outFilename) {
 
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
-  TCut ht("ht30>500"), njets("jet4_pt>30"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp);
+  TCut ht("ht30>500"), njets("num_jets_pt30>=4"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp);
+  TCut SL("num_veto_mus+um_veto_els==1");
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   // 13 TeV
-  TTree *outCh = inCh->CopyTree(ht+njets+mht30);
-  //  TTree *outCh = inCh->CopyTree(ht+njets+"num_csvm_jets30>=2&&min_delta_phi_met_N>6&&lumiblock<400000");
+  TTree *outCh(0);
+  if (type=="ZL") outCh = inCh->CopyTree(ht+njets+mht30);
+  else if (type=="SL") outCh = inCh->CopyTree(ht+njets+SL+"mht30>125");
+  // TTree *outCh = inCh->CopyTree(ht+njets+"num_csvm_jets30>=2&&lumiblock<400000");
+  // TTree *outCh = inCh->CopyTree(ht+njets+"num_csvm_jets30>=2");
   // 8 TeV  
   //  TTree *outCh = inCh->CopyTree("jet4_pt>40&&passesJSONCut&&passesPVCut&&passes2012METCleaningCut&&met>200&&ht40>500&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   cout << "Saved " << outCh->GetEntries() << " events." << endl;
@@ -35,12 +39,15 @@ void SkimReducedTree(string inFilename, string outFilename) {
 }
 
 int main(int argc, char *argv[]){
-  std::string inFilename("");
+  std::string inFilename(""), type("ZL");
   int c(0);
   while((c=getopt(argc, argv, "i:"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
+      break;
+    case 't':
+      type=optarg;
       break;
     default:
       break;
@@ -59,9 +66,9 @@ int main(int argc, char *argv[]){
   }
   // 13 TeV
   outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
-  //outFilename="reduced_trees/13TeV/skimmed/test_dataset/"+baseName+"_skimmed.root";
-  //outFilename="reduced_trees/13TeV/skimmed/test_mc/"+baseName+"_skimmed.root";
+  // outFilename="reduced_trees/13TeV/skimmed/test_dataset/"+baseName+"_skimmed.root";
+  // outFilename="reduced_trees/13TeV/skimmed/test_mc/"+baseName+"_skimmed.root";
   // 8 TeV  
   //  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
-  SkimReducedTree(inFilename,outFilename);
+  SkimReducedTree(inFilename,outFilename,type);
 }

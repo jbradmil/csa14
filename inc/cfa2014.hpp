@@ -1081,6 +1081,10 @@ protected:
   std::vector<float> *mus_dB;
   std::vector<float> *mus_globalTrack_normalizedChi2;
   std::vector<float> *mus_numberOfMatchedStations;
+  std::vector<float> *mus_trkPositionMatch;
+  std::vector<float> *mus_trkKink;
+  std::vector<float> *mus_tkHitsFrac;
+  std::vector<float> *mus_segmentCompatibility;
   UInt_t NpfTypeINoXYCorrmets;
   std::vector<float> *pfTypeINoXYCorrmets_et;
   std::vector<float> *pfTypeINoXYCorrmets_phi;
@@ -2496,6 +2500,10 @@ protected:
   TBranch *b_mus_dB;
   TBranch *b_mus_globalTrack_normalizedChi2;
   TBranch *b_mus_numberOfMatchedStations;
+  TBranch *b_mus_trkPositionMatch;
+  TBranch *b_mus_trkKink;
+  TBranch *b_mus_tkHitsFrac;
+  TBranch *b_mus_segmentCompatibility;
   TBranch *b_NpfTypeINoXYCorrmets;
   TBranch *b_pfTypeINoXYCorrmets_et;
   TBranch *b_pfTypeINoXYCorrmets_phi;

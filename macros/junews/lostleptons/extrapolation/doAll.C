@@ -1,4 +1,4 @@
-void doAll(TString directory="macros/junews/lostleptons/529_trigger/")
+void doAll(TString directory="macros/junews/lostleptons/extrapolation/")
 {
   gROOT->ProcessLine(".L macros/junews/lostleptons/RatioError.C++");
   gROOT->ProcessLine(".L "+directory+"RTree.C++");

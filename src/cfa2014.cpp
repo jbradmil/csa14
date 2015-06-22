@@ -1058,6 +1058,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   mus_dB(0),
   mus_globalTrack_normalizedChi2(0),
   mus_numberOfMatchedStations(0),
+  mus_trkPositionMatch(0),
+  mus_trkKink(0),
+  mus_tkHitsFrac(0),
+  mus_segmentCompatibility(0),
   NpfTypeINoXYCorrmets(0),
   pfTypeINoXYCorrmets_et(0),
   pfTypeINoXYCorrmets_phi(0),
@@ -2470,6 +2474,10 @@ cfA::cfA(const std::string& fileIn, const bool isList):
   b_mus_dB(),
   b_mus_globalTrack_normalizedChi2(),
   b_mus_numberOfMatchedStations(),
+  b_mus_trkPositionMatch(),
+  b_mus_trkKink(),
+  b_mus_tkHitsFrac(),
+  b_mus_segmentCompatibility(),
   b_NpfTypeINoXYCorrmets(),
   b_pfTypeINoXYCorrmets_et(),
   b_pfTypeINoXYCorrmets_phi(),
@@ -4321,6 +4329,10 @@ void cfA::InitializeB(){
   mus_dB=0;
   mus_globalTrack_normalizedChi2=0;
   mus_numberOfMatchedStations=0;
+  mus_trkPositionMatch=0;
+  mus_trkKink=0;
+  mus_tkHitsFrac=0;
+  mus_segmentCompatibility=0;
   NpfTypeINoXYCorrmets=0;
   pfTypeINoXYCorrmets_et=0;
   pfTypeINoXYCorrmets_phi=0;
@@ -5801,7 +5813,13 @@ void cfA::InitializeB(){
   // chainB.SetBranchAddress("mus_tpfms_numvalPixelhits", &mus_tpfms_numvalPixelhits, &b_mus_tpfms_numvalPixelhits);
   chainB.SetBranchAddress("mus_dB", &mus_dB, &b_mus_dB);
   chainB.SetBranchAddress("mus_numberOfMatchedStations", &mus_numberOfMatchedStations, &b_mus_numberOfMatchedStations);
-  if (cfAVersion>=77)   chainB.SetBranchAddress("mus_globalTrack_normalizedChi2", &mus_globalTrack_normalizedChi2, &b_mus_globalTrack_normalizedChi2);
+  if (cfAVersion>=77)   {
+    chainB.SetBranchAddress("mus_globalTrack_normalizedChi2", &mus_globalTrack_normalizedChi2, &b_mus_globalTrack_normalizedChi2);
+    chainB.SetBranchAddress("mus_trkPositionMatch", &mus_trkPositionMatch, &b_mus_trkPositionMatch);
+    chainB.SetBranchAddress("mus_trkKink", &mus_trkKink, &b_mus_trkKink);
+    chainB.SetBranchAddress("mus_tkHitsFrac", &mus_tkHitsFrac, &b_mus_tkHitsFrac);
+    chainB.SetBranchAddress("mus_segmentCompatibility", &mus_segmentCompatibility, &b_mus_segmentCompatibility);
+  }
   if (cfAVersion<=71||cfAVersion==74) {
     chainB.SetBranchAddress("NpfTypeINoXYCorrmets", &NpfTypeINoXYCorrmets, &b_NpfTypeINoXYCorrmets);
     chainB.SetBranchAddress("pfTypeINoXYCorrmets_et", &pfTypeINoXYCorrmets_et, &b_pfTypeINoXYCorrmets_et);

@@ -1,3 +1,5 @@
+// Developed by Arne-Rasmus Drager, adapted by Jack
+
 #define Expectation_cxx
 // The class definition in Expectation.h has been generated automatically
 // by the ROOT utility TTree::MakeSelector(). This class is derived

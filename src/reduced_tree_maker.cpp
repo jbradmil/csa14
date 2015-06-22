@@ -64,6 +64,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   vector<float> jet_corr_def, jet_corr_new;
   vector<float> jet_l1_corr, jet_l2_corr, jet_l3_corr;
   vector<bool> jet_looseID;
+  vector<bool> jet_isLepton, jet_isPhoton;
   vector<float> jet_delta_phi_met, jet_delta_phi_mht, jet_delta_T, jet_mT;
   vector<float> jet_mdp_jet, jet_mdR_jet;
   vector<int> jet_parton_id, jet_parton_mother_id;
@@ -84,6 +85,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   // float jet1_partonId(0.0), jet2_partonId(0.), jet3_partonId(0.), jet4_partonId(0.), jet5_partonId(0.), jet6_partonId(0.);
   // float jet1_motherId(0.0), jet2_motherId(0.), jet3_motherId(0.), jet4_motherId(0.), jet5_motherId(0.), jet6_motherId(0.);
 
+  float jet1_dphi(-1.), jet2_dphi(-1.), jet3_dphi(-1.);
+  bool passDeltaPhiCut;
   float pu_num_interactions(0.0), pu_true_num_interactions(0.0);
   unsigned short num_primary_vertices(0);
 
@@ -121,11 +124,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   double Prob0_pt50, ProbGEQ1_pt50, Prob1_pt50, ProbGEQ2_pt50, Prob2_pt50, ProbGEQ3_pt50, Prob3_pt50, ProbGEQ4_pt50;
 
 
-
-  int num_mus(0), num_veto_mus(0);
-  int num_low_pt_mus(0), num_high_pt_mus(0);
-  int num_els(0), num_veto_els(0);
-  int num_low_pt_els(0), num_high_pt_els(0);
+  int num_mus(0), num_id_mus(0), num_veto_mus(0), num_med_mus(0);
+  int num_els(0), num_id_els(0), num_veto_els(0);
   int num_veto_taus_mT(0);
   vector<bool> tau_loose, tau_medium, tau_tight;
   vector<float> tau_pt, tau_dB_iso, tau_chargedIsoPtSum, tau_mT;
@@ -142,6 +142,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   vector<float> mu_dB_iso_R04, mu_mini_iso_tr02, mu_ch_iso;
   vector<float> mu_mT, mu_ptW, mu_dTT, mu_ptW_MHT, mu_dTT_MHT;
   vector<int> mu_truid, mu_momid;
+  vector<float> mu_activity_mu, mu_activity_el;
   
 
   vector<bool> el_signal, el_veto, el_sid, el_vid, el_tm;
@@ -149,6 +150,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   vector<float> el_dB_iso_R03, el_mini_iso_tr02, el_ch_iso;
   vector<float> el_mT, el_ptW, el_dTT, el_ptW_MHT, el_dTT_MHT;
   vector<int> el_truid, el_momid;
+  vector<float> el_activity_mu, el_activity_el;
 
 
   float min_delta_phi_met, min_delta_phi_met_loose_jets;
@@ -164,10 +166,10 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   int num_el_tracks_mT, num_mu_tracks_mT, num_had_tracks_mT;
   //int num_had_tracks_no_iso, num_had_tracks_mT_no_iso;
 
-  vector<bool> el_track_tm;
+  vector<bool> el_track_tm, el_track_isLepton;
   vector<int> el_track_truid, el_track_momid;
   vector<float> el_track_pt, el_track_ch_iso, el_track_mT;
-  vector<bool> mu_track_tm;
+  vector<bool> mu_track_tm, mu_track_isLepton;
   vector<int> mu_track_truid, mu_track_momid;
   vector<float> mu_track_pt, mu_track_ch_iso, mu_track_mT;
   vector<bool> had_track_from_tau;
@@ -205,12 +207,16 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   double gluino1_pt(0.), gluino2_pt(0.);
 
   unsigned short num_true_els(0), num_true_mus(0), num_true_had_taus(0), num_true_lep_taus(0);
-  vector<float> true_el_pt, true_el_eta, true_el_min_parton_dR, true_el_mini_iso, true_el_d0, true_el_tk_pt, true_el_tk_ch_iso;
-  vector<bool> true_el_reco, true_el_passID, true_el_track;
+  vector<float> true_el_pt, true_el_eta, true_el_min_parton_dR, true_el_iso, true_el_d0, true_el_tk_pt, true_el_tk_ch_iso;
+  vector<bool>  true_el_passID, true_el_track;
+  vector<int> true_el_reco_ind;
+  vector<float> true_el_mT, true_el_activity_mu, true_el_activity_el;
   vector<float> true_el_ptW, true_el_dTT;
   vector<float> true_el_ptW_MHT, true_el_dTT_MHT;
-  vector<float> true_mu_pt, true_mu_eta, true_mu_min_parton_dR, true_mu_mini_iso, true_mu_d0, true_mu_tk_pt, true_mu_tk_ch_iso;
-  vector<bool> true_mu_reco, true_mu_passID, true_mu_track;
+  vector<float> true_mu_pt, true_mu_eta, true_mu_min_parton_dR, true_mu_iso, true_mu_d0, true_mu_tk_pt, true_mu_tk_ch_iso;
+  vector<bool>  true_mu_passID, true_mu_track;
+  vector<int> true_mu_reco_ind;
+  vector<float> true_mu_mT, true_mu_activity_mu, true_mu_activity_el;
   vector<float> true_mu_ptW, true_mu_dTT;
   vector<float> true_mu_ptW_MHT, true_mu_dTT_MHT;
   vector<float> true_had_tau_pt, true_had_tau_eta, true_had_tau_min_parton_dR;
@@ -226,6 +232,16 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   vector<bool> ph_id;
   vector<float> ph_ch_iso, ph_nh_iso, ph_ph_iso;
   vector<float> ph_ch_iso_cut, ph_nh_iso_cut, ph_ph_iso_cut;
+
+  // Lost-lepton shenanigans
+  UShort_t Expectation;
+  UShort_t muIso, muReco, muAcc, muMTW, muTotal;
+  UShort_t elIso, elReco, elAcc, elMTW, elTotal;
+  UShort_t MuPurity, ElPurity;
+  UShort_t ExpectationDiLep, MuDiLepControlSample, ElDiLepControlSample;
+  double LLMTW(0.);
+  unsigned int Bin(0);
+
 
   //  cout << "Defining tree branches" << endl;
 
@@ -323,6 +339,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   // reduced_tree.Branch("jet_l2_corr", &jet_l2_corr);
   // reduced_tree.Branch("jet_l3_corr", &jet_l3_corr);
   // reduced_tree.Branch("jet_looseID", &jet_looseID);
+  reduced_tree.Branch("jet_isLepton", &jet_isLepton);
+  reduced_tree.Branch("jet_isPhoton", &jet_isPhoton);
   reduced_tree.Branch("jet_delta_phi_met", &jet_delta_phi_met);
   reduced_tree.Branch("jet_delta_phi_mht", &jet_delta_phi_mht);
   // reduced_tree.Branch("jet_delta_T", &jet_delta_T);
@@ -361,6 +379,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("jet4_pt", &jet4_pt);
   reduced_tree.Branch("jet5_pt", &jet5_pt);
   reduced_tree.Branch("jet6_pt", &jet6_pt);
+
+  reduced_tree.Branch("jet1_dphi", &jet1_dphi);
+  reduced_tree.Branch("jet2_dphi", &jet2_dphi);
+  reduced_tree.Branch("jet3_dphi", &jet3_dphi);
+  reduced_tree.Branch("passDeltaPhiCut" , &passDeltaPhiCut);
+  
  
   reduced_tree.Branch("def_met", &def_met);
   reduced_tree.Branch("def_met_phi", &def_met_phi);
@@ -447,53 +471,56 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("num_good_truth_matched_b_jets", &num_good_truth_matched_b_jets);
 
   reduced_tree.Branch("num_veto_mus", &num_veto_mus);
+  reduced_tree.Branch("num_id_mus", &num_id_mus);
+  reduced_tree.Branch("num_med_mu", &num_med_mus);
   reduced_tree.Branch("num_mus", &num_mus);
-  reduced_tree.Branch("num_low_pt_mus", &num_low_pt_mus);
-  reduced_tree.Branch("num_high_pt_mus", &num_high_pt_mus);
-  if (cfAVersion>=73) {
-    reduced_tree.Branch("mu_tm", &mu_tm);
-    reduced_tree.Branch("mu_truid", &mu_truid);
-    reduced_tree.Branch("mu_momid", &mu_momid);
-    reduced_tree.Branch("mu_signal", &mu_signal);
-    reduced_tree.Branch("mu_veto", &mu_veto);
-    reduced_tree.Branch("mu_vid", &mu_vid);
-    reduced_tree.Branch("mu_pt", &mu_pt);
-    reduced_tree.Branch("mu_eta", &mu_eta);
-    reduced_tree.Branch("mu_phi", &mu_phi);
-    reduced_tree.Branch("mu_dB_iso_R04", &mu_dB_iso_R04);
-    reduced_tree.Branch("mu_mini_iso_tr02", &mu_mini_iso_tr02);
-    reduced_tree.Branch("mu_ch_iso", &mu_ch_iso);
-    reduced_tree.Branch("mu_mT", &mu_mT);
-    reduced_tree.Branch("mu_ptW", &mu_ptW);
-    reduced_tree.Branch("mu_dTT", &mu_dTT);
-    reduced_tree.Branch("mu_ptW_MHT", &mu_ptW_MHT);
-    reduced_tree.Branch("mu_dTT_MHT", &mu_dTT_MHT);
-  }
+  //if (cfAVersion>=73) {
+  reduced_tree.Branch("mu_tm", &mu_tm);
+  reduced_tree.Branch("mu_truid", &mu_truid);
+  reduced_tree.Branch("mu_momid", &mu_momid);
+  reduced_tree.Branch("mu_signal", &mu_signal);
+  reduced_tree.Branch("mu_veto", &mu_veto);
+  reduced_tree.Branch("mu_vid", &mu_vid);
+  reduced_tree.Branch("mu_pt", &mu_pt);
+  reduced_tree.Branch("mu_eta", &mu_eta);
+  reduced_tree.Branch("mu_phi", &mu_phi);
+  reduced_tree.Branch("mu_dB_iso_R04", &mu_dB_iso_R04);
+  reduced_tree.Branch("mu_mini_iso_tr02", &mu_mini_iso_tr02);
+  reduced_tree.Branch("mu_ch_iso", &mu_ch_iso);
+  reduced_tree.Branch("mu_mT", &mu_mT);
+  reduced_tree.Branch("mu_ptW", &mu_ptW);
+  reduced_tree.Branch("mu_dTT", &mu_dTT);
+  reduced_tree.Branch("mu_ptW_MHT", &mu_ptW_MHT);
+  reduced_tree.Branch("mu_dTT_MHT", &mu_dTT_MHT);
+  reduced_tree.Branch("mu_activity_mu", &mu_activity_mu);
+  reduced_tree.Branch("mu_activity_el", &mu_activity_el);
+  // }
 
   reduced_tree.Branch("num_veto_els", &num_veto_els);
+  reduced_tree.Branch("num_id_els", &num_id_els);
   reduced_tree.Branch("num_els", &num_els);
-  reduced_tree.Branch("num_low_pt_els", &num_low_pt_els);
-  reduced_tree.Branch("num_high_pt_els", &num_high_pt_els);
-  if (cfAVersion>=73) {
-    reduced_tree.Branch("el_tm", &el_tm);
-    reduced_tree.Branch("el_truid", &el_truid);
-    reduced_tree.Branch("el_momid", &el_momid);
-    reduced_tree.Branch("el_signal", &el_signal);
-    reduced_tree.Branch("el_veto", &el_veto);
-    reduced_tree.Branch("el_sid", &el_sid);
-    reduced_tree.Branch("el_vid", &el_vid);
-    reduced_tree.Branch("el_pt", &el_pt);
-    reduced_tree.Branch("el_eta", &el_eta);
-    reduced_tree.Branch("el_phi", &el_phi);
-    reduced_tree.Branch("el_dB_iso_R03", &el_dB_iso_R03);
-    reduced_tree.Branch("el_mini_iso_tr02", &el_mini_iso_tr02);
-    reduced_tree.Branch("el_ch_iso", &el_ch_iso);
-    reduced_tree.Branch("el_mT", &el_mT);
-    reduced_tree.Branch("el_ptW", &el_ptW);
-    reduced_tree.Branch("el_dTT", &el_dTT);
-    reduced_tree.Branch("el_ptW_MHT", &el_ptW_MHT);
-    reduced_tree.Branch("el_dTT_MHT", &el_dTT_MHT);
-  }
+  // if (cfAVersion>=73) {
+  reduced_tree.Branch("el_tm", &el_tm);
+  reduced_tree.Branch("el_truid", &el_truid);
+  reduced_tree.Branch("el_momid", &el_momid);
+  reduced_tree.Branch("el_signal", &el_signal);
+  reduced_tree.Branch("el_veto", &el_veto);
+  reduced_tree.Branch("el_sid", &el_sid);
+  reduced_tree.Branch("el_vid", &el_vid);
+  reduced_tree.Branch("el_pt", &el_pt);
+  reduced_tree.Branch("el_eta", &el_eta);
+  reduced_tree.Branch("el_phi", &el_phi);
+  reduced_tree.Branch("el_dB_iso_R03", &el_dB_iso_R03);
+  reduced_tree.Branch("el_mini_iso_tr02", &el_mini_iso_tr02);
+  reduced_tree.Branch("el_ch_iso", &el_ch_iso);
+  reduced_tree.Branch("el_mT", &el_mT);
+  reduced_tree.Branch("el_ptW", &el_ptW);
+  reduced_tree.Branch("el_dTT", &el_dTT);
+  reduced_tree.Branch("el_ptW_MHT", &el_ptW_MHT);
+  reduced_tree.Branch("el_dTT_MHT", &el_dTT_MHT);
+  reduced_tree.Branch("el_activity_mu", &el_activity_mu);
+  reduced_tree.Branch("el_activity_el", &el_activity_el);
+  // }
   reduced_tree.Branch("min_delta_phi_met_N", &min_delta_phi_met_N);
   reduced_tree.Branch("min_delta_phi_met_N_old", &min_delta_phi_met_N_old);
   reduced_tree.Branch("min_delta_phi_met_N_2012", &min_delta_phi_met_N_2012);
@@ -608,6 +635,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("iso_track_mT", &iso_track_mT);
 
   reduced_tree.Branch("el_track_tm", &el_track_tm);
+  reduced_tree.Branch("el_track_isLepton", &el_track_isLepton);
   // reduced_tree.Branch("el_track_truid", &el_track_truid);
   // reduced_tree.Branch("el_track_momid", &el_track_momid);
   reduced_tree.Branch("el_track_pt", &el_track_pt);
@@ -616,6 +644,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   //  reduced_tree.Branch("el_track_mini_iso", &el_track_mini_iso);
   reduced_tree.Branch("el_track_mT", &el_track_mT);
   reduced_tree.Branch("mu_track_tm", &mu_track_tm);
+  reduced_tree.Branch("mu_track_isLepton", &mu_track_isLepton);
   //  reduced_tree.Branch("mu_track_truid", &mu_track_truid);
   //  reduced_tree.Branch("mu_track_momid", &mu_track_momid);
   reduced_tree.Branch("mu_track_pt", &mu_track_pt);
@@ -635,10 +664,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("true_el_pt", &true_el_pt);
   reduced_tree.Branch("true_el_eta", &true_el_eta);
   reduced_tree.Branch("true_el_min_parton_dR", &true_el_min_parton_dR);
-  reduced_tree.Branch("true_el_reco", &true_el_reco);
+  reduced_tree.Branch("true_el_reco_ind", &true_el_reco_ind);
   reduced_tree.Branch("true_el_passID", &true_el_passID);
-  reduced_tree.Branch("true_el_mini_iso", &true_el_mini_iso);
+  reduced_tree.Branch("true_el_iso", &true_el_iso);
   reduced_tree.Branch("true_el_d0", &true_el_d0);
+  reduced_tree.Branch("true_el_mT", &true_el_mT);
+  reduced_tree.Branch("true_el_activity_mu", &true_el_activity_mu);
+  reduced_tree.Branch("true_el_activity_el", &true_el_activity_el);
   reduced_tree.Branch("true_el_ptW", &true_el_ptW);
   reduced_tree.Branch("true_el_dTT", &true_el_dTT);
   reduced_tree.Branch("true_el_ptW_MHT", &true_el_ptW_MHT);
@@ -648,10 +680,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("true_mu_pt", &true_mu_pt);
   reduced_tree.Branch("true_mu_eta", &true_mu_eta);
   reduced_tree.Branch("true_mu_min_parton_dR", &true_mu_min_parton_dR);
-  reduced_tree.Branch("true_mu_reco", &true_mu_reco);
+  reduced_tree.Branch("true_mu_reco_ind", &true_mu_reco_ind);
   reduced_tree.Branch("true_mu_passID", &true_mu_passID);
-  reduced_tree.Branch("true_mu_mini_iso", &true_mu_mini_iso);
+  reduced_tree.Branch("true_mu_iso", &true_mu_iso);
   reduced_tree.Branch("true_mu_d0", &true_mu_d0);
+  reduced_tree.Branch("true_mu_mT", &true_mu_mT);
+  reduced_tree.Branch("true_mu_activity_mu", &true_mu_activity_mu);
+  reduced_tree.Branch("true_mu_activity_el", &true_mu_activity_el);
   reduced_tree.Branch("true_mu_ptW", &true_mu_ptW);
   reduced_tree.Branch("true_mu_dTT", &true_mu_dTT);
   reduced_tree.Branch("true_mu_ptW_MHT", &true_mu_ptW_MHT);
@@ -684,6 +719,26 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
   reduced_tree.Branch("ph_ph_iso_cut", &ph_ph_iso_cut);
   reduced_tree.Branch("ph_mht", &ph_mht);
   // reduced_tree.Branch("ph_mht_old", &ph_mht_old);
+  reduced_tree.Branch("Expectation", &Expectation);
+  reduced_tree.Branch("muIso", &muIso);
+  reduced_tree.Branch("muReco", &muReco);
+  reduced_tree.Branch("muAcc", &muAcc); 
+  reduced_tree.Branch("muMTW", &muMTW); 
+  reduced_tree.Branch("muTotal", &muTotal);
+  reduced_tree.Branch("elIso", &elIso);
+  reduced_tree.Branch("elReco", &elReco);
+  reduced_tree.Branch("elAcc", &elAcc);
+  reduced_tree.Branch("elMTW", &elMTW);
+  reduced_tree.Branch("elTotal", &elTotal);
+  reduced_tree.Branch("MuPurity", &MuPurity); 
+  reduced_tree.Branch("ElPurity", &ElPurity);
+  reduced_tree.Branch("ExpectationDiLep", &ExpectationDiLep);
+  reduced_tree.Branch("MuDiLepControlSample", &MuDiLepControlSample);
+  reduced_tree.Branch("ElDiLepControlSample", &ElDiLepControlSample);
+  reduced_tree.Branch("LLMTW", &LLMTW);
+  
+  reduced_tree.Branch("Bin", &Bin);
+
 
   
 
@@ -703,13 +758,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
       timer.PrintRemainingTime();
     }
     timer.Iterate();
-    //     cout << "JERR" << endl;
+    //        cout << "JERR" << endl;
     GetEntry(i);
     entry=i;
    
     // if (i<6066) continue;
     // if (!(event==5467)) continue;
-    // cout << "*****Entry " << i << " (event " << event << ")*****" << endl;
+    //    cout << "*****Entry " << i << " (event " << event << ")*****" << endl;
     
 
     std::pair<std::set<EventNumber>::iterator, bool> returnVal(eventList.insert(EventNumber(run, event, lumiblock)));
@@ -719,7 +774,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     // vector<size_t> moms = GetMoms(parts);
 
     type_code=TypeCode();
-    //cout << "JERR1" << endl;
+    //        cout << "JERR1" << endl;
 
 
     mht30=GetMHT(30.,5.);
@@ -772,7 +827,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     loot_pu=GetLateOutOfTimePU();
     oot_pu=eoot_pu+loot_pu;
 
-    //cout << "GetJets" << endl;
+    //    cout << "GetJets" << endl;
     highest_csv=GetHighestJetCSV(1);
     second_highest_csv=GetHighestJetCSV(2);
     third_highest_csv=GetHighestJetCSV(3);
@@ -792,7 +847,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     def_mht = GetDEFMHT(30.,5.);
     def_mht_phi = GetDEFMHTPhi(30.,5.);
 
-    //    cout << "GetHT" << endl;
+    // cout << "GetHT" << endl;
     ht20=GetHT(20.);
     ht30=GetHT(30.);
     ht40=GetHT(40.);
@@ -835,6 +890,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     
     jet_pt.clear(); jet_eta.clear(); jet_phi.clear(); jet_energy.clear();
     jet_csv.clear(); jet_looseID.clear();
+    jet_isLepton.clear(); jet_isPhoton.clear();
+
     jet_corr_def.clear(); jet_corr_new.clear();
     jet_l1_corr.clear(); jet_l2_corr.clear(); jet_l3_corr.clear();
     jet_delta_phi_met.clear(); jet_delta_phi_mht.clear(); jet_delta_T.clear(); jet_mT.clear();
@@ -872,6 +929,8 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	// jet_l3_corr.push_back(corrJets[jets[ijet]].GetSubCorr(3));
 	jet_csv.push_back(corrJets[jets[ijet]].GetBTag());
 	jet_looseID.push_back(jetPassLooseID(jets[ijet]));
+	jet_isLepton.push_back(corrJets[jets[ijet]].isLepton());
+	jet_isPhoton.push_back(corrJets[jets[ijet]].isPhoton());
 	jet_delta_phi_met.push_back(Math::GetDeltaPhi(corrJets[jets[ijet]].GetTLV(theJESType_).Phi(),met_phi));
 	jet_delta_phi_mht.push_back(Math::GetDeltaPhi(corrJets[jets[ijet]].GetTLV(theJESType_).Phi(),mht30_phi));
 	// jet_delta_T.push_back(getDeltaPhiMETN_deltaT(jets[ijet]));
@@ -929,7 +988,12 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	  if (jet_pt[ijet]>30&&abs(jet_eta[ijet])<2.4&&jet_looseID[ijet]) num_good_truth_matched_b_jets++;
 	}
       }
-
+      if (jets.size()>0) jet1_dphi = jet_delta_phi_mht[0];
+      if (jets.size()>1) jet2_dphi = jet_delta_phi_mht[1];
+      if (jets.size()>2) jet3_dphi = jet_delta_phi_mht[2];
+      passDeltaPhiCut=false;
+      if (fabs(jet1_dphi)>0.5&&fabs(jet2_dphi)>0.5&&fabs(jet3_dphi)>0.3) passDeltaPhiCut=true;
+      
       // get worst mis-measured, over-measured, under-measured jets
       //    cout << "Find most mismeasured jets" << endl;
       mmjet=-1;
@@ -954,7 +1018,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	}
       }
     }
-    //    cout << "JERR2" << endl;
+    // cout << "JERR2" << endl;
 
 
     sumP30=GetSumP(30.);
@@ -962,7 +1026,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     cent30=GetCentrality(30.);
     cent50=GetCentrality(50.);
 
-    //    cout << "GetNumGoodJets" << endl;
+        // cout << "GetNumGoodJets" << endl;
     num_jets_pt30=GetNumGoodJets(30);
     //    if (num_jets_pt30!=num_jets_pt30_old) cout << "Event " << entry << "is funky" << endl;
     num_jets_pt20=GetNumGoodJets(20);
@@ -971,7 +1035,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     num_jets_pt70=GetNumGoodJets(70);
     num_jets_pt100=GetNumGoodJets(100);
     num_jets_pt150=GetNumGoodJets(150);
-    //    cout << "num_jets=" << num_jets_pt50 << endl;
+    // cout << "num_jets=" << num_jets_pt50 << endl;
     if (cfAVersion<77) {
       num_csvt_jets=GetNumCSVTJets();
       num_csvm_jets=GetNumCSVMJets();
@@ -1031,7 +1095,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     }
 
 
-    //    cout << "Get leptons" << endl;
+    // cout << "Get leptons" << endl;
 
     mu_truid.clear(); mu_momid.clear(), mu_tm.clear(); 
     mu_signal.clear(); mu_veto.clear(); mu_vid.clear();
@@ -1039,105 +1103,145 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     mu_dB_iso_R04.clear(); mu_mini_iso_tr02.clear(); mu_ch_iso.clear();
     mu_mT.clear();
     mu_ptW.clear(); mu_dTT.clear(); mu_ptW_MHT.clear(); mu_dTT_MHT.clear();
-
-    vector<int> mus, veto_mus;
+    mu_activity_mu.clear();
+    mu_activity_el.clear();
+    
+    vector<int> mus, acc_id_mus, veto_mus;
     if (cfAVersion>=73&&cfAVersion!=74) {
       mus = GetRecoMuons(0, false, false, true); // save to tree, cut on eta & id
+      acc_id_mus = GetRecoMuons(0, true, false, true); // acceptance & id
       veto_mus = GetRecoMuons();
     }
     else {
-      mus = GetRA2bMuons(false);
+      // cout << "Get RA2b muons..." << endl;
+      mus = GetRA2bMuons(true);
       veto_mus = GetRA2bMuons(true);
+      // cout << "...DONE" << endl;
     }
+    // cout << "Count mus..." << endl;
     num_veto_mus = veto_mus.size();
-    num_low_pt_mus=0;
-    num_high_pt_mus=0;
-    if (cfAVersion>=77) {
-      for (uint imu(0); imu<mus.size(); imu++) {
-	mu_signal.push_back(isRecoMuon(mus[imu],1));
-	mu_veto.push_back(isRecoMuon(mus[imu],0));
-	mu_vid.push_back(isRecoMuon(mus[imu],0,false,false));
+    num_id_mus = acc_id_mus.size();
+    // cout << "num_veto_mus=" << num_veto_mus << endl;
+    if (cfAVersion>=77) num_med_mus=GetNumMediumMuons();
+    // if (cfAVersion>=77) {
+    for (uint imu(0); imu<mus.size(); imu++) {
+      if (cfAVersion>=75) {
 	mu_pt.push_back(mus_pt->at(mus[imu]));
 	mu_eta.push_back(mus_eta->at(mus[imu]));
 	mu_phi.push_back(mus_phi->at(mus[imu])); 
+	mu_signal.push_back(isRecoMuon(mus[imu],1));
+	mu_veto.push_back(isRecoMuon(mus[imu],0));
+	mu_vid.push_back(isRecoMuon(mus[imu],0,false,false));
 	mu_dB_iso_R04.push_back(GetMuonRelIso(mus[imu],0.4));
 	if (cfAVersion>=78) mu_mini_iso_tr02.push_back(mus_miniso->at(mus[imu]));
 	else mu_mini_iso_tr02.push_back(GetIsolation(mus[imu], 13));
 	if (cfAVersion>=77) mu_ch_iso.push_back(GetSimpleChargedTrackIsolation(mus[imu], 13, 0.3)/mu_pt[imu]);
-	mu_mT.push_back(GetMTW(mu_pt[imu], met, mu_phi[imu], met_phi));
-	if (mu_pt[imu]>20&&mu_vid[imu]&&mu_mini_iso_tr02[imu]<0.2) num_high_pt_mus++;
-	if (mu_pt[imu]>5&&mu_pt[imu]<20&&mu_vid[imu]&&mu_ch_iso[imu]<0.2&&mu_mT[imu]<100) num_low_pt_mus++;
-	mu_ptW.push_back(GetWpT(mu_pt[imu], mu_phi[imu]));
-	mu_dTT.push_back(GetDeltaThetaT(mu_pt[imu], mu_phi[imu]));
-	mu_ptW_MHT.push_back(GetWpT(mu_pt[imu], mu_phi[imu], true));
-	mu_dTT_MHT.push_back(GetDeltaThetaT(mu_pt[imu], mu_phi[imu], true));
-	//	printf("ptW/ht30/njets/RLF = %3.2f/%3.2f/%d/%3.2f\n", mu_ptW[imu], ht30, num_jets_pt30, mu_RLF[imu]);
-	// truth-matching
-	bool fromW(false);
-	int mcID, mcmomID;
-	float deltaR;
-	mcID = GetTrueMuon(mu_pt[imu], mu_eta[imu], mu_phi[imu], mcmomID, fromW, deltaR);
-	mu_truid.push_back(mcID);
-	mu_momid.push_back(mcmomID);
-	mu_tm.push_back(abs(mcID)==13 && fromW);
+      } else {
+	// cout << "PF Muon " << mus[imu] << ": " << endl;
+	mu_pt.push_back(pf_mus_pt->at(mus[imu]));
+	mu_eta.push_back(pf_mus_eta->at(mus[imu]));
+	mu_phi.push_back(pf_mus_phi->at(mus[imu])); 
+	mu_signal.push_back(isRA2bMuon(mus[imu],1));
+	mu_veto.push_back(isRA2bMuon(mus[imu],0));
+	mu_vid.push_back(isRA2bMuon(mus[imu],0,false));
+	mu_dB_iso_R04.push_back(GetRA2bMuonRelIso(mus[imu]));
       }
+      mu_mT.push_back(GetMTW(mu_pt[imu], met, mu_phi[imu], met_phi));
+      mu_ptW.push_back(GetWpT(mu_pt[imu], mu_phi[imu]));
+      mu_dTT.push_back(GetDeltaThetaT(mu_pt[imu], mu_phi[imu]));
+      mu_ptW_MHT.push_back(GetWpT(mu_pt[imu], mu_phi[imu], true));
+      mu_dTT_MHT.push_back(GetDeltaThetaT(mu_pt[imu], mu_phi[imu], true));
+      mu_activity_mu.push_back(GetActivity(13, mu_eta[imu], mu_phi[imu]));
+      mu_activity_el.push_back(GetActivity(11, mu_eta[imu], mu_phi[imu]));
+      //	printf("ptW/ht30/njets/RLF = %3.2f/%3.2f/%d/%3.2f\n", mu_ptW[imu], ht30, num_jets_pt30, mu_RLF[imu]);
+      // truth-matching
+      bool fromW(false);
+      int mcID, mcmomID;
+      float deltaR;
+      mcID = GetTrueMuon(mu_pt[imu], mu_eta[imu], mu_phi[imu], mcmomID, fromW, deltaR);
+      mu_truid.push_back(mcID);
+      mu_momid.push_back(mcmomID);
+      mu_tm.push_back(abs(mcID)==13 && fromW);
     }
+    //}
 
     el_truid.clear(); el_momid.clear(), el_tm.clear();
     el_signal.clear(); el_veto.clear(); el_sid.clear(); el_vid.clear();
     el_pt.clear(); el_eta.clear(); el_phi.clear();
     el_dB_iso_R03.clear(); el_mini_iso_tr02.clear(); el_ch_iso.clear();
     el_mT.clear(); el_ptW.clear(); el_dTT.clear(); el_ptW_MHT.clear(); el_dTT_MHT.clear();
+    el_activity_mu.clear();
+    el_activity_el.clear();
 
-    vector<int> els, veto_els;
+    vector<int> els, acc_id_els, veto_els;
     if (cfAVersion>=73) {
       els = GetRecoElectrons(0, false, false, true); // save to tree, cut on eta & ID
       //  els_mini = GetRecoElectrons(false, true, true, true);
+      acc_id_els = GetRecoElectrons(0, true, false, true); // acceptance & id
       veto_els = GetRecoElectrons();
       //  veto_els_mini = GetRecoElectrons(true, true, true, true);
       // els_save = GetRecoElectrons(true, false, false);
     }
     else {
-      els = GetRA2bElectrons(false);
+      // cout << "GetRA2bElectrons" << endl;
+      els = GetRA2bElectrons(true);
       veto_els = GetRA2bElectrons(true);
-    }
-
+      // cout << "...DONE" << endl;
+  }
+    num_id_els = acc_id_els.size();
     num_veto_els = veto_els.size();
-    num_low_pt_els=0;
-    num_high_pt_els=0;
-    
-    if (cfAVersion>=77) {
-      for (uint iel(0); iel<els.size(); iel++) {
+    // cout << "num_veto_els=" << num_veto_els << endl;
+
+    // skim for SL control sample!!!
+    if (cfAVersion<=71&&!isRealData&&num_veto_mus+num_veto_els!=1) continue;
+    if (cfAVersion<=71&&!isRealData&&(met<100||ht40<500||num_jets_pt40<6||!passes2012RA2bTrigger)) continue;
+    if (cfAVersion<=71&&(ht40<500||num_jets_pt40<6)) continue;
+    // if (cfAVersion>=77) {
+    for (uint iel(0); iel<els.size(); iel++) {
+      if (cfAVersion>=75) {
+	el_pt.push_back(els_pt->at(els[iel]));
+	el_eta.push_back(els_scEta->at(els[iel]));
+	el_phi.push_back(els_phi->at(els[iel]));
 	el_signal.push_back(isRecoElectron(els[iel],1));
 	el_veto.push_back(isRecoElectron(els[iel],0));
 	el_sid.push_back(isRecoElectron(els[iel],1, false, false));
 	el_vid.push_back(isRecoElectron(els[iel],0, false, false));
-	el_pt.push_back(els_pt->at(els[iel]));
-	el_eta.push_back(els_scEta->at(els[iel]));
-	el_phi.push_back(els_phi->at(els[iel]));
 	el_dB_iso_R03.push_back(GetCSAElectronIsolation(els[iel]));
 	if (cfAVersion>=78) el_mini_iso_tr02.push_back(els_miniso->at(els[iel]));
 	else el_mini_iso_tr02.push_back(GetIsolation(els[iel], 11));
 	if (cfAVersion>=77) el_ch_iso.push_back(GetSimpleChargedTrackIsolation(els[iel], 11, 0.3)/el_pt[iel]);
-	el_mT.push_back(GetMTW(el_pt[iel],met,el_phi[iel],met_phi));
-	if (el_pt[iel]>20&&el_vid[iel]&&el_mini_iso_tr02[iel]<0.1) num_high_pt_els++;
-	if (el_pt[iel]>5&&el_pt[iel]<20&&el_vid[iel]&&el_ch_iso[iel]<0.2&&el_mT[iel]<100) num_low_pt_els++;
-	el_ptW.push_back(GetWpT(el_pt[iel], el_phi[iel]));
-	el_dTT.push_back(GetDeltaThetaT(el_pt[iel], el_phi[iel]));
-	el_ptW_MHT.push_back(GetWpT(el_pt[iel], el_phi[iel], true));
-	el_dTT_MHT.push_back(GetDeltaThetaT(el_pt[iel], el_phi[iel], true));
-	// truth-matching
-	bool fromW(false);
-	int mcID, mcmomID;
-	float deltaR;
-	mcID = GetTrueElectron(el_pt[iel], el_eta[iel], el_phi[iel], mcmomID, fromW, deltaR);
-	el_truid.push_back(mcID);
-	el_momid.push_back(mcmomID);
-	el_tm.push_back(abs(mcID)==11 && fromW);
+      } else {
+	// cout << "PF Electron " << els[iel] << ": " << endl;
+	el_pt.push_back(pf_els_pt->at(els[iel]));
+	el_eta.push_back(pf_els_scEta->at(els[iel]));
+	el_phi.push_back(pf_els_phi->at(els[iel]));
+	el_signal.push_back(isRA2bElectron(els[iel],1));
+	el_veto.push_back(isRA2bElectron(els[iel],0));
+	el_sid.push_back(isRA2bElectron(els[iel],1, false));
+	el_vid.push_back(isRA2bElectron(els[iel],0, false));
+	el_dB_iso_R03.push_back(GetRA2bElectronRelIso(els[iel]));
+	// cout << "iso=" << el_dB_iso_R03[iel] << endl;
+
       }
+      el_mT.push_back(GetMTW(el_pt[iel],met,el_phi[iel],met_phi));
+      el_ptW.push_back(GetWpT(el_pt[iel], el_phi[iel]));
+      el_dTT.push_back(GetDeltaThetaT(el_pt[iel], el_phi[iel]));
+      el_ptW_MHT.push_back(GetWpT(el_pt[iel], el_phi[iel], true));
+      el_dTT_MHT.push_back(GetDeltaThetaT(el_pt[iel], el_phi[iel], true));
+      el_activity_mu.push_back(GetActivity(13, el_eta[iel], el_phi[iel]));
+      el_activity_el.push_back(GetActivity(11, el_eta[iel], el_phi[iel]));
+      // truth-matching
+      bool fromW(false);
+      int mcID, mcmomID;
+      float deltaR;
+      mcID = GetTrueElectron(el_pt[iel], el_eta[iel], el_phi[iel], mcmomID, fromW, deltaR);
+      el_truid.push_back(mcID);
+      el_momid.push_back(mcmomID);
+      el_tm.push_back(abs(mcID)==11 && fromW);
     }
+    // }
    
-    //    cout << "minDeltaPhi..." << endl;
+    // cout << "minDeltaPhi..." << endl;
     min_delta_phi_met=GetMinDeltaPhiMET(3,30.);
     min_delta_phi_met_loose_jets=GetMinDeltaPhiMET(3,20.,5.);
     min_delta_phi_met_N=getMinDeltaPhiMETN(3,30.,2.4,true,30.,2.4,true,true);
@@ -1174,6 +1278,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     iso_track_dB_iso=-1;
     iso_track_mT=-1;
     el_track_tm.clear();
+    el_track_isLepton.clear();
     el_track_truid.clear();
     el_track_momid.clear();
     el_track_pt.clear();
@@ -1181,6 +1286,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     //    el_track_mini_iso.clear();
     el_track_mT.clear();
     mu_track_tm.clear();
+    mu_track_isLepton.clear();
     mu_track_truid.clear();
     mu_track_momid.clear();   
     mu_track_pt.clear();
@@ -1198,59 +1304,44 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     // had_track_pt=-999.;
     // had_track_ch_iso=-999.;
     // had_track_mT=-999.;
-    //  cout << "Look for tracks..." << endl;
-    vector<std::pair<int, double> > el_tracks, mu_tracks, had_tracks;
-    if (cfAVersion==71||cfAVersion==74||(cfAVersion>=76&&cfAVersion<=77)) {
-      num_iso_tracks_pt10=GetNumIsoTracks(10, false);
-      num_iso_tracks_pt10_mT=GetNumIsoTracks(10, true);
-      // store index and relIso of tracks
-      vector<pair<int, double> > isotracks = GetIsoTracks(15, false);
-      num_iso_tracks_pt15=isotracks.size();
-      if (num_iso_tracks_pt15>0) {
-	iso_track_pt=isotk_pt->at(isotracks[0].first);
-	iso_track_dB_iso=isotracks[0].second;
-	//	iso_track_miniIso=GetIsolation(isotracks[0].first,0)/iso_track_pt;
-	iso_track_mT=GetMTW(iso_track_pt, met, isotk_phi->at(isotracks[0].first), met_phi);
-	for (uint itk(0); itk<isotracks.size(); itk++) {
-	  if (GetMTW(isotk_pt->at(isotracks[itk].first), met, isotk_phi->at(isotracks[itk].first), met_phi)<100) num_iso_tracks_pt15_mT++;
-	}
-      }
-    }
+
     if (cfAVersion>=76) {
       //	cout << "Preparing electron tracks..." << endl;
-      NewGetIsoTracks(el_tracks, mu_tracks, had_tracks, true, false); // pass pt>5/10, ID
-      for (uint iel(0); iel<el_tracks.size(); iel++) {
-	float ch_iso=el_tracks[iel].second;
+      //NewGetIsoTracks(el_tracks, mu_tracks, had_tracks, true, false); // pass pt>5/10, ID
+      for (uint iel(0); iel<elTracks_.size(); iel++) {
+	float ch_iso=elTracks_[iel].GetIso();
 	if (ch_iso>0.5) continue;
-	el_track_pt.push_back(pfcand_pt->at(el_tracks[iel].first));
-	// double el_track_eta=pfcand_eta->at(el_tracks[iel].first);
-	double el_track_phi=pfcand_phi->at(el_tracks[iel].first);
+	el_track_isLepton.push_back(elTracks_[iel].isLepton()); // avoid double-counting
+	el_track_pt.push_back(elTracks_[iel].GetPt());
+	// double el_track_eta=pfcand_eta->at(elTracks_[iel].first);
+	double el_track_phi=elTracks_[iel].GetTLV().Phi();
 	el_track_mT.push_back(GetMTW(el_track_pt[iel], met, el_track_phi, met_phi));
 	el_track_ch_iso.push_back(ch_iso);
 	// count tracks
 	if (el_track_pt[iel]>5&&el_track_mT[iel]<100&&el_track_ch_iso[iel]<0.2) num_el_tracks_mT++;
       }
       //	cout << endl << "Preparing muon tracks..." << endl;
-      for (uint imu(0); imu<mu_tracks.size(); imu++) {
-	float ch_iso=mu_tracks[imu].second;
+      for (uint imu(0); imu<muTracks_.size(); imu++) {
+	float ch_iso=muTracks_[imu].GetIso();
 	if (ch_iso>0.5) continue;
-	mu_track_pt.push_back(pfcand_pt->at(mu_tracks[imu].first));
-	// double mu_track_eta=pfcand_eta->at(mu_tracks[imu].first);
-	double mu_track_phi=pfcand_phi->at(mu_tracks[imu].first);
+	mu_track_isLepton.push_back(muTracks_[imu].isLepton()); // avoid double-counting
+	mu_track_pt.push_back(muTracks_[imu].GetPt());
+	// double mu_track_eta=pfcand_eta->at(muTracks_[imu].first);
+	double mu_track_phi=muTracks_[imu].GetTLV().Phi();
 	mu_track_mT.push_back(GetMTW(mu_track_pt[imu], met, mu_track_phi, met_phi));
 	mu_track_ch_iso.push_back(ch_iso);
 	// count tracks
 	if (mu_track_pt[imu]>5&&mu_track_mT[imu]<100&&mu_track_ch_iso[imu]<0.2) num_mu_tracks_mT++;	
       }
       //	cout << endl << "Preparing hadronic tracks..." << endl;
-      for (uint ihad(0); ihad<had_tracks.size(); ihad++) {
-	float pt=pfcand_pt->at(had_tracks[ihad].first);
-	float ch_iso=had_tracks[ihad].second;
+      for (uint ihad(0); ihad<hadTracks_.size(); ihad++) {
+	float pt=hadTracks_[ihad].GetPt();
+	float ch_iso=hadTracks_[ihad].GetIso();
 	if (pt<10) continue;
 	if (ch_iso>0.5) continue;
 	had_track_pt.push_back(pt);
 	had_track_ch_iso.push_back(ch_iso);
-	double had_track_phi=pfcand_phi->at(had_tracks[ihad].first);
+	double had_track_phi=hadTracks_[ihad].GetTLV().Phi();
 	double mT = GetMTW(pt, met, had_track_phi, met_phi);
 	had_track_mT.push_back(mT);
 	if (pt>10&&ch_iso<0.1 && mT<100) num_had_tracks_mT++;
@@ -1331,7 +1422,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     tau_dB_iso.clear();
     tau_chargedIsoPtSum.clear();
     tau_mT.clear();
-    //    cout << "JERR3" << endl;
+     // cout << "JERR3" << endl;
    
     std::vector<int> taus_save = GetTaus(); // loose taus, pt >20, eta< 2.3
     num_veto_taus_mT = 0;
@@ -1350,7 +1441,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     
     
 
-    //    cout << "Look for true leptons." << endl;
+    // cout << "Look for true leptons." << endl;
     std::vector<int> true_els;
     std::vector<int> true_mus;
     std::vector<int> true_had_taus;
@@ -1370,100 +1461,125 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
     true_el_pt.clear();
     true_el_eta.clear();
     true_el_min_parton_dR.clear();
-    true_el_reco.clear();
+    true_el_reco_ind.clear();
     true_el_passID.clear();
-    true_el_mini_iso.clear();
+    true_el_iso.clear();
     true_el_d0.clear();
+    true_el_mT.clear();
     true_el_ptW.clear();
     true_el_dTT.clear();
     true_el_ptW_MHT.clear();
     true_el_dTT_MHT.clear();
-    if (cfAVersion>=77) {
-      for (uint iel(0); iel<num_true_els; iel++) {
-	true_el_pt.push_back(mc_doc_pt->at(true_els[iel]));
-	true_el_eta.push_back(mc_doc_eta->at(true_els[iel]));
-	true_el_min_parton_dR.push_back(GetDRToClosestParton(true_els[iel]));
-	true_el_ptW.push_back(GetWpT(true_el_pt[iel], mc_doc_phi->at(true_els[iel])));
-	true_el_dTT.push_back(GetDeltaThetaT(true_el_pt[iel], mc_doc_phi->at(true_els[iel])));
-	true_el_ptW_MHT.push_back(GetWpT(true_el_pt[iel], mc_doc_phi->at(true_els[iel]), true));
-	true_el_dTT_MHT.push_back(GetDeltaThetaT(true_el_pt[iel], mc_doc_phi->at(true_els[iel]), true));
-	if (matched_els[iel]>=0)	{
-	  true_el_reco.push_back(true);
-	  true_el_passID.push_back(PassElectronID(matched_els[iel],0));
-	  if (cfAVersion>=78) true_el_mini_iso.push_back(els_miniso->at(matched_els[iel]));
-	  else true_el_mini_iso.push_back(GetIsolation(matched_els[iel], 11));
-	  true_el_d0.push_back(GetElectronD0(matched_els[iel]));
-	} else {
-	  true_el_reco.push_back(false);
-	  true_el_passID.push_back(false);
-	  true_el_mini_iso.push_back(-999.);
-	  true_el_d0.push_back(-999.);
-	}
-      }
-      true_mu_pt.clear();
-      true_mu_eta.clear();
-      true_mu_min_parton_dR.clear();
-      true_mu_reco.clear();
-      true_mu_passID.clear();
-      true_mu_mini_iso.clear();
-      true_mu_d0.clear();
-      true_mu_ptW.clear();
-      true_mu_dTT.clear();
-      true_mu_ptW_MHT.clear();
-      true_mu_dTT_MHT.clear();
-      for (uint imu(0); imu<num_true_mus; imu++) {
-	true_mu_pt.push_back(mc_doc_pt->at(true_mus[imu]));
-	true_mu_eta.push_back(mc_doc_eta->at(true_mus[imu]));
-	true_mu_min_parton_dR.push_back(GetDRToClosestParton(true_mus[imu]));
-	true_mu_ptW.push_back(GetWpT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu])));
-	true_mu_dTT.push_back(GetDeltaThetaT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu])));
-	true_mu_ptW_MHT.push_back(GetWpT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu]), true));
-	true_mu_dTT_MHT.push_back(GetDeltaThetaT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu]), true));
-	//	cout << "True muon " << imu << ": ";
-	if (matched_mus[imu]>=0)	{
-	  //	  cout << "matched to reco muon " << matched_mus[imu] << endl;
-	  true_mu_reco.push_back(true);
-	  true_mu_passID.push_back(PassMuonID(matched_mus[imu]));
-	  if (cfAVersion>=78) true_mu_mini_iso.push_back(mus_miniso->at(matched_mus[imu]));
-	  else true_mu_mini_iso.push_back(GetIsolation(matched_mus[imu], 13));
-	  true_mu_d0.push_back(GetMuonD0(matched_mus[imu]));
-	} else {
-	  //	  cout << "not matched." << endl;
-	  true_mu_reco.push_back(false);
-	  true_mu_passID.push_back(false);
-	  true_mu_mini_iso.push_back(-999.);
-	  true_mu_d0.push_back(-999.);
-	}
-      }
+    true_el_activity_mu.clear();
+    true_el_activity_el.clear();
 
-      num_true_had_taus=true_had_taus.size();
-      num_true_lep_taus=true_lep_taus.size();
-      true_had_tau_pt.clear();
-      true_had_tau_eta.clear();
-      true_had_tau_min_parton_dR.clear();
-      true_had_tau_ptW.clear();
-      true_had_tau_dTT.clear();
-      true_had_tau_ptW_MHT.clear();
-      true_had_tau_dTT_MHT.clear();
-      //if (num_true_had_taus>0) cout << "Found " << num_true_had_taus << " hadronic taus" << endl;
-      for (uint itau(0); itau<num_true_had_taus; itau++) {
-	true_had_tau_pt.push_back(mc_doc_pt->at(true_had_taus[itau]));
-	true_had_tau_eta.push_back(mc_doc_eta->at(true_had_taus[itau]));
-	true_had_tau_min_parton_dR.push_back(GetDRToClosestParton(true_had_taus[itau]));
-	true_had_tau_ptW.push_back(GetWpT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau])));
-	true_had_tau_dTT.push_back(GetDeltaThetaT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau])));
-	true_had_tau_ptW_MHT.push_back(GetWpT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau]), true));
-	true_had_tau_dTT_MHT.push_back(GetDeltaThetaT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau]), true));
-      }
-      //if (num_true_had_taus>0) cout << "Saved " << true_had_tau_pt.size() << " hadronic taus" << endl;
-      genW_pt.clear();
-      genW_lep.clear();
-      vector<int> Ws = GetGenWs();
-      for (uint iW(0); iW<Ws.size(); iW++) {
-	genW_pt.push_back(mc_doc_pt->at(Ws[iW]));
-	genW_lep.push_back(DecaysToLeptons(Ws[iW]));
+    //    if (cfAVersion>=77) {
+    for (uint iel(0); iel<num_true_els; iel++) {
+      true_el_pt.push_back(mc_doc_pt->at(true_els[iel]));
+      true_el_eta.push_back(mc_doc_eta->at(true_els[iel]));
+      true_el_min_parton_dR.push_back(GetDRToClosestParton(true_els[iel]));
+      true_el_ptW.push_back(GetWpT(true_el_pt[iel], mc_doc_phi->at(true_els[iel])));
+      true_el_dTT.push_back(GetDeltaThetaT(true_el_pt[iel], mc_doc_phi->at(true_els[iel])));
+      true_el_ptW_MHT.push_back(GetWpT(true_el_pt[iel], mc_doc_phi->at(true_els[iel]), true));
+      true_el_dTT_MHT.push_back(GetDeltaThetaT(true_el_pt[iel], mc_doc_phi->at(true_els[iel]), true));
+      true_el_activity_mu.push_back(GetActivity(13, true_el_eta[iel], mc_doc_phi->at(true_els[iel])));
+      true_el_activity_el.push_back(GetActivity(11, true_el_eta[iel], mc_doc_phi->at(true_els[iel])));
+      if (matched_els[iel]>=0)	{
+	true_el_reco_ind.push_back(matched_els[iel]);
+	if (cfAVersion>=75) true_el_passID.push_back(PassElectronID(matched_els[iel],0));
+	else true_el_passID.push_back(isRA2bElectron(matched_els[iel], 0, false));
+	if (cfAVersion>=78) true_el_iso.push_back(els_miniso->at(matched_els[iel]));
+	else if (cfAVersion==77) true_el_iso.push_back(GetIsolation(matched_els[iel], 11));
+	else true_el_iso.push_back(GetRA2bElectronRelIso(matched_els[iel]));
+	true_el_d0.push_back(GetElectronD0(matched_els[iel]));
+	if (cfAVersion>=75) true_el_mT.push_back(GetMTW(els_pt->at(matched_els[iel]), met, els_phi->at(matched_els[iel]), met_phi));
+	else true_el_mT.push_back(GetMTW(pf_els_pt->at(matched_els[iel]), met, pf_els_phi->at(matched_els[iel]), met_phi));
+	//true_el_activity.push_back(GetActivity(11, els_eta->at(matched_els[iel]), els_phi->at(matched_els[iel])));
+      } else {
+	true_el_reco_ind.push_back(-1);
+	true_el_passID.push_back(false);
+	true_el_iso.push_back(-999.);
+	true_el_d0.push_back(-999.);
+	true_el_mT.push_back(-999.);
+	// true_el_activity.push_back(-999.);
       }
     }
+    true_mu_pt.clear();
+    true_mu_eta.clear();
+    true_mu_min_parton_dR.clear();
+    true_mu_reco_ind.clear();
+    true_mu_passID.clear();
+    true_mu_iso.clear();
+    true_mu_d0.clear();
+    true_mu_mT.clear();
+    true_mu_ptW.clear();
+    true_mu_dTT.clear();
+    true_mu_ptW_MHT.clear();
+    true_mu_dTT_MHT.clear();
+    true_mu_activity_mu.clear();
+    true_mu_activity_el.clear();
+    for (uint imu(0); imu<num_true_mus; imu++) {
+      true_mu_pt.push_back(mc_doc_pt->at(true_mus[imu]));
+      true_mu_eta.push_back(mc_doc_eta->at(true_mus[imu]));
+      true_mu_min_parton_dR.push_back(GetDRToClosestParton(true_mus[imu]));
+      true_mu_ptW.push_back(GetWpT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu])));
+      true_mu_dTT.push_back(GetDeltaThetaT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu])));
+      true_mu_ptW_MHT.push_back(GetWpT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu]), true));
+      true_mu_dTT_MHT.push_back(GetDeltaThetaT(true_mu_pt[imu], mc_doc_phi->at(true_mus[imu]), true));
+      true_mu_activity_mu.push_back(GetActivity(13, true_mu_eta[imu], mc_doc_phi->at(true_mus[imu])));
+      true_mu_activity_el.push_back(GetActivity(11, true_mu_eta[imu], mc_doc_phi->at(true_mus[imu])));
+      //      cout << "True muon " << imu << ": " << endl;
+      if (matched_mus[imu]>=0)	{
+	//	cout << "matched to reco muon " << matched_mus[imu] << endl;
+	true_mu_reco_ind.push_back(matched_mus[imu]);
+	if (cfAVersion>=75) true_mu_passID.push_back(PassMuonID(matched_mus[imu]));
+	else true_mu_passID.push_back(isRA2bMuon(matched_mus[imu], 0, false));
+	if (cfAVersion>=78) true_mu_iso.push_back(mus_miniso->at(matched_mus[imu]));
+	else if (cfAVersion==77) true_mu_iso.push_back(GetIsolation(matched_mus[imu], 13));
+	else true_mu_iso.push_back(GetRA2bMuonRelIso(matched_mus[imu]));
+	true_mu_d0.push_back(GetMuonD0(matched_mus[imu]));
+	if (cfAVersion>=75) true_mu_mT.push_back(GetMTW(mus_pt->at(matched_mus[imu]), met, mus_phi->at(matched_mus[imu]), met_phi));
+	else true_mu_mT.push_back(GetMTW(pf_mus_pt->at(matched_mus[imu]), met, pf_mus_phi->at(matched_mus[imu]), met_phi));
+	// true_mu_activity.push_back(GetActivity(13, mus_eta->at(matched_mus[imu]), mus_phi->at(matched_mus[imu])));
+      } else {
+	//	  cout << "not matched." << endl;
+	true_mu_reco_ind.push_back(-1);
+	true_mu_passID.push_back(false);
+	true_mu_iso.push_back(-999.);
+	true_mu_d0.push_back(-999.);
+	true_mu_mT.push_back(-999.);
+	// true_mu_activity.push_back(-999.);
+      }
+    }
+
+    num_true_had_taus=true_had_taus.size();
+    num_true_lep_taus=true_lep_taus.size();
+    true_had_tau_pt.clear();
+    true_had_tau_eta.clear();
+    true_had_tau_min_parton_dR.clear();
+    true_had_tau_ptW.clear();
+    true_had_tau_dTT.clear();
+    true_had_tau_ptW_MHT.clear();
+    true_had_tau_dTT_MHT.clear();
+    //    if (num_true_had_taus>0) cout << "Found " << num_true_had_taus << " hadronic taus" << endl;
+    for (uint itau(0); itau<num_true_had_taus; itau++) {
+      true_had_tau_pt.push_back(mc_doc_pt->at(true_had_taus[itau]));
+      true_had_tau_eta.push_back(mc_doc_eta->at(true_had_taus[itau]));
+      true_had_tau_min_parton_dR.push_back(GetDRToClosestParton(true_had_taus[itau]));
+      true_had_tau_ptW.push_back(GetWpT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau])));
+      true_had_tau_dTT.push_back(GetDeltaThetaT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau])));
+      true_had_tau_ptW_MHT.push_back(GetWpT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau]), true));
+      true_had_tau_dTT_MHT.push_back(GetDeltaThetaT(true_had_tau_pt[itau], mc_doc_phi->at(true_had_taus[itau]), true));
+    }
+    //if (num_true_had_taus>0) cout << "Saved " << true_had_tau_pt.size() << " hadronic taus" << endl;
+    genW_pt.clear();
+    genW_lep.clear();
+    vector<int> Ws = GetGenWs();
+    for (uint iW(0); iW<Ws.size(); iW++) {
+      genW_pt.push_back(mc_doc_pt->at(Ws[iW]));
+      genW_lep.push_back(DecaysToLeptons(Ws[iW]));
+    }
+    //}
     
     //    cout << "JERR4" << endl;
     if (cfAVersion>=78) {
@@ -1499,12 +1615,126 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
       }
       ph_mht=GetPhotonMHT(30,5.,100.,false);
     } // photons--v78 or later
-    
+
+    Bin = SearchBins_->GetBinNumber(ht30, mht30, num_jets_pt30, num_csvm_jets30);
+
+    //    cout << "Classical lost-lepton studies" << endl;
+    Expectation=0;
+    muIso =1;
+    muReco =1;
+    muAcc =1;
+    muMTW =1;
+    muTotal=1;
+    elIso =1;
+    elReco =1;
+    elAcc =1;
+    elTotal=1;
+    elMTW=1;
+    // di lep
+    ExpectationDiLep=0;
+    MuDiLepControlSample=1;
+    ElDiLepControlSample=1;
+    // new purity
+    MuPurity=1;
+    ElPurity=1;
+    if (num_true_mus==1&&num_true_els==0) { // 1 muon
+      //     cout << "true muon event" << endl;
+      if ( true_mu_pt[0] < 10. || std::abs(true_mu_eta[0]) > 2.4) {
+	//	cout << "out-of-acceptance" << endl;
+	muAcc=0;
+	Expectation=1;
+      } else {
+	//	cout << "in acceptance" << endl;
+	muAcc=2;
+	bool RecoNotMatched=true;
+	if (true_mu_reco_ind[0]>=0&&true_mu_passID[0]) {
+	  //	cout << "reconstructed" << endl;
+	  RecoNotMatched=false;
+	  muReco =2;
+	  bool IsoNotMatched=true;
+	  if(true_mu_iso[0]<0.2) { // happens to be the same cut value for 2012 and mini
+	    //	cout << "isolated" << endl;
+	    IsoNotMatched=false;
+	    muIso=2;
+	    Expectation=2;
+	    LLMTW=true_mu_mT[0];
+	    MuDiLepControlSample=2;
+	  }
+	  if(IsoNotMatched) {
+	    muIso=0;
+	    Expectation=1;
+	  }
+	}
+	if(RecoNotMatched) {
+	  muReco=0;
+	  Expectation=1;
+	}
+      }      
+    } else if (num_true_els==1&&num_true_mus==0){ // 1 electron
+      // cout << "true electron event" << endl;
+      if ( true_el_pt[0] < 10. || std::abs(true_el_eta[0]) > 2.5) {
+	elAcc=0;
+	Expectation=1;
+      } else {
+	elAcc=2;
+	bool RecoNotMatched=true;
+	if (true_el_reco_ind[0]>=0&&true_el_passID[0]) {
+	  RecoNotMatched=false;
+	  elReco =2;
+	  bool IsoNotMatched=true;
+	  if( (cfAVersion>=75&&true_el_iso[0]<0.1) || (cfAVersion<=71&&true_el_iso[0]<0.15) ) {
+	    IsoNotMatched=false;
+	    elIso=2;
+	    Expectation=2;
+	    LLMTW=true_el_mT[0];
+	    ElDiLepControlSample=2;
+	  }
+	  if(IsoNotMatched) {
+	    elIso=0;
+	    Expectation=1;
+	  }
+	}
+	if(RecoNotMatched) {
+	  elReco=0;
+	  Expectation=1;
+	}
+      }  
+    } else if (num_true_mus+num_true_els==2) {  // dilepton
+      // cout << "true di-lepton event" << endl;
+      if(num_veto_mus==0 && num_veto_els==0) {
+	Expectation=1;
+	ExpectationDiLep=1;
+      } else if(num_veto_mus==1 && num_veto_els==0) {
+	MuDiLepControlSample=0;
+	LLMTW=GetMTW(mus_pt->at(veto_mus[0]),met, mus_phi->at(veto_mus[0]), met_phi);
+      } else if(num_veto_mus==0 && num_veto_els==1) {
+	ElDiLepControlSample=0;
+	LLMTW=GetMTW(els_pt->at(veto_els[0]),met, els_phi->at(veto_els[0]), met_phi);
+      }
+    }
+    // new purity studies
+    if(num_veto_mus==1 && num_veto_els==0 && (num_true_mus + num_true_els)<2)
+      {
+	if(num_true_mus<1)
+	  {
+	    MuPurity=0;
+	  }
+	else MuPurity=2;
+      }
+    if(num_veto_mus==0 && num_veto_els==1 && (num_true_mus + num_true_els)<2)
+      {
+	if(num_true_els<1)
+	  {
+	    ElPurity=0;
+	  }
+	else ElPurity=2;
+      }
+    //    cout << "End of event." << endl;
     reduced_tree.Fill(); 
     // if (i==10) break;
 
     // if(num_jets_pt30>=4&&mht30>200&&ht30>500&&num_veto_mus==0&&num_veto_els==0&&min_delta_phi_met_N>4&&num_iso_tracks_pt15_mT==0) {
-    //   fprintf(fp,"Run %d : Lumi %d : Evt %d :  NJets %d : HT   %3.0f : MHT %3.0f : Muons %d : ElectronsNum %d : minDelPhi %3.0f : isoTracks %d \n",
+    //   fprintf(fp, "Run %d : Lumi %d : Evt %d :  NJets %d : HT   %3.0f : MHT %3.0f : Muons %d : ElectronsNum %d : minDelPhi %3.0f : isoTracks %d \n",
     // 	       run, lumiblock, event, num_jets_pt30, ht30, mht30, num_veto_mus, num_veto_els, min_delta_phi_met_N, num_iso_tracks_pt15_mT);
     //   }
     

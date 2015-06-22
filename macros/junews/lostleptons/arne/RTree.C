@@ -1,3 +1,6 @@
+// Developed by Arne-Rasmus Drager, adapted by Jack
+// this script measures the lepton efficiencies from MC gen info and saves them to a root file
+
 #define RTree_cxx
 // The class definition in RTree.h has been generated automatically
 // by the ROOT utility TTree::MakeSelector(). This class is derived

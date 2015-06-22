@@ -1,3 +1,5 @@
+// Developed by Arne-Rasmus Drager, adapted by Jack
+
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
 // Mon May 25 11:35:43 2015 by ROOT version 5.34/25
