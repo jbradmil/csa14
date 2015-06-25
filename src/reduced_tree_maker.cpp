@@ -1315,7 +1315,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	el_track_pt.push_back(elTracks_[iel].GetPt());
 	// double el_track_eta=pfcand_eta->at(elTracks_[iel].first);
 	double el_track_phi=elTracks_[iel].GetTLV().Phi();
-	el_track_mT.push_back(GetMTW(el_track_pt[iel], met, el_track_phi, met_phi));
+	el_track_mT.push_back(GetMTW(el_track_pt[iel], theMET_, el_track_phi, theMETPhi_));
 	el_track_ch_iso.push_back(ch_iso);
 	// count tracks
 	if (el_track_pt[iel]>5&&el_track_mT[iel]<100&&el_track_ch_iso[iel]<0.2) num_el_tracks_mT++;
@@ -1328,7 +1328,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	mu_track_pt.push_back(muTracks_[imu].GetPt());
 	// double mu_track_eta=pfcand_eta->at(muTracks_[imu].first);
 	double mu_track_phi=muTracks_[imu].GetTLV().Phi();
-	mu_track_mT.push_back(GetMTW(mu_track_pt[imu], met, mu_track_phi, met_phi));
+	mu_track_mT.push_back(GetMTW(mu_track_pt[imu], theMET_, mu_track_phi, theMETPhi_));
 	mu_track_ch_iso.push_back(ch_iso);
 	// count tracks
 	if (mu_track_pt[imu]>5&&mu_track_mT[imu]<100&&mu_track_ch_iso[imu]<0.2) num_mu_tracks_mT++;	
@@ -1342,7 +1342,7 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	had_track_pt.push_back(pt);
 	had_track_ch_iso.push_back(ch_iso);
 	double had_track_phi=hadTracks_[ihad].GetTLV().Phi();
-	double mT = GetMTW(pt, met, had_track_phi, met_phi);
+	double mT = GetMTW(pt, theMET_, had_track_phi, theMETPhi_);
 	had_track_mT.push_back(mT);
 	if (pt>10&&ch_iso<0.1 && mT<100) num_had_tracks_mT++;
       }
@@ -1607,13 +1607,13 @@ void ReducedTreeMaker::MakeReducedTree(const std::string& out_file_name, const b
 	ph_ch_iso.push_back(ch_iso);
 	ph_nh_iso.push_back(nh_iso);
 	ph_ph_iso.push_back(ph_iso);
-	ph_ch_iso_cut.push_back((fabs(eta)<1.4442) ? 2.56 : 3.12);
-	ph_nh_iso_cut.push_back((fabs(eta)<1.4442) ? 3.74 + 0.0025*pt : 17.11 + 0.0118*pt);
-	ph_ph_iso_cut.push_back((fabs(eta)<1.4442) ? 2.68 + 0.001*pt : 2.7 + 0.0059*pt);
+	ph_ch_iso_cut.push_back((fabs(eta)<1.4442) ? 2.67 : 1.79);
+	ph_nh_iso_cut.push_back((fabs(eta)<1.4442) ? 7.23 + TMath::Exp(0.0028*pt+0.5408) : 8.89+ 0.01725*pt);
+	ph_ph_iso_cut.push_back((fabs(eta)<1.4442) ? 2.11 + 0.0014*pt : 3.09 + 0.0091*pt);
 	// ph_id.push_back(PassPhotonID(photons[iph]));
 	if (isGoodPhoton(photons[iph])) num_photons_pt100++; 
       }
-      ph_mht=GetPhotonMHT(30,5.,100.,false);
+      ph_mht=GetPhotonMHT(30,5.,100.);
     } // photons--v78 or later
 
     Bin = SearchBins_->GetBinNumber(ht30, mht30, num_jets_pt30, num_csvm_jets30);

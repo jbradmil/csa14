@@ -115,7 +115,7 @@ void EventHandler::GetEntry(const unsigned int entry){
     muons_ = GetRecoMuons();
     electrons_ = GetRecoElectrons();
     photons_ = GetPhotons();
-    GetIsoTracks(muTracks_, elTracks_, hadTracks_, true, true);
+    GetIsoTracks(muTracks_, elTracks_, hadTracks_, true, false);
   } else{
     muons_ = GetRA2bMuons();
     electrons_ = GetRA2bElectrons();
@@ -2896,8 +2896,9 @@ double EventHandler::GetPFCandIsolation(const uint indexA) const { // absolute, 
   for (uint other(0); other<pfcand_pdgId->size(); other++) {
     if (isnan(pfcand_charge->at(other)) || isnan(pfcand_pt->at(other))  || isnan(pfcand_fromPV->at(other)) || isnan(pfcand_phi->at(other)) || isnan(pfcand_eta->at(other)) ) continue;
     if (other==indexA) continue; // don't count track in it's own isolation sum
-    if (static_cast<int>(pfcand_charge->at(other))==0) continue; // only consider charged tracks
-    if (fabs(pfcand_fromPV->at(other))<=1) continue; // pileup suppression
+    if (TMath::Nint(pfcand_charge->at(other))==0) continue; // only consider charged tracks
+    // if (fabs(pfcand_fromPV->at(other))<=1) continue; // pileup suppression
+    if (fabs(pfcand_dz->at(other))>0.1) continue;
     double deltaR = Math::GetDeltaR(pfcand_phi->at(indexA), pfcand_eta->at(indexA), pfcand_phi->at(other), pfcand_eta->at(other)); // isolation cone
     if (deltaR>0.3) continue;
     isoSum+=pfcand_pt->at(other);
@@ -2942,51 +2943,52 @@ double EventHandler::GetPFCandIsolationDeltaBetaCorr(const uint indexA) const { 
 
 bool EventHandler::PassIsoTrackBaseline(const uint itk) const {
   //these already applied
-  // if (static_cast<int>(pfcand_charge->at(itk))==0) return false;
+  if (static_cast<int>(pfcand_charge->at(itk))==0) return false;
   // if (pfcand_pt->at(itk)<3) return false;
-  // if (fabs(pfcand_eta->at(itk))>2.5) return false;
-  if (pfcand_fromPV->at(itk)<=1) return false; // pileup suppression
-  if (static_cast<int>(pfcand_pdgId->at(itk))==0) return false;
+  if (fabs(pfcand_eta->at(itk))>2.5) return false;
+  //if (pfcand_fromPV->at(itk)<=1) return false; // pileup suppression
+  if (fabs(pfcand_dz->at(itk))>0.1) return false;
+  if (static_cast<int>(pfcand_pdgId->at(itk))==0) return false; // just to be safe
   return true;
 }
 
-void EventHandler::NewGetIsoTracks(std::vector<std::pair<int,double> > &eCands, std::vector<std::pair<int,double> > &muCands, std::vector<std::pair<int,double> > &hadCands, bool checkID, bool mT_cut) {
-  if (cfAVersion<77) return;
-  eCands.clear();
-  muCands.clear();
-  hadCands.clear();
-  // cout << "Found " << pfcand_pt->size() << " PFCands." << endl;
-  for (uint itk(0); itk<pfcand_pdgId->size(); itk++) {
-    if (isnan(pfcand_charge->at(itk)) || isnan(pfcand_pt->at(itk))  || isnan(pfcand_dz->at(itk)) || isnan(pfcand_phi->at(itk)) || isnan(pfcand_eta->at(itk)) ) continue;
-    if (static_cast<int>(pfcand_charge->at(itk))==0) continue;
-    double pt = pfcand_pt->at(itk);
-    if (pt<5) continue;
-    if (abs(TMath::Nint(pfcand_pdgId->at(itk)))==211&&pt<10) continue;
-    double eta = pfcand_eta->at(itk);
-    if (fabs(eta)>2.5) continue;
-    if (checkID&&!PassIsoTrackBaseline(itk)) continue;
-    if (mT_cut && GetMTW(pfcand_pt->at(itk),theMET_,pfcand_phi->at(itk),theMETPhi_)>100) continue;
-    //  int type = static_cast<int>(pfcand_pdgId->at(itk));
-    double iso = GetPFCandIsolation(itk);
-    double relIso=iso/pfcand_pt->at(itk);
-    // note: not cutting here on isolation!
-    switch (abs(TMath::Nint(pfcand_pdgId->at(itk)))) {
-    case 11:
-      eCands.push_back(std::make_pair(itk, relIso));
-      break;
-    case 13:
-      muCands.push_back(std::make_pair(itk, relIso));
-      break;
-    case 211:
-      // if (pfcand_pt->at(itk)>10) printf("pfcand %d: pdgId=%d, pt=%f, ch_rel_iso=%f, mT=%f\n", itk, TMath::Nint(pfcand_pdgId->at(itk)), pfcand_pt->at(itk), relIso, GetMTW(pfcand_pt->at(itk),theMET_,pfcand_phi->at(itk),theMETPhi_));
-      if (pt>10) hadCands.push_back(std::make_pair(itk, relIso));
-      break;
-    default:
-      continue;
-    }
-  }
-  return;
-}
+// void EventHandler::NewGetIsoTracks(std::vector<std::pair<int,double> > &eCands, std::vector<std::pair<int,double> > &muCands, std::vector<std::pair<int,double> > &hadCands, bool checkID, bool mT_cut) {
+//   if (cfAVersion<77) return;
+//   eCands.clear();
+//   muCands.clear();
+//   hadCands.clear();
+//   // cout << "Found " << pfcand_pt->size() << " PFCands." << endl;
+//   for (uint itk(0); itk<pfcand_pdgId->size(); itk++) {
+//     if (isnan(pfcand_charge->at(itk)) || isnan(pfcand_pt->at(itk))  || isnan(pfcand_dz->at(itk)) || isnan(pfcand_phi->at(itk)) || isnan(pfcand_eta->at(itk)) ) continue;
+//     if (static_cast<int>(pfcand_charge->at(itk))==0) continue;
+//     double pt = pfcand_pt->at(itk);
+//     if (pt<5) continue;
+//     if (abs(TMath::Nint(pfcand_pdgId->at(itk)))==211&&pt<10) continue;
+//     double eta = pfcand_eta->at(itk);
+//     if (fabs(eta)>2.5) continue;
+//     if (checkID&&!PassIsoTrackBaseline(itk)) continue;
+//     if (mT_cut && GetMTW(pfcand_pt->at(itk),theMET_,pfcand_phi->at(itk),theMETPhi_)>100) continue;
+//     //  int type = static_cast<int>(pfcand_pdgId->at(itk));
+//     double iso = GetPFCandIsolation(itk);
+//     double relIso=iso/pfcand_pt->at(itk);
+//     // note: not cutting here on isolation!
+//     switch (abs(TMath::Nint(pfcand_pdgId->at(itk)))) {
+//     case 11:
+//       eCands.push_back(std::make_pair(itk, relIso));
+//       break;
+//     case 13:
+//       muCands.push_back(std::make_pair(itk, relIso));
+//       break;
+//     case 211:
+//       // if (pfcand_pt->at(itk)>10) printf("pfcand %d: pdgId=%d, pt=%f, ch_rel_iso=%f, mT=%f\n", itk, TMath::Nint(pfcand_pdgId->at(itk)), pfcand_pt->at(itk), relIso, GetMTW(pfcand_pt->at(itk),theMET_,pfcand_phi->at(itk),theMETPhi_));
+//       if (pt>10) hadCands.push_back(std::make_pair(itk, relIso));
+//       break;
+//     default:
+//       continue;
+//     }
+//   }
+//   return;
+// }
 
 double EventHandler::GetTransverseMassMu() const{
   //Find leading lepton
@@ -4012,68 +4014,46 @@ double EventHandler::GetSumSkinnyJetMass() const {
  return sum;
 }
 
-unsigned int EventHandler::GetNumPhotons(const double pt_cut, const bool oldID) const {
+unsigned int EventHandler::GetNumPhotons(const double pt_cut) const {
   if (cfAVersion<78) return 0;
   // cout << "GetNumPhotons" << endl;
   uint nphotons(0);
   for (uint iph(0); iph<photons_pt->size(); iph++) {
-    if (isGoodPhoton(iph, pt_cut, oldID)) nphotons++;
+    if (isGoodPhoton(iph, pt_cut)) nphotons++;
   }
   return nphotons;
 }
 
-double EventHandler::GetPhotonIsolation(const iso_type_t type, const double raw_iso, const double eta, const bool oldID) const {
+double EventHandler::GetPhotonIsolation(const iso_type_t type, const double raw_iso, const double eta) const {
   if (type!=CH&&type!=NH&&type!=PH) {
     cerr << "Error: I don't know which photon isolation to compute." << endl;
     return -1.;
   }
   // cout << "GetPhotonIsolation" << endl;
   double EA_ch(0.), EA_nh(0.), EA_ph(0.);
-  if (oldID) {
-   // cout << "Using old EAs..." << endl;
-    if (fabs(eta)<1.0) {
-      EA_ch=0.012; EA_nh=0.030; EA_ph=0.148;
-    } else if (fabs(eta)>=1.0&&fabs(eta)<1.479) {
-      EA_ch=0.010; EA_nh=0.057; EA_ph=0.130;
-    }
-    else if (fabs(eta)>=1.479&&fabs(eta)<2.0) {
-      EA_ch=0.014; EA_nh=0.039; EA_ph=0.112;
-    }
-    else if (fabs(eta)>=2.0&&fabs(eta)<2.2) {
-      EA_ch=0.012; EA_nh=0.015; EA_ph=0.216;
-    }
-    else if (fabs(eta)>=2.2&&fabs(eta)<2.3) {
-      EA_ch=0.016; EA_nh=0.024; EA_ph=0.262;
-    }
-    else if (fabs(eta)>=2.3&&fabs(eta)<2.4) {
-      EA_ch=0.020; EA_nh=0.039; EA_ph=0.260;
-    }
-    else if (fabs(eta)>=2.4) {
-      EA_ch=0.012; EA_nh=0.072; EA_ph=0.266;
-    }
-  } else { // new effective areas: https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonIdentificationRun2
-   // cout << "Using new EAs..." << endl;
-   if (fabs(eta)<1.0) {
-      EA_ch=0.013; EA_nh=0.0056; EA_ph=0.0896;
-    } else if (fabs(eta)>=1.0&&fabs(eta)<1.479) {
-      EA_ch=0.0096; EA_nh=0.0107; EA_ph=0.0762;
-    }
-    else if (fabs(eta)>=1.479&&fabs(eta)<2.0) {
-      EA_ch=0.0107; EA_nh=0.0019; EA_ph=0.0383;
-    }
-    else if (fabs(eta)>=2.0&&fabs(eta)<2.2) {
-      EA_ch=0.0077; EA_nh=0.0011; EA_ph=0.0534;
-    }
-    else if (fabs(eta)>=2.2&&fabs(eta)<2.3) {
-      EA_ch=0.0088; EA_nh=0.0077; EA_ph=0.0846;
-    }
-    else if (fabs(eta)>=2.3&&fabs(eta)<2.4) {
-      EA_ch=0.0065; EA_nh=0.0178; EA_ph=0.1032;
-    }
-    else if (fabs(eta)>=2.4) {
-      EA_ch=0.0030; EA_nh=0.1675; EA_ph=0.1598;
-    }
-  }	
+  // new effective areas: https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedPhotonIdentificationRun2
+  // cout << "Using new EAs..." << endl;
+  if (fabs(eta)<1.0) {
+    EA_ch=0.0234; EA_nh=0.0053; EA_ph=0.078;
+  } else if (fabs(eta)>=1.0&&fabs(eta)<1.479) {
+    EA_ch=0.0189; EA_nh=0.0103; EA_ph=0.0629;
+  }
+  else if (fabs(eta)>=1.479&&fabs(eta)<2.0) {
+    EA_ch=0.0171; EA_nh=0.0057; EA_ph=0.0264;
+  }
+  else if (fabs(eta)>=2.0&&fabs(eta)<2.2) {
+    EA_ch=0.0129; EA_nh=0.0070; EA_ph=0.0462;
+  }
+  else if (fabs(eta)>=2.2&&fabs(eta)<2.3) {
+    EA_ch=0.0110; EA_nh=0.0152; EA_ph=0.0740;
+  }
+  else if (fabs(eta)>=2.3&&fabs(eta)<2.4) {
+    EA_ch=0.0074; EA_nh=0.0232; EA_ph=0.0924;
+  }
+  else if (fabs(eta)>=2.4) {
+    EA_ch=0.0035; EA_nh=0.1709; EA_ph=0.1484;
+  }
+  	
   double EA(0.);
   switch(type) {
   case CH : 
@@ -4096,7 +4076,7 @@ double EventHandler::GetPhotonIsolation(const iso_type_t type, const double raw_
   
 }
 
-bool EventHandler::isGoodPhoton(uint iph, const double pt_cut, const bool oldID) const{
+bool EventHandler::isGoodPhoton(uint iph, const double pt_cut) const{
 
   double max_iso_ch = 0.;
   double max_iso_nh = 0.;
@@ -4113,59 +4093,50 @@ bool EventHandler::isGoodPhoton(uint iph, const double pt_cut, const bool oldID)
     isEndcapPhoton=false;
   }
   if (!isBarrelPhoton && !isEndcapPhoton) return false;
-  if (!PassPhotonID(iph, isBarrelPhoton)) return false;
-  max_iso_ch = (isBarrelPhoton) ? 0.7 : 0.5;
-  max_iso_nh = (isBarrelPhoton) ? 0.4 + 0.04*pt : 1.5 + 0.04*pt;
-  max_iso_ph = (isBarrelPhoton) ? 0.5 + 0.005*pt : 1.0 + 0.005*pt;
-  if (!oldID) {
-    max_iso_ch = (isBarrelPhoton) ? 2.56 : 3.12;
-    max_iso_nh = (isBarrelPhoton) ? 3.74 + 0.0025*pt : 17.11 + 0.0118*pt;
-    max_iso_ph = (isBarrelPhoton) ? 2.68 + 0.001*pt : 2.7 + 0.0059*pt;
-  }
-  double ch_iso = GetPhotonIsolation(CH, photons_pf_ch_iso->at(iph), eta, oldID);
+  if (!PassPhotonID(iph)) return false;
+  max_iso_ch = (isBarrelPhoton) ? 2.67 : 1.79;
+  max_iso_nh = (isBarrelPhoton) ? 7.23 + TMath::Exp(0.0028*pt+0.5408) : 8.89+ 0.01725*pt;
+  max_iso_ph = (isBarrelPhoton) ? 2.11 + 0.0014*pt : 3.09 + 0.0091*pt;
+  double ch_iso = GetPhotonIsolation(CH, photons_pf_ch_iso->at(iph), eta);
   if (ch_iso>max_iso_ch) return false;
-  double nh_iso = GetPhotonIsolation(NH, photons_pf_nh_iso->at(iph), eta, oldID);
+  double nh_iso = GetPhotonIsolation(NH, photons_pf_nh_iso->at(iph), eta);
   if (nh_iso>max_iso_nh) return false;
-  double ph_iso = GetPhotonIsolation(PH, photons_pf_ph_iso->at(iph), eta, oldID);
+  double ph_iso = GetPhotonIsolation(PH, photons_pf_ph_iso->at(iph), eta);
   if (ph_iso>max_iso_ph) return false;
   return true;
 }
 
-bool EventHandler::PassPhotonID(uint iph, const bool oldID) const{
+bool EventHandler::PassPhotonID(uint iph) const{
   bool isBarrelPhoton(false);
   double eta=photons_eta->at(iph);
   if(fabs(eta) < 1.4442 ) isBarrelPhoton=true;
-  double sigmaIetaIeta_cut = isBarrelPhoton ? 0.011 : 0.031;
-  double hadTowOverEM_cut = 0.05;
-  if (!oldID) {
-    sigmaIetaIeta_cut = isBarrelPhoton ? 0.0106 : 0.0266;
-    hadTowOverEM_cut = (isBarrelPhoton) ? 0.048 : 0.069;
-  }
+  double sigmaIetaIeta_cut =  isBarrelPhoton ? 0.0176 : 0.0272;
+  double hadTowOverEM_cut = (isBarrelPhoton) ? 0.028 : 0.093;
+
   if (cfAVersion<78&&photons_sigmaIetaIeta->at(iph)>sigmaIetaIeta_cut) return false;
   if (cfAVersion>=78&&photons_full5x5sigmaIEtaIEta->at(iph)>sigmaIetaIeta_cut) return false;
   if (photons_hadTowOverEM->at(iph)>hadTowOverEM_cut) return false;
-  if (oldID&&photons_hasPixelSeed->at(iph)>0) return false;
-  if (!oldID&&cfAVersion>=78&&!photons_pass_el_veto->at(iph)) return false;
+  if (cfAVersion>=78&&!photons_pass_el_veto->at(iph)) return false;
   return true;
 }
 
-TVector2 EventHandler::GetPhotonMHTVec(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const{
+TVector2 EventHandler::GetPhotonMHTVec(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut) const{
   TVector2 mht_vec = GetMHTVec(jet_pt_cut, jet_eta_cut);
   for (uint iph(0); iph<photons_pt->size(); iph++) {
-    if (cfAVersion<78||!isGoodPhoton(iph, ph_pt_cut, oldID)) continue;
+    if (cfAVersion<78||!isGoodPhoton(iph, ph_pt_cut)) continue;
     TVector2 phVec(photons_px->at(iph),photons_py->at(iph));
     mht_vec+=phVec;
   }
   return mht_vec;
 }
 
-double EventHandler::GetPhotonMHT(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const {
-  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut, oldID);
+double EventHandler::GetPhotonMHT(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut) const {
+  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut);
   return vec.Mod();
 }
 
-double EventHandler::GetPhotonMHTPhi(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut, const bool oldID) const {
-  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut, oldID);
+double EventHandler::GetPhotonMHTPhi(const double jet_pt_cut, const double jet_eta_cut, const double ph_pt_cut) const {
+  TVector2 vec = GetPhotonMHTVec(jet_pt_cut, jet_eta_cut, ph_pt_cut);
   return TVector2::Phi_mpi_pi(vec.Phi());
 }
 
@@ -4183,7 +4154,7 @@ std::vector<int> EventHandler::GetPhotons(double pt_cut, bool checkID) const {
       isEndcapPhoton=false;
     }
     if (!isBarrelPhoton && !isEndcapPhoton) continue;
-    if (checkID&&!PassPhotonID(iph, isBarrelPhoton)) continue;
+    if (checkID&&!PassPhotonID(iph)) continue;
     photons.push_back(iph);
   }
   return photons;

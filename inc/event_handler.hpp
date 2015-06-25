@@ -333,7 +333,7 @@ protected:
   int GetNumIsoTracks(const double=15.0, const bool=true) const;
   //vector<std::pair<int,double> > GetIsoTracks(const double=15.0, const bool=true) const;
   void GetIsoTracks(vector<IsolatedTrack> &muCands, vector<IsolatedTrack> &eCands, vector<IsolatedTrack> &hadCands, bool checkID, bool mT_cut);
-  void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool checkID=true, bool mT_cut=true);
+  //  void NewGetIsoTracks(vector<std::pair<int,double> > &eCands, vector<std::pair<int,double> > &muCands, vector<std::pair<int,double> > &hadCands, bool checkID=true, bool mT_cut=true);
   bool PassIsoTrackBaseline(const uint index) const;
   double GetPFCandIsolation(const uint indexA) const;
   double GetPFCandIsolationDeltaBetaCorr(const uint indexA) const;
@@ -419,13 +419,13 @@ protected:
   double GetSumSkinnyJetMass() const;
 
   std::vector<int> GetPhotons(const double pt_cut=100., const bool checkID=true) const;
-  unsigned int GetNumPhotons(const double=100., bool=false) const;
-  bool isGoodPhoton(uint iph, const double pt_cut=100., const bool oldID=false) const;
-  bool PassPhotonID(uint iph, const bool oldID=false) const;
-  double GetPhotonIsolation(const iso_type_t, const double, const double, const bool=false) const;
-  TVector2 GetPhotonMHTVec(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
-  double GetPhotonMHT(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
-  double GetPhotonMHTPhi(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100., const bool oldID=false) const;
+  unsigned int GetNumPhotons(const double=100.) const;
+  bool isGoodPhoton(uint iph, const double pt_cut=100.) const;
+  bool PassPhotonID(uint iph) const;
+  double GetPhotonIsolation(const iso_type_t, const double, const double) const;
+  TVector2 GetPhotonMHTVec(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100.) const;
+  double GetPhotonMHT(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100.) const;
+  double GetPhotonMHTPhi(const double jet_pt_cut=30., const double jet_eta_cut=5., const double ph_pt_cut=100.) const;
 
   double GetActivity(const int type, const double eta, const double phi, const double maxDeltaR=1.0) const;
 

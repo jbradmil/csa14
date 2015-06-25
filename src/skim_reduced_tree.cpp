@@ -22,7 +22,7 @@ void SkimReducedTree(string inFilename, string outFilename, TString type) {
   TFile* outfile = new TFile(outFilename.c_str(),"recreate");
   outfile->cd();
   TCut ht("ht30>500"), njets("num_jets_pt30>=4"), mht30("mht30>200"), mdp("min_delta_phi_met_N>4"), nb("num_csvm_jets30>=2"), presel(ht+njets+mht30+mdp);
-  TCut SL("num_veto_mus+um_veto_els==1");
+  TCut SL("num_veto_mus+num_veto_els==1");
   //TTree *outCh = inCh->CopyTree("(fatpT30_MJ>400||ht30>750)&&met>200&&num_csvm_jets30>1&&min_delta_phi_met_N>4&&num_reco_veto_muons==0&&num_reco_veto_electrons==0");
   // 13 TeV
   TTree *outCh(0);
@@ -41,7 +41,7 @@ void SkimReducedTree(string inFilename, string outFilename, TString type) {
 int main(int argc, char *argv[]){
   std::string inFilename(""), type("ZL");
   int c(0);
-  while((c=getopt(argc, argv, "i:"))!=-1){
+  while((c=getopt(argc, argv, "i:t:"))!=-1){
     switch(c){
     case 'i':
       inFilename=optarg;
@@ -66,9 +66,11 @@ int main(int argc, char *argv[]){
   }
   // 13 TeV
   outFilename="reduced_trees/13TeV/skimmed/"+baseName+"_skimmed.root";
+  if (type=="SL") outFilename="reduced_trees/13TeV/skimmed/SL/"+baseName+"_skimmed.root";
   // outFilename="reduced_trees/13TeV/skimmed/test_dataset/"+baseName+"_skimmed.root";
   // outFilename="reduced_trees/13TeV/skimmed/test_mc/"+baseName+"_skimmed.root";
   // 8 TeV  
-  //  outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
+  // outFilename="reduced_trees/8TeV/skimmed/"+baseName+"_skimmed.root";
+  // if (type=="SL") outFilename="reduced_trees/8TeV/skimmed/SL/"+baseName+"_skimmed.root";
   SkimReducedTree(inFilename,outFilename,type);
 }
