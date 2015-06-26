@@ -4093,20 +4093,20 @@ bool EventHandler::isGoodPhoton(uint iph, const double pt_cut) const{
     isEndcapPhoton=false;
   }
   if (!isBarrelPhoton && !isEndcapPhoton) return false;
-  // printf("Photon %d: pt %3.2f, eta %3.2f\n", iph, pt, eta);
+  printf("Photon %d: pt %3.2f, eta %3.2f\n", iph, pt, eta);
   if (!PassPhotonID(iph)) return false;
-  // printf("Passed ID\n");
+  printf("Passed ID\n");
   max_iso_ch = (isBarrelPhoton) ? 2.67 : 1.79;
   max_iso_nh = (isBarrelPhoton) ? 7.23 + TMath::Exp(0.0028*pt+0.5408) : 8.89+ 0.01725*pt;
   max_iso_ph = (isBarrelPhoton) ? 2.11 + 0.0014*pt : 3.09 + 0.0091*pt;
   double ch_iso = GetPhotonIsolation(CH, photons_pf_ch_iso->at(iph), eta);
   double nh_iso = GetPhotonIsolation(NH, photons_pf_nh_iso->at(iph), eta);
   double ph_iso = GetPhotonIsolation(PH, photons_pf_ph_iso->at(iph), eta);
-  // printf("CH Iso %3.2f, NH Iso %3.2f, PH Iso %3.2f\n", ch_iso, nh_iso, ph_iso);
+  printf("CH Iso %3.2f, NH Iso %3.2f, PH Iso %3.2f\n", ch_iso, nh_iso, ph_iso);
   if (ch_iso>max_iso_ch) return false;
   if (nh_iso>max_iso_nh) return false;
   if (ph_iso>max_iso_ph) return false;
-  // printf("Passed isolation\n");
+  printf("Passed isolation\n");
   return true;
 }
 
@@ -4114,14 +4114,15 @@ bool EventHandler::PassPhotonID(uint iph) const{
   bool isBarrelPhoton(false);
   double eta=photons_eta->at(iph);
   if(fabs(eta) < 1.4442 ) isBarrelPhoton=true;
-  double sigmaIetaIeta_cut =  isBarrelPhoton ? 0.0176 : 0.0272;
+  double sigmaIetaIeta_cut =  isBarrelPhoton ? 0.0107 : 0.0272;
   double hadTowOverEM_cut = (isBarrelPhoton) ? 0.028 : 0.093;
 
-  //  printf("sieie %3.2f, hOverE %3.2f\n", photons_sigmaIetaIeta->at(iph), photons_hadTowOverEM->at(iph));
+  printf("sieie %3.2f, hOverE %3.2f, hasPixelSeed %3.0f\n", photons_sigmaIetaIeta->at(iph), photons_hadTowOverEM->at(iph), photons_hasPixelSeed->at(iph));
   if (cfAVersion<78&&photons_sigmaIetaIeta->at(iph)>sigmaIetaIeta_cut) return false;
   if (cfAVersion>=78&&photons_full5x5sigmaIEtaIEta->at(iph)>sigmaIetaIeta_cut) return false;
   if (photons_hadTowOverEM->at(iph)>hadTowOverEM_cut) return false;
   //if (cfAVersion>=78&&!photons_pass_el_veto->at(iph)) return false;
+  if (photons_hasPixelSeed->at(iph)>0) return false;
   return true;
 }
 
