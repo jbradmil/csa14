@@ -231,7 +231,7 @@ void MakeClosurePlot(TH1D* hObs, TH1D* hPred, TString name, bool logy=true) {
 
   c1->cd();
   
-  c1->Print("Closure/plots/"+name+".pdf");
+  c1->Print("Closure/plots/no_dp_cut/"+name+".pdf");
 
   delete staterr;
   delete ratio;
@@ -246,9 +246,9 @@ void MakeClosurePlot(TH1D* hObs, TH1D* hPred, TString name, bool logy=true) {
   
 }
 
-void DoClosureTests(TString outputfile="Closure/Closure.root",
+void DoClosureTests(TString outputfile="Closure/Closure_no_dp_cut.root",
 		    //TString classicalfile="macros/junews/lostleptons/Classical/Classical.root",
-		    TString ratiofile="outputfiles/analysis-output3.root") {
+		    TString ratiofile="outputfiles/analysis_output_no_dp_cut.root") {
 
   TFile* ofile = new TFile(outputfile.Data(), "recreate");
   // TH1::SetDefaultSumW2();

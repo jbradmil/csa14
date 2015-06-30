@@ -34,7 +34,7 @@ double wptbins_for_rlf[15] = { 0., 25., 50., 75., 100., 150., 200., 250., 300., 
 
 //---
 
-void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long64_t first_evt) {
+void DTTMHTRatioAnalysis::Run(TString infile, TString outfile, bool verb, Long64_t max_evts, Long64_t first_evt) {
 
   //--- found leptons must pass these cuts (trigger and control sample selection).
   /////////////double mht_cut = 200. ;
@@ -50,7 +50,7 @@ void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long
 
   gDirectory -> Delete( "h*" ) ;
 
-  TString input_hist_file = Form("%s/outputfiles/cdtta-input-hists.root", outdir.Data());
+  TString input_hist_file = Form("%s", infile.Data());
   
   printf("\n\n Reading input histograms from %s\n\n", input_hist_file.Data() ) ;
   loadHist( input_hist_file ) ;
@@ -665,7 +665,7 @@ void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long
       if ( jentry < first_evt ) continue ;
 
       if ( MHT < 125 ) continue ; // try a mht cut.
-      if (DeltaPhi1 <0.5 || DeltaPhi2 < 0.5 || DeltaPhi3 < 0.3) continue;// delta phi cut, for consistency
+      //      if (DeltaPhi1 <0.5 || DeltaPhi2 < 0.5 || DeltaPhi3 < 0.3) continue;// delta phi cut, for consistency
       if (HT < 500 || NJets < 4) continue; // binning baseline
 	 
       int gen_n_leptonic_w = GenElecNum+GenMuNum;
@@ -683,11 +683,11 @@ void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long
       double dTT(0.), WpT(0.);
       if (gen_n_leptonic_w==1) {
 	if (GenMuNum==1) {
-	  dTT = GetLeptonDeltaThetaT( GenMuPt[0], GenMuPhi[0], METPt, METPhi);
-	  WpT = GetWpT(GenMuPt[0], GenMuPhi[0], METPt, METPhi);
+	  dTT = GetLeptonDeltaThetaT( GenMuPt[0], GenMuPhi[0], MHT, MHTPhi);
+	  WpT = GetWpT(GenMuPt[0], GenMuPhi[0], MHT, MHTPhi);
 	} else if (GenElecNum==1) {
-	  dTT = GetLeptonDeltaThetaT( GenElecPt[0], GenElecPhi[0], METPt, METPhi);
-	  WpT = GetWpT(GenElecPt[0], GenElecPhi[0], METPt, METPhi);
+	  dTT = GetLeptonDeltaThetaT( GenElecPt[0], GenElecPhi[0], MHT, MHTPhi);
+	  WpT = GetWpT(GenElecPt[0], GenElecPhi[0], MHT, MHTPhi);
 	}
       }
 	 
@@ -749,19 +749,19 @@ void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long
 	Lphi=selectedIDIsoElectronsPhi[0];
 	MT=selectedIDIsoElectrons_MTW[0];
 	// sanity check
-	dTT = GetLeptonDeltaThetaT( selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], METPt, METPhi);
-	WpT = GetWpT(selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], METPt, METPhi);
+	dTT = GetLeptonDeltaThetaT( selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], MHT, MHTPhi);
+	WpT = GetWpT(selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], MHT, MHTPhi);
       } else if (selectedIDIsoMuonsNum==1) {
 	LpT=selectedIDIsoMuonsPt[0];
 	Lphi=selectedIDIsoMuonsPhi[0];
 	MT=selectedIDIsoMuons_MTW[0];
 	// sanity check
- 	dTT = GetLeptonDeltaThetaT( selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], METPt, METPhi);
-	WpT = GetWpT(selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], METPt, METPhi);
+ 	dTT = GetLeptonDeltaThetaT( selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], MHT, MHTPhi);
+	WpT = GetWpT(selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], MHT, MHTPhi);
       }
 
       if (LpT<lepton_pt_cut || MT < mt_cut) continue; // SL control sample
-      if ( verb ) printf( " %8llu : LpT %6.1f, Lphi %6.1f, METPt %6.1f, METPhi %6.1f, WpT %6.1f, MT %6.1f\n", jentry, LpT, Lphi, METPt, METPhi, WpT, MT ) ;
+      if ( verb ) printf( " %8llu : LpT %6.1f, Lphi %6.1f, MHT %6.1f, MHTPhi %6.1f, WpT %6.1f, MT %6.1f\n", jentry, LpT, Lphi, MHT, MHTPhi, WpT, MT ) ;
     
       if ( pass == 0 ) {
 	h_foundlep_wpt_mc_all_80bin -> Fill( WpT ) ;
@@ -1594,9 +1594,9 @@ void DTTMHTRatioAnalysis::Run(TString outdir, bool verb, Long64_t max_evts, Long
 
   } // pass
 
-  TString outfile = Form("%s/outputfiles/analysis-output3.root", outdir.Data());
+
   
-  if ( !verb ) saveHist( outfile, "h*" ) ;
+  if ( !verb ) saveHist( outfile.Data(), "h*" ) ;
 
    
 } // Run

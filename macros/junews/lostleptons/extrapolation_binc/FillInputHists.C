@@ -29,7 +29,7 @@ double wptbins_for_rlf[15] = { 0., 25., 50., 75., 100., 150., 200., 250., 300., 
 
 //--------------------------------------------------------------------------------------------------------
 
-void FillInputHists::Run(TString outdir) {
+void FillInputHists::Run(TString outfile) {
 
 
   //--- found leptons must pass these cuts (trigger and control sample selection).
@@ -121,7 +121,7 @@ void FillInputHists::Run(TString outdir) {
     //if ( abs(gen_l1_flav) == 15 && abs(gen_trk1_flav)>15 ) continue ; // remove hadronic taus
 
     if ( MHT < 125 ) continue ; // try a MHT cut (for the trigger) to see what happens.
-    if (DeltaPhi1 <0.5 || DeltaPhi2 < 0.5 || DeltaPhi3 < 0.3) continue;// delta phi cut, for consistency
+    //    if (DeltaPhi1 <0.5 || DeltaPhi2 < 0.5 || DeltaPhi3 < 0.3) continue;// delta phi cut, for consistency
     if (HT < 500 || NJets < 4) continue; // binning baseline
 
     int nji = -1 ;
@@ -138,11 +138,11 @@ void FillInputHists::Run(TString outdir) {
 
         
     if (GenMuNum==1) {
-      dTT = GetLeptonDeltaThetaT( GenMuPt[0], GenMuPhi[0], METPt, METPhi);
-      WpT = GetWpT(GenMuPt[0], GenMuPhi[0], METPt, METPhi);
+      dTT = GetLeptonDeltaThetaT( GenMuPt[0], GenMuPhi[0], MHT, MHTPhi);
+      WpT = GetWpT(GenMuPt[0], GenMuPhi[0], MHT, MHTPhi);
     } else if (GenElecNum==1) {
-      dTT = GetLeptonDeltaThetaT( GenElecPt[0], GenElecPhi[0], METPt, METPhi);
-      WpT = GetWpT(GenElecPt[0], GenElecPhi[0], METPt, METPhi);
+      dTT = GetLeptonDeltaThetaT( GenElecPt[0], GenElecPhi[0], MHT, MHTPhi);
+      WpT = GetWpT(GenElecPt[0], GenElecPhi[0], MHT, MHTPhi);
     }
     
     h_cdtt_all[nji][hti] -> Fill( 0.5*(1.-cos(dTT)) ) ;
@@ -160,14 +160,14 @@ void FillInputHists::Run(TString outdir) {
 	LpT=selectedIDIsoElectronsPt[0];
 	MT=selectedIDIsoElectrons_MTW[0];
 	// sanity check
-	dTT = GetLeptonDeltaThetaT( selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], METPt, METPhi);
-	WpT = GetWpT(selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], METPt, METPhi);
+	dTT = GetLeptonDeltaThetaT( selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], MHT, MHTPhi);
+	WpT = GetWpT(selectedIDIsoElectronsPt[0], selectedIDIsoElectronsPhi[0], MHT, MHTPhi);
      } else if (selectedIDIsoMuonsNum==1) {
 	LpT=selectedIDIsoMuonsPt[0];
 	MT=selectedIDIsoMuons_MTW[0];
 	// sanity check
- 	dTT = GetLeptonDeltaThetaT( selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], METPt, METPhi);
-	WpT = GetWpT(selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], METPt, METPhi);
+ 	dTT = GetLeptonDeltaThetaT( selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], MHT, MHTPhi);
+	WpT = GetWpT(selectedIDIsoMuonsPt[0], selectedIDIsoMuonsPhi[0], MHT, MHTPhi);
      }
       if (MT<mt_cut && LpT>lepton_pt_cut  ) {
 	h_cdtt_foundlep[nji][hti] -> Fill( 0.5*(1.-cos(dTT)) ) ;
@@ -202,7 +202,7 @@ void FillInputHists::Run(TString outdir) {
 
 
   char ofile[10000] ;
-  sprintf( ofile, "%s/outputfiles/cdtta-input-hists.root", outdir.Data() ) ;
+  sprintf( ofile, "%s", outfile.Data() ) ;
   printf("\n\n Saving histograms in %s\n", ofile ) ;
   saveHist( ofile, "h*" ) ;
   printf("\n\n\n") ;

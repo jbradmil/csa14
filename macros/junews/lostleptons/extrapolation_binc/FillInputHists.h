@@ -37,6 +37,7 @@ public :
    Float_t         HT;
    
    Float_t         MHT;
+   Float_t         MHTPhi;
    Float_t         DeltaPhi1;
    Float_t         DeltaPhi2;
    Float_t         DeltaPhi3;
@@ -186,6 +187,7 @@ public :
    TBranch        *b_Weight;   //!
    TBranch        *b_HT;   //!
    TBranch        *b_MHT;   //!
+   TBranch        *b_MHTPhi;
    TBranch        *b_DeltaPhi1;   //!
    TBranch        *b_DeltaPhi2;   //!
    TBranch        *b_DeltaPhi3;   //!
@@ -326,7 +328,7 @@ public :
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
-   virtual void     Run(TString outdir);
+   virtual void     Run(TString outfile);
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
@@ -405,6 +407,7 @@ void FillInputHists::Init(TTree *tree)
    fChain->SetBranchAddress("Weight", &Weight, &b_Weight);
    fChain->SetBranchAddress("HT", &HT, &b_HT);
    fChain->SetBranchAddress("MHT", &MHT, &b_MHT);
+   fChain->SetBranchAddress("MHTPhi", &MHTPhi, &b_MHTPhi);
    fChain->SetBranchAddress("DeltaPhi1", &DeltaPhi1, &b_DeltaPhi1);
    fChain->SetBranchAddress("DeltaPhi2", &DeltaPhi2, &b_DeltaPhi2);
    fChain->SetBranchAddress("DeltaPhi3", &DeltaPhi3, &b_DeltaPhi3);
