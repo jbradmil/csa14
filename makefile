@@ -19,7 +19,7 @@ vpath %.exe $(EXEDIR)
 vpath %.d $(MAKEDIR)
 
 # Add new executables to this list
-all: make_reduced_tree.exe print_collections.exe skim_file.exe skim_reduced_tree.exe skim_adam_tree.exe slim_cfa_files.exe
+all: make_reduced_tree.exe print_collections.exe skim_file.exe skim_reduced_tree.exe skim_arne_tree.exe slim_cfa_files.exe
 
 # List any object files your executable needs to be linked with
 $(EXEDIR)/generate_cfa_class.exe: generate_cfa_class.o
@@ -27,7 +27,7 @@ $(EXEDIR)/make_reduced_tree.exe: make_reduced_tree.o event_handler.o JetCorrecto
 $(EXEDIR)/print_collections.exe: print_collections.o object_printer.o cfa2014.o event_handler.o event_number.o jet.o fat_jet.o itk.o math.o pu_constants.o timer.o cfa2014.o weights.o reduced_tree_maker.o gen_muon.o gen_electron.o gen_tau.o in_json_2012.o BTagWeight2.o JetCorrector.o FactorizedJetCorrector.o JetCorrectionUncertainty.o SimpleJetCorrector.o SimpleJetCorrectionUncertainty.o JetCorrectorParameters.o search_bins.o
 $(EXEDIR)/skim_file.exe: skim_file.o event_handler.o event_number.o jet.o fat_jet.o itk.o math.o pu_constants.o timer.o cfa2014.o cfa_skimmer.o gen_muon.o gen_electron.o gen_tau.o in_json_2012.o BTagWeight2.o JetCorrector.o FactorizedJetCorrector.o JetCorrectionUncertainty.o SimpleJetCorrector.o SimpleJetCorrectionUncertainty.o JetCorrectorParameters.o search_bins.o
 $(EXEDIR)/skim_reduced_tree.exe: skim_reduced_tree.o
-$(EXEDIR)/skim_adam_tree.exe: skim_adam_tree.o
+$(EXEDIR)/skim_arne_tree.exe: skim_arne_tree.o
 $(EXEDIR)/slim_cfa_files.exe: slim_cfa_files.o
 
 -include $(addsuffix .d,$(addprefix $(MAKEDIR)/,$(notdir $(basename $(wildcard $(SRCDIR)/*.cpp)))))
