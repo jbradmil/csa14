@@ -29,9 +29,9 @@ float int_lumi(10000.);
 
 void PrintHeader() {
 
-  printf( "\\begin{table}[h] \n");
+  printf( "\\begin{sidewaystable}[h] \n");
   printf( "\\centering\n");
-  printf( "\\begin{tabular}{lcccccc}\n");
+  printf( "\\begin{tabular}{lcccccc|c}\n");
   printf( "\\hline\n");
   printf( "\\hline\n");
   printf( "Cut & $t\\bar{t}$ & QCD  & $Z+$jets  & $W+$jets  & Single top & Other \\\\ \\hline\n");
@@ -43,7 +43,7 @@ void PrintTrailer() {
   printf( "\\hline\n");
   printf( "\\hline\n");
   printf( "\\end{tabular}\n");
-  printf( "\\end{table}\n");
+  printf( "\\end{sidewaysytable}\n");
   
 }
 
@@ -141,56 +141,56 @@ void getBackgroundCutflow(float lumi=10000.) {
   single_top_ch = new TChain("reduced_tree");
   other_ch = new TChain("reduced_tree");
 
-  // ttbar_ch->Add("reduced_trees/13TeV/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2406_v78/*");
+  ttbar_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2406_v78/*");
   
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-300to470_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2376_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-470to600_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2375_v78/*");
-  // //temp_ch->Add("save/13TeV/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2374_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2374_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2373_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2372_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2371_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v2_MINIAODSIM_UCSB2370_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2369_v78/*");
-  // qcd_ch->Add("reduced_trees/13TeV/QCD_Pt-3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2368_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-300to470_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2376_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-470to600_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2375_v78/*");
+  //temp_ch->Add("save/13TeV/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2374_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-600to800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2374_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-800to1000_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v2_MINIAODSIM_UCSB2373_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-1000to1400_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2372_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-1400to1800_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_castor_PHYS14_25_V1-v1_MINIAODSIM_UCSB2371_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-1800to2400_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v2_MINIAODSIM_UCSB2370_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-2400to3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2369_v78/*");
+  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/QCD_Pt-3200_Tune4C_13TeV_pythia8_Phys14DR-PU20bx25_trkalmb_PHYS14_25_V1-v1_MINIAODSIM_UCSB2368_v78/*");
 
-  // znn_ch->Add("reduced_trees/13TeV/ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2408_v78/*");
-  // znn_ch->Add("reduced_trees/13TeV/ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2381_v78/*");
-  // znn_ch->Add("reduced_trees/13TeV/ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v2_MINIAODSIM_UCSB2380_v78/*");
-  // znn_ch->Add("reduced_trees/13TeV/ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2379_v78/*");
+  znn_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/ZJetsToNuNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2408_v78/*");
+  znn_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/ZJetsToNuNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2381_v78/*");
+  znn_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/ZJetsToNuNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v2_MINIAODSIM_UCSB2380_v78/*");
+  znn_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/ZJetsToNuNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2379_v78/*");
 
-  // wjets_ch->Add("reduced_trees/13TeV/WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2407_v78/*");
-  // wjets_ch->Add("reduced_trees/13TeV/WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2405_v78/*");
-  // wjets_ch->Add("reduced_trees/13TeV/WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2398_v78/*");
-  // wjets_ch->Add("reduced_trees/13TeV/WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2397_v78/*");
+  wjets_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/WJetsToLNu_HT-100to200_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2407_v78/*");
+  wjets_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/WJetsToLNu_HT-200to400_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2405_v78/*");
+  wjets_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/WJetsToLNu_HT-400to600_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2398_v78/*");
+  wjets_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/WJetsToLNu_HT-600toInf_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2397_v78/*");
 
-  // single_top_ch->Add("reduced_trees/13TeV/TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2411_v78/*");
-  // single_top_ch->Add("reduced_trees/13TeV/TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2412_v78/*");
-  // single_top_ch->Add("reduced_trees/13TeV/Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2395_v78/*");
-  // single_top_ch->Add("reduced_trees/13TeV/TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2410_v78/*");
-  // single_top_ch->Add("reduced_trees/13TeV/TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2409_v78/*");
-  // single_top_ch->Add("reduced_trees/13TeV/T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2393_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TBarToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2411_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TBarToLeptons_t-channel_Tune4C_CSA14_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2412_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2395_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TToLeptons_s-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2410_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TToLeptons_t-channel-CSA14_Tune4C_13TeV-aMCatNLO-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2409_v78/*");
+  single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2393_v78/*");
  
-  // other_ch->Add("reduced_trees/13TeV/TTWJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2390_v78/*");
-  // other_ch->Add("reduced_trees/13TeV/TTZJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2384_v78/*");
-  // other_ch->Add("reduced_trees/13TeV/WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2382_v78/*");
-  // other_ch->Add("reduced_trees/13TeV/TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v2_MINIAODSIM_UCSB2391_v78/*");
-  // other_ch->Add("reduced_trees/13TeV/ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2392_v78/*");
+  other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TTWJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2390_v78/*");
+  other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TTZJets_Tune4C_13TeV-madgraph-tauola_Phys14DR-PU20bx25_PHYS14_25_V1-v1_MINIAODSIM_UCSB2384_v78/*");
+  other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/WH_HToBB_WToLNu_M-125_13TeV_powheg-herwigpp_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2382_v78/*");
+  other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/TTbarH_M-125_13TeV_amcatnlo-pythia8-tauola_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v2_MINIAODSIM_UCSB2391_v78/*");
+  other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/ZH_HToBB_ZToNuNu_M-125_13TeV_powheg-herwigpp_Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1_MINIAODSIM_UCSB2392_v78/*");
 
 
-    ttbar_ch->Add("reduced_trees/13TeV/skimmed/TTJets*v78*.root");
-  //  qcd_ch->Add("reduced_trees/13TeV/skimmed/QCD_HT*v78*.root");
-  qcd_ch->Add("reduced_trees/13TeV/skimmed/QCD_Pt*v78*.root");
-  znn_ch->Add("reduced_trees/13TeV/skimmed/ZJets*v78*.root");
-  wjets_ch->Add("reduced_trees/13TeV/skimmed/WJets*v78*.root");
-  single_top_ch->Add("reduced_trees/13TeV/skimmed/TTo*v78*.root");
-  single_top_ch->Add("reduced_trees/13TeV/skimmed/TBarTo*v78*.root");
-  single_top_ch->Add("reduced_trees/13TeV/skimmed/*tW*v78*.root");
-  other_ch->Add("reduced_trees/13TeV/skimmed/ZH*v78*.root");
-  other_ch->Add("reduced_trees/13TeV/skimmed/WH*v78*.root");
-  other_ch->Add("reduced_trees/13TeV/skimmed/TTbar*v78*.root");
-  other_ch->Add("reduced_trees/13TeV/skimmed/TTW*v78*.root");
-  other_ch->Add("reduced_trees/13TeV/skimmed/TTZ*v78*.root");
+  //   ttbar_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TTJets*v78*.root");
+  // //  qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/QCD_HT*v78*.root");
+  // qcd_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/QCD_Pt*v78*.root");
+  // znn_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/ZJets*v78*.root");
+  // wjets_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/WJets*v78*.root");
+  // single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TTo*v78*.root");
+  // single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TBarTo*v78*.root");
+  // single_top_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/*tW*v78*.root");
+  // other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/ZH*v78*.root");
+  // other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/WH*v78*.root");
+  // other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TTbar*v78*.root");
+  // other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TTW*v78*.root");
+  // other_ch->Add("/cms8r0/johnbr/2014/csa14/reduced_trees/13TeV/skimmed/TTZ*v78*.root");
   
 
 
@@ -201,9 +201,10 @@ void getBackgroundCutflow(float lumi=10000.) {
 
 
  TCut ht("ht30>500"), njets("num_jets_pt30>=4"), mht30("mht30>200"), mdp("min_delta_phi_met_N>6");
- TCut mdp_new("min_delta_phi_mht>0.5");
+ TCut mdp_new("passDeltaPhiCut");
   //  TCut  mu_veto("num_veto_mus==0"), el_veto("num_veto_els==0");
   TCut mu_veto("num_veto_mus==0"), el_veto("num_veto_els==0");
+  TCut mutkveto("num_mu_tracks_mT==0"), eltkveto("num_el_tracks_mT==0"), hadtkveto("num_had_tracks_mT==0");
   TCut cleaning("passesBadJetFilter&&PBNRcode>0");
 
   TCut nj50("num_jets_pt50>=4");
@@ -211,9 +212,8 @@ void getBackgroundCutflow(float lumi=10000.) {
 
   TCut lv2("Sum$(mu_pt>10&&mu_vid&&mu_mini_iso_tr02<0.2)+Sum$(el_pt>10&&el_vid&&el_mini_iso_tr02<0.1)==0");
   TCut isoTk("num_iso_tracks_pt15_mT==0");
-  TCut mutkveto("num_mu_tracks_mT==0"), eltkveto("num_el_tracks_mT==0"), hadtkveto("num_had_tracks_mT==0");
   TCut tk3veto(mutkveto+eltkveto+hadtkveto);
-  TCut baseline(ht+njets+mht30+mdp_new+mu_veto+el_veto+tk3veto+cleaning);
+  TCut baseline(njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto+hadtkveto+mdp_new+cleaning);
   TCut mdp_mht4("min_delta_phi_mht_N>4");
   TCut MJ("fatpT30_MJ>200");
   TCut ttrich(ht+mht30+mu_veto+el_veto+mdp+isoTk+"num_jets_pt30>=6&&num_csvm_jets30>=2");
@@ -229,50 +229,23 @@ void getBackgroundCutflow(float lumi=10000.) {
   TCut ht1("ht30>500&&ht30<800"), ht2("ht30>800&&ht30<1200"), ht3("ht30>1200");
 
   TCut box1(mht1&&ht1), box2(mht1&&ht2), box3(mht1&&ht3), box4(mht2&&(ht1||ht2)), box5(mht2||ht3), box6(mht3&&(ht2||ht3));
-  // cout << "Low nb" << endl;
-  // PrintLine(bleq1, "$N_{b-\\mathrm{jets}}\\leq1$", bleq1);
-  // PrintLine(bleq1+njets, "$\\njets >=4$", bleq1);
-  // PrintLine(bleq1+njets+ht,"$\\HT > 500$ GeV", njets+bleq1);
-  // PrintLine(bleq1+mht30+njets+ht, "$\\MHT > 200$ GeV", njets+ht+bleq1);
-  // PrintLine(bleq1+njets+ht+mht30+mu_veto, "Muon veto", njets+ht+mht30+bleq1);
-  // PrintLine(bleq1+njets+ht+mht30+mu_veto+el_veto, "Electron veto", njets+ht+mht30+mu_veto+bleq1);
-  // PrintLine(bleq1+njets+ht+mht30+mu_veto+el_veto+tk3veto, "Iso. track veto", njets+ht+mht30+mu_veto+el_veto+bleq1);
-  // PrintLine(bleq1+njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp, "$\\dphin>6$", njets+ht+mht30+mu_veto+el_veto+tk3veto+bleq1);
-  // printf("\\hline \\multicolumn{7}{c}{Additional QCD supression}\\\\\\hline\n");
-  // PrintLine(baseline+bleq1+mdp5, "$\\dphin>5$", baseline+bleq1);
-  // PrintLine(baseline+bleq1+mdp6, "$\\dphin>6$", baseline+bleq1);
-  // PrintLine(baseline+bleq1+mdp7, "$\\dphin>7$", baseline+bleq1);
-  // PrintLine(baseline+bleq1+mdp8, "$\\dphin>8$", baseline+bleq1);
-  // PrintLine(baseline+bleq1+nj50, "$p_{T,1-4}>50$ GeV", baseline+bleq1);
 
-  // cout << "High nb" << endl;
-  // PrintLine(bgeq2, "$N_{b-\\mathrm{jets}}\\geq2$", bgeq2);
-  // PrintLine(bgeq2+njets, "$\\njets >=4$", bgeq2);
-  // PrintLine(bgeq2+njets+ht,"$\\HT > 500$ GeV", njets+bgeq2);
-  // PrintLine(bgeq2+mht30+njets+ht, "$\\MHT > 200$ GeV", njets+ht+bgeq2);
-  // PrintLine(bgeq2+njets+ht+mht30+mu_veto, "Muon veto", njets+ht+mht30+bgeq2);
-  // PrintLine(bgeq2+njets+ht+mht30+mu_veto+el_veto, "Electron veto", njets+ht+mht30+mu_veto+bgeq2);
-  // PrintLine(bgeq2+njets+ht+mht30+mu_veto+el_veto+tk3veto, "Iso. track veto", njets+ht+mht30+mu_veto+el_veto+bgeq2);
-  // PrintLine(bgeq2+njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp, "$\\dphin>4$", njets+ht+mht30+mu_veto+el_veto+tk3veto+bgeq2);
-  // printf("\\hline \\multicolumn{7}{c}{Additional QCD supression}\\\\\\hline\n");
-  // PrintLine(baseline+bgeq2+mdp5, "$\\dphin>5$", baseline+bgeq2);
-  // PrintLine(baseline+bgeq2+mdp6, "$\\dphin>6$", baseline+bgeq2);
-  // PrintLine(baseline+bgeq2+mdp7, "$\\dphin>7$", baseline+bgeq2);
-  // PrintLine(baseline+bgeq2+mdp8, "$\\dphin>8$", baseline+bgeq2);
-  // PrintLine(baseline+bgeq2+nj50, "$p_{T,1-4}>50$ GeV", baseline+bgeq2);
-  
   PrintLine("", "Start" "");
   PrintLine(njets, "$\\njets >=4$", "");
   PrintLine(njets+ht,"$\\HT > 500$ GeV", njets);
   PrintLine(mht30+njets+ht, "$\\MHT > 200$ GeV", njets+ht);
-  PrintLine(njets+ht+mht30+mu_veto, "Muon veto", njets+ht+mht30);
-  PrintLine(njets+ht+mht30+mu_veto+el_veto, "Electron veto", njets+ht+mht30+mu_veto);
-  PrintLine(njets+ht+mht30+mu_veto+el_veto+tk3veto, "Iso. track veto", njets+ht+mht30+mu_veto+el_veto);
-  PrintLine(njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp_new, "$\\dphi>0.5$", njets+ht+mht30+mu_veto+el_veto+tk3veto);
-  PrintLine(njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp_new+cleaning, "Event cleaning", njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp_new);
-
-  //PrintLine(njets+ht+mht30+mu_veto+el_veto+mdp+cleaning, "***Cross-check***", njets+ht+mht30+mu_veto+el_veto+mdp+"passesBadJetFilter&&PBNRcode>0");
-
+  PrintLine(njets+ht+mht30+mu_veto, "$\\mu$ veto", njets+ht+mht30);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto, "$e$ veto", njets+ht+mht30+mu_veto);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto+mutkveto, "$\\mu$ track veto", njets+ht+mht30+mu_veto+el_veto);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto, "$e$ track veto", njets+ht+mht30+mu_veto+el_veto+mutkveto);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto+hadtkveto, "Had. track veto", njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto+hadtkveto+mdp_new, "$\\Delta\\phi$ cuts", njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto+hadtkveto);
+  PrintLine(njets+ht+mht30+mu_veto+el_veto+mutkveto+eltkveto+hadtkveto+mdp_new+cleaning, "Evt. cleaning", njets+ht+mht30+mu_veto+el_veto+tk3veto+mdp_new);
+  printf("\\hline\\multicolumn{8}{c}{$\\nbjets$ bins}\\\\\\hline\n");
+  PrintLine(baseline+nb0, "$\\nbjets=0$", baseline);
+  PrintLine(baseline+nb1, "$\\nbjets=1$", baseline);
+  PrintLine(baseline+nb2, "$\\nbjets=2$", baseline);
+  PrintLine(baseline+nb3, "$\\nbjets\\geq3$", baseline);
   
   PrintTrailer();
 }
