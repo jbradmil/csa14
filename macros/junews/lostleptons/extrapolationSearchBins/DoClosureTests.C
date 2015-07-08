@@ -17,6 +17,7 @@
 #include "TChain.h"
 #include "../../../include/my_style.hpp"
 #include "classical_errors.h"
+#include "texfile_maker.h"
 
 
 using namespace std;
@@ -51,49 +52,89 @@ void SetPredictionBinContentAndError(int bin, TH1D* hPredE, TH1D* hClass, double
 }
 
 void PrintEventsTable(TH1D* hObs, TH1D* hPred, TH1D* hPredE) {
-  printf("*** Event yields for %s *** \n", hObs->GetName());
+
+  TString section_name = hPred->GetName();
+  section_name.ReplaceAll("hCPred", "");
+  fprintf(ofile, "\n\\section{%s}\n\n", section_name.Data());
+
+  fprintf(ofile, "\\begin{figure}[h]\n");
+  fprintf(ofile, "\\centering\n");
+  fprintf(ofile,  "\\caption{%s}\n", section_name.Data());
+  fprintf(ofile,  "\\begin{subfigure}[b]{0.49\\textwidth}\n");
+  fprintf(ofile,    "\\includegraphics[width=\\textwidth]{Closure/plots/%s.pdf}\n", section_name.Data());
+  fprintf(ofile,    "\\caption{Classical}\n");
+  fprintf(ofile,  "\\end{subfigure}\n");
+  fprintf(ofile, "\\begin{subfigure}[b]{0.49\\textwidth}\n");
+  fprintf(ofile,      "\\includegraphics[width=\\textwidth]{Closure/plots/%s.pdf}\n", (section_name+"_ext").Data());
+  fprintf(ofile,   "\\caption{Extrapolation}\n");
+  fprintf(ofile, "\\end{subfigure}\n");
+  fprintf(ofile, "\\end{figure}\n\n\n");
+
+  fprintf(ofile, "\\begin{table}[h]\n");
+  fprintf(ofile, "\\centering\n");
+  fprintf(ofile, "\\caption{Event yields for %s}\n", section_name.Data());
+  fprintf(ofile, "\\begin{tabular}{|c|c|c|c|}\n");
+  fprintf(ofile, "\\hline\n");
+  fprintf(ofile, "HT-MHT Bin & $N_{cl}$ & $N_{ext}$ & $N_{obs}$ \\\\\n");
+  fprintf(ofile, "\\hline\n");
   for (int i=1; i<=6; i++) {
     if (i>3) {
       double err_red = (hPred->GetBinContent(i)>0) ? (hPred->GetBinError(i)/hPred->GetBinContent(i)) / (hPredE->GetBinError(i)/hPredE->GetBinContent(i)) : err_red = 1 / (hPredE->GetBinError(i)/hPredE->GetBinContent(i));
-      if (hPred->GetBinContent(i)>=10)	printf("Box %d & $%3.1f\\pm%3.1f$ & $%3.1f\\pm%3.1f$ & $%3.0f$  \\\\ \n", i,
-					       hPred->GetBinContent(i), hPred->GetBinError(i),
-					       hPredE->GetBinContent(i), hPredE->GetBinError(i),
-					       hObs->GetBinContent(i));
-      else printf("Box %d & $%3.2f\\pm%3.2f$ & $%3.2f\\pm%3.2f$ & $%3.0f$ \\\\ \n", i,
-		  hPred->GetBinContent(i), hPred->GetBinError(i),
-		  hPredE->GetBinContent(i), hPredE->GetBinError(i),
-		  hObs->GetBinContent(i));
+      if (hPred->GetBinContent(i)>=10)	fprintf(ofile, "Box %d & $%3.1f\\pm%3.1f$ & $%3.1f\\pm%3.1f$ & $%3.0f$  \\\\ \n", i,
+						hPred->GetBinContent(i), hPred->GetBinError(i),
+						hPredE->GetBinContent(i), hPredE->GetBinError(i),
+						hObs->GetBinContent(i));
+      else fprintf(ofile, "Box %d & $%3.2f\\pm%3.2f$ & $%3.2f\\pm%3.2f$ & $%3.0f$ \\\\ \n", i,
+		   hPred->GetBinContent(i), hPred->GetBinError(i),
+		   hPredE->GetBinContent(i), hPredE->GetBinError(i),
+		   hObs->GetBinContent(i));
     } else {
-      printf("Box %d & \\multicolumn{2}{c|}{$%3.1f\\pm%3.1f$} & $%3.0f$ \\\\ \n", i, hPred->GetBinContent(i), hPred->GetBinError(i), hObs->GetBinContent(i) );
+      fprintf(ofile, "Box %d & \\multicolumn{2}{c|}{$%3.1f\\pm%3.1f$} & $%3.0f$ \\\\ \n", i, hPred->GetBinContent(i), hPred->GetBinError(i), hObs->GetBinContent(i) );
     }
-    if (i==3) printf("\\hline \n");
+    if (i==3) fprintf(ofile, "\\hline \n");
   }
-  std::cout << std::endl;
+  fprintf(ofile, "\\hline\n");
+  fprintf(ofile, "\\end{tabular}\n");
+  fprintf(ofile, "\\end{table}\n\n\n");
 }
 
 void PrintClosureTable(TH1D* hObs, TH1D* hPred, TH1D* hPredE) {
-  printf("*** Closure/uncertainty comparison for %s *** \n", hObs->GetName());
+  TString section_name = hPred->GetName();
+  section_name.ReplaceAll("hCPred", "");
+
+  fprintf(ofile, "\\begin{table}[h]\n");
+  fprintf(ofile, "\\centering\n");
+  fprintf(ofile, "\\caption{Closure/uncertainty comparison for %s}\n", section_name.Data());
+  fprintf(ofile, "\\begin{tabular}{|c|c|c|c|c|}\n");
+  fprintf(ofile, "\\hline\n");
+  fprintf(ofile, "HT-MHT Bin & $\\frac{\\delta(N_{cl})}{N_{cl}}$ & $\\frac{\\delta(N_{ext})}{N_{ext}}$ & $\\frac{N_{cl}-N_{obs}}{N_{obs}}$ &  $\\frac{N_{ext}-N_{obs}}{N_{obs}}$ \\\\\n");
+  fprintf(ofile, "\\hline\n");
   for (int i=1; i<=6; i++) {
     double ferr_cl = (hPred->GetBinContent(i)>0) ? (hPred->GetBinError(i)/hPred->GetBinContent(i)) : 0;
     double fncl_cl = (hObs->GetBinContent(i)>0) ? (hPred->GetBinContent(i)-hObs->GetBinContent(i))/hObs->GetBinContent(i) : 0;
-      if (i>3) {
-	double ferr_ext = (hPredE->GetBinContent(i)>0) ? (hPredE->GetBinError(i)/hPredE->GetBinContent(i)) : 0;
-	double fncl_ext = (hObs->GetBinContent(i)>0) ? (hPredE->GetBinContent(i)-hObs->GetBinContent(i))/hObs->GetBinContent(i) : 0;
-	printf("Box %d & $%3.2f$ & $%3.2f$ & $%3.2f$ & $%3.2f$ \\\\ \n", i,
-	       ferr_cl, ferr_ext,
-	       fncl_cl, fncl_ext);
+    if (i>3) {
+      double ferr_ext = (hPredE->GetBinContent(i)>0) ? (hPredE->GetBinError(i)/hPredE->GetBinContent(i)) : 0;
+      double fncl_ext = (hObs->GetBinContent(i)>0) ? (hPredE->GetBinContent(i)-hObs->GetBinContent(i))/hObs->GetBinContent(i) : 0;
+      fprintf(ofile, "Box %d & $%3.2f$ & $%3.2f$ & $%3.2f$ & $%3.2f$ \\\\ \n", i,
+	      ferr_cl, ferr_ext,
+	      fncl_cl, fncl_ext);
     } else {
-      printf("Box %d & \\multicolumn{2}{c|}{$%3.2f$} & \\multicolumn{2}{c|}{$%3.2f$} \\\\ \n", i, ferr_cl, fncl_cl );
+      fprintf(ofile, "Box %d & \\multicolumn{2}{c|}{$%3.2f$} & \\multicolumn{2}{c|}{$%3.2f$} \\\\ \n", i, ferr_cl, fncl_cl );
     }
-    if (i==3) printf("\\hline \n");
+    if (i==3) fprintf(ofile, "\\hline \n");
   }
-  std::cout << std::endl;
+  fprintf(ofile, "\\hline\n");
+  fprintf(ofile, "\\end{tabular}\n");
+  fprintf(ofile, "\\end{table}\n\n");
+  fprintf(ofile, "\\clearpage\n\n");
+
 }
 
 
 void MakeClosurePlot(TH1D* hObs, TH1D* hPred, TString name, bool logy=true) {
   set_style(hObs,"data_obs");
   set_style(hPred,"pred");
+
 
   // Setup canvas and pads
   TCanvas * c1 = new TCanvas("c1", "c1", 700, 700);
@@ -316,7 +357,8 @@ TH1D* GetCPredHist(TString cpred_file, TString hname, TCut cuts, int fErrInd) {
   ch->Project(hname, "5.5", (baseline+singleEl+cuts+box6)*predSF);
 
   for (int i = 0; i<6; i++) {
-    hist->SetBinError(i+1, hist->GetBinContent(i+1)*classical_errors[fErrInd+i]);
+    if (classical_errors[fErrInd+i]<0) hist->SetBinError(i+1, hist->GetBinContent(i+1));
+    else hist->SetBinError(i+1, hist->GetBinContent(i+1)*classical_errors[fErrInd+i]);
   }
 
   //  hist->Print("all");
@@ -367,6 +409,8 @@ void DoClosureTests(TString expec_file="/cms8r0/johnbr/2014/csa14/Lost-Lepton/Ex
  		    TString ratiofile="outputfiles/analysis-output3-default.root")
 {
 
+  ofile = fopen("results.tex","w");
+  PrintFileHeader();
 
   TH1D* hExpNB0NJ1 = GetExpecHist(expec_file, "hExpNB0NJ1", "BTags==0&&NJets>=4&&NJets<=6");
   TH1D* hExpNB0NJ2 = GetExpecHist(expec_file, "hExpNB0NJ2", "BTags==0&&NJets>=7&&NJets<=8");
@@ -410,261 +454,102 @@ void DoClosureTests(TString expec_file="/cms8r0/johnbr/2014/csa14/Lost-Lepton/Ex
   TH1D* hEPredNB3NJ2 = GetEPredHist("hEPredNB3NJ2", hCPredNB3NJ2, hratios, 4, 8, 10);
   TH1D* hEPredNB3NJ3 = GetEPredHist("hEPredNB3NJ3", hCPredNB3NJ3, hratios, 4, 8, 10);
 
-  hExpNB0NJ1->Write();
-  hCPredNB0NJ1->Write();
-  hEPredNB0NJ1->Write();
-  hExpNB0NJ2->Write();
-  hCPredNB0NJ2->Write();
-  hEPredNB0NJ2->Write();
-  hExpNB0NJ3->Write();
-  hCPredNB0NJ3->Write();
-  hEPredNB0NJ3->Write();
-  hExpNB1NJ1->Write();
-  hCPredNB1NJ1->Write();
-  hEPredNB1NJ1->Write();
-  hExpNB1NJ2->Write();
-  hCPredNB1NJ2->Write();
-  hEPredNB1NJ2->Write();
-  hExpNB1NJ3->Write();
-  hCPredNB1NJ3->Write();
-  hEPredNB1NJ3->Write();
-  hExpNB2NJ1->Write();
-  hCPredNB2NJ1->Write();
-  hEPredNB2NJ1->Write();
-  hExpNB2NJ2->Write();
-  hCPredNB2NJ2->Write();
-  hEPredNB2NJ2->Write();
-  hExpNB2NJ3->Write();
-  hCPredNB2NJ3->Write();
-  hEPredNB2NJ3->Write();
-  hExpNB3NJ1->Write();
-  hCPredNB3NJ1->Write();
-  hEPredNB3NJ1->Write();
-  hExpNB3NJ2->Write();
-  hCPredNB3NJ2->Write();
-  hEPredNB3NJ2->Write();
-  hExpNB3NJ3->Write();
-  hCPredNB3NJ3->Write();
-  hEPredNB3NJ3->Write();
+  // hExpNB0NJ1->Write();
+  // hCPredNB0NJ1->Write();
+  // hEPredNB0NJ1->Write();
+  // hExpNB0NJ2->Write();
+  // hCPredNB0NJ2->Write();
+  // hEPredNB0NJ2->Write();
+  // hExpNB0NJ3->Write();
+  // hCPredNB0NJ3->Write();
+  // hEPredNB0NJ3->Write();
+  // hExpNB1NJ1->Write();
+  // hCPredNB1NJ1->Write();
+  // hEPredNB1NJ1->Write();
+  // hExpNB1NJ2->Write();
+  // hCPredNB1NJ2->Write();
+  // hEPredNB1NJ2->Write();
+  // hExpNB1NJ3->Write();
+  // hCPredNB1NJ3->Write();
+  // hEPredNB1NJ3->Write();
+  // hExpNB2NJ1->Write();
+  // hCPredNB2NJ1->Write();
+  // hEPredNB2NJ1->Write();
+  // hExpNB2NJ2->Write();
+  // hCPredNB2NJ2->Write();
+  // hEPredNB2NJ2->Write();
+  // hExpNB2NJ3->Write();
+  // hCPredNB2NJ3->Write();
+  // hEPredNB2NJ3->Write();
+  // hExpNB3NJ1->Write();
+  // hCPredNB3NJ1->Write();
+  // hEPredNB3NJ1->Write();
+  // hExpNB3NJ2->Write();
+  // hCPredNB3NJ2->Write();
+  // hEPredNB3NJ2->Write();
+  // hExpNB3NJ3->Write();
+  // hCPredNB3NJ3->Write();
+  // hEPredNB3NJ3->Write();
 
   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
   setTDRStyle(tdrStyle);
   tdrStyle->cd();
+
   MakeClosurePlot(hExpNB0NJ1, hCPredNB0NJ1, "NB0NJ1");
   MakeClosurePlot(hExpNB0NJ1, hEPredNB0NJ1, "NB0NJ1_ext");
-  MakeClosurePlot(hExpNB0NJ2, hCPredNB0NJ2, "NB0NJ2");
-  MakeClosurePlot(hExpNB0NJ2, hEPredNB0NJ2, "NB0NJ2_ext");
-  MakeClosurePlot(hExpNB0NJ3, hCPredNB0NJ3, "NB0NJ3");
-  MakeClosurePlot(hExpNB0NJ3, hEPredNB0NJ3, "NB0NJ3_ext");
-  MakeClosurePlot(hExpNB1NJ1, hCPredNB1NJ1, "NB1NJ1");
-  MakeClosurePlot(hExpNB1NJ1, hEPredNB1NJ1, "NB1NJ1_ext");
-  MakeClosurePlot(hExpNB1NJ2, hCPredNB1NJ2, "NB1NJ2");
-  MakeClosurePlot(hExpNB1NJ2, hEPredNB1NJ2, "NB1NJ2_ext");
-  MakeClosurePlot(hExpNB1NJ3, hCPredNB1NJ3, "NB1NJ3");
-  MakeClosurePlot(hExpNB1NJ3, hEPredNB1NJ3, "NB1NJ3_ext");
-  MakeClosurePlot(hExpNB2NJ1, hCPredNB2NJ1, "NB2NJ1");
-  MakeClosurePlot(hExpNB2NJ1, hEPredNB2NJ1, "NB2NJ1_ext");
-  MakeClosurePlot(hExpNB2NJ2, hCPredNB2NJ2, "NB2NJ2");
-  MakeClosurePlot(hExpNB2NJ2, hEPredNB2NJ2, "NB2NJ2_ext");
-  MakeClosurePlot(hExpNB2NJ3, hCPredNB2NJ3, "NB2NJ3");
-  MakeClosurePlot(hExpNB2NJ3, hEPredNB2NJ3, "NB2NJ3_ext");
-  MakeClosurePlot(hExpNB3NJ1, hCPredNB3NJ1, "NB3NJ1");
-  MakeClosurePlot(hExpNB3NJ1, hEPredNB3NJ1, "NB3NJ1_ext");
-  MakeClosurePlot(hExpNB3NJ2, hCPredNB3NJ2, "NB3NJ2");
-  MakeClosurePlot(hExpNB3NJ2, hEPredNB3NJ2, "NB3NJ2_ext");
-  MakeClosurePlot(hExpNB3NJ3, hCPredNB3NJ3, "NB3NJ3");
-  MakeClosurePlot(hExpNB3NJ3, hEPredNB3NJ3, "NB3NJ3_ext");
-
   PrintEventsTable(hExpNB0NJ1, hCPredNB0NJ1, hEPredNB0NJ1);
   PrintClosureTable(hExpNB0NJ1, hCPredNB0NJ1, hEPredNB0NJ1);
+  MakeClosurePlot(hExpNB0NJ2, hCPredNB0NJ2, "NB0NJ2");
+  MakeClosurePlot(hExpNB0NJ2, hEPredNB0NJ2, "NB0NJ2_ext");
   PrintEventsTable(hExpNB0NJ2, hCPredNB0NJ2, hEPredNB0NJ2);
   PrintClosureTable(hExpNB0NJ2, hCPredNB0NJ2, hEPredNB0NJ2);
+  MakeClosurePlot(hExpNB0NJ3, hCPredNB0NJ3, "NB0NJ3");
+  MakeClosurePlot(hExpNB0NJ3, hEPredNB0NJ3, "NB0NJ3_ext");
   PrintEventsTable(hExpNB0NJ3, hCPredNB0NJ3, hEPredNB0NJ3);
   PrintClosureTable(hExpNB0NJ3, hCPredNB0NJ3, hEPredNB0NJ3);
+  
+  MakeClosurePlot(hExpNB1NJ1, hCPredNB1NJ1, "NB1NJ1");
+  MakeClosurePlot(hExpNB1NJ1, hEPredNB1NJ1, "NB1NJ1_ext");
   PrintEventsTable(hExpNB1NJ1, hCPredNB1NJ1, hEPredNB1NJ1);
   PrintClosureTable(hExpNB1NJ1, hCPredNB1NJ1, hEPredNB1NJ1);
+  MakeClosurePlot(hExpNB1NJ2, hCPredNB1NJ2, "NB1NJ2");
+  MakeClosurePlot(hExpNB1NJ2, hEPredNB1NJ2, "NB1NJ2_ext");
   PrintEventsTable(hExpNB1NJ2, hCPredNB1NJ2, hEPredNB1NJ2);
   PrintClosureTable(hExpNB1NJ2, hCPredNB1NJ2, hEPredNB1NJ2);
+  MakeClosurePlot(hExpNB1NJ3, hCPredNB1NJ3, "NB1NJ3");
+  MakeClosurePlot(hExpNB1NJ3, hEPredNB1NJ3, "NB1NJ3_ext");
   PrintEventsTable(hExpNB1NJ3, hCPredNB1NJ3, hEPredNB1NJ3);
   PrintClosureTable(hExpNB1NJ3, hCPredNB1NJ3, hEPredNB1NJ3);
+
+  MakeClosurePlot(hExpNB2NJ1, hCPredNB2NJ1, "NB2NJ1");
+  MakeClosurePlot(hExpNB2NJ1, hEPredNB2NJ1, "NB2NJ1_ext");
   PrintEventsTable(hExpNB2NJ1, hCPredNB2NJ1, hEPredNB2NJ1);
   PrintClosureTable(hExpNB2NJ1, hCPredNB2NJ1, hEPredNB2NJ1);
+  MakeClosurePlot(hExpNB2NJ2, hCPredNB2NJ2, "NB2NJ2");
+  MakeClosurePlot(hExpNB2NJ2, hEPredNB2NJ2, "NB2NJ2_ext");
   PrintEventsTable(hExpNB2NJ2, hCPredNB2NJ2, hEPredNB2NJ2);
   PrintClosureTable(hExpNB2NJ2, hCPredNB2NJ2, hEPredNB2NJ2);
+  MakeClosurePlot(hExpNB2NJ3, hCPredNB2NJ3, "NB2NJ3");
+  MakeClosurePlot(hExpNB2NJ3, hEPredNB2NJ3, "NB2NJ3_ext");
   PrintEventsTable(hExpNB2NJ3, hCPredNB2NJ3, hEPredNB2NJ3);
   PrintClosureTable(hExpNB2NJ3, hCPredNB2NJ3, hEPredNB2NJ3);
+  
+  MakeClosurePlot(hExpNB3NJ1, hCPredNB3NJ1, "NB3NJ1");
+  MakeClosurePlot(hExpNB3NJ1, hEPredNB3NJ1, "NB3NJ1_ext");
   PrintEventsTable(hExpNB3NJ1, hCPredNB3NJ1, hEPredNB3NJ1);
   PrintClosureTable(hExpNB3NJ1, hCPredNB3NJ1, hEPredNB3NJ1);
+  MakeClosurePlot(hExpNB3NJ2, hCPredNB3NJ2, "NB3NJ2");
+  MakeClosurePlot(hExpNB3NJ2, hEPredNB3NJ2, "NB3NJ2_ext");
   PrintEventsTable(hExpNB3NJ2, hCPredNB3NJ2, hEPredNB3NJ2);
   PrintClosureTable(hExpNB3NJ2, hCPredNB3NJ2, hEPredNB3NJ2);
+  MakeClosurePlot(hExpNB3NJ3, hCPredNB3NJ3, "NB3NJ3");
+  MakeClosurePlot(hExpNB3NJ3, hEPredNB3NJ3, "NB3NJ3_ext");
   PrintEventsTable(hExpNB3NJ3, hCPredNB3NJ3, hEPredNB3NJ3);
   PrintClosureTable(hExpNB3NJ3, hCPredNB3NJ3, hEPredNB3NJ3);
 
   rfile->Close();
 
+  PrintFileTrailer();
+  fclose(ofile);
   
 }
-
-// void DoClosureTests(TString outputfile="Closure/Closure_no_dp_cut.root",
-// 		    //TString classicalfile="macros/junews/lostleptons/Classical/Classical.root",
-// 		    TString ratiofile="outputfiles/analysis_output_no_dp_cut.root") {
-
-//   TFile* ofile = new TFile(outputfile.Data(), "recreate");
-//   // TH1::SetDefaultSumW2();
-
-//   //TFile* cfile = new TFile(classicalfile.Data(), "read");
-
-
-  
-//   TFile* rfile = new TFile(ratiofile.Data(), "read");
-//   // get ratios and uncertainties
-//   vector<double> ratios;
-//   vector<double> rerrors;
-//   TH1D* hratios = (TH1D*)rfile->Get("h_mhtratio_cdtt_superbins");
-//   // ratios.push_back(hratios->GetBinContent(2));
-//   // ratios.push_back(hratios->GetBinContent(3));
-//   // ratios.push_back(hratios->GetBinContent(5));
-//   // ratios.push_back(hratios->GetBinContent(6));
-//   // ratios.push_back(hratios->GetBinContent(8));
-//   // rerrors.push_back(hratios->GetBinError(2));
-//   // rerrors.push_back(hratios->GetBinError(3));
-//   // rerrors.push_back(hratios->GetBinError(5));
-//   // rerrors.push_back(hratios->GetBinError(6));
-//   // rerrors.push_back(hratios->GetBinError(8));
-
-//   ratios.push_back(hratios->GetBinContent(3));
-//   ratios.push_back(hratios->GetBinContent(4));
-//   ratios.push_back(hratios->GetBinContent(7));
-//   ratios.push_back(hratios->GetBinContent(8));
-//   ratios.push_back(hratios->GetBinContent(10));
-//   rerrors.push_back(hratios->GetBinError(3));
-//   rerrors.push_back(hratios->GetBinError(4));
-//   rerrors.push_back(hratios->GetBinError(7));
-//   rerrors.push_back(hratios->GetBinError(8));
-//   rerrors.push_back(hratios->GetBinError(10));
-
-//   for (unsigned int rat(0); rat<ratios.size(); rat++) {
-//     printf("DeltaThetaT ratio %d: %3.4f +/- %3.4f\n", rat+1, ratios[rat], rerrors[rat]);
-//   }
-//   cout << endl;
-  
-//   const Int_t nx = 6;
-//   TString boxes[nx] = {"Box 1","Box 2","Box 3","Box 4", "Box 5", "Box 6"};
-  
-//   TH1D* hObs_NJ1 = new TH1D("hObs_NJ1", "", nx, 0, nx);
-//   TH1D* hObs_NJ2 = new TH1D("hObs_NJ2", "", nx, 0, nx);
-//   TH1D* hObs_NJ3 = new TH1D("hObs_NJ3", "", nx, 0, nx);
-//   TH1D* hPred_NJ1 = new TH1D("hPred_NJ1", "", nx, 0, nx);
-//   TH1D* hPred_NJ2 = new TH1D("hPred_NJ2", "", nx, 0, nx);
-//   TH1D* hPred_NJ3 = new TH1D("hPred_NJ3", "", nx, 0, nx);
-//   TH1D* hPredE_NJ1 = new TH1D("hPredE_NJ1", "", nx, 0, nx);
-//   TH1D* hPredE_NJ2 = new TH1D("hPredE_NJ2", "", nx, 0, nx);
-//   TH1D* hPredE_NJ3 = new TH1D("hPredE_NJ3", "", nx, 0, nx);
-
-//   for (int i=1;i<=nx;i++) {
-//     hObs_NJ1->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hObs_NJ2->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hObs_NJ3->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPred_NJ1->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPred_NJ2->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPred_NJ3->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPredE_NJ1->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPredE_NJ2->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//     hPredE_NJ3->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
-//   }
-
-//   Double_t Obs_NJ1[nx] = {1381., 284., 43., 15., 2., 3.};
-//   Double_t Obs_NJ2[nx] = {261., 153., 40., 5., 3., 0.};
-//   Double_t Obs_NJ3[nx] = {3., 13., 7., 0., 0., 0.};
-
-//   Double_t Obs_NJ1_err[nx];
-//   Double_t Obs_NJ2_err[nx];
-//   Double_t Obs_NJ3_err[nx];
-
-//   for (int i=0;i<nx;i++) {
-//     Obs_NJ1_err[i] = sqrt(Obs_NJ1[i]);
-//     Obs_NJ2_err[i] = sqrt(Obs_NJ2[i]);
-//     Obs_NJ3_err[i] = sqrt(Obs_NJ3[i]);
-//   }
-
-//   Double_t Pred_NJ1[nx] = {1167.5, 210.2, 31.8, 13.5, 1.8, 0.2};
-//   Double_t Pred_NJ2[nx] = {327.8, 168.8, 42.5, 3.8, 3.0, 0.};
-//   Double_t Pred_NJ3[nx] = {4.5, 14.5, 7.5, 0., 0.5, 0.};
-
-//   Double_t Pred_NJ1_err[nx] = {17.1, 7.2, 2.8, 1.8, 0.7, 0.2};
-//   Double_t Pred_NJ2_err[nx] = {9.1, 6.5, 3.3, 1.0, 0.9, 0.0};
-//   Double_t Pred_NJ3_err[nx] = {1.1, 1.9, 1.4, 0., 0.4, 0.};
-
-//   for (int i=1;i<=nx;i++) {
-//     hObs_NJ1->SetBinContent(i,Obs_NJ1[i-1]);
-//     hObs_NJ2->SetBinContent(i,Obs_NJ2[i-1]);
-//     hObs_NJ3->SetBinContent(i,Obs_NJ3[i-1]);
-//     hObs_NJ1->SetBinError(i,Obs_NJ1_err[i-1]);
-//     hObs_NJ2->SetBinError(i,Obs_NJ2_err[i-1]);
-//     hObs_NJ3->SetBinError(i,Obs_NJ3_err[i-1]);
-//     hPred_NJ1->SetBinContent(i,Pred_NJ1[i-1]);
-//     hPred_NJ2->SetBinContent(i,Pred_NJ2[i-1]);
-//     hPred_NJ3->SetBinContent(i,Pred_NJ3[i-1]);
-//     hPred_NJ1->SetBinError(i,Pred_NJ1_err[i-1]);
-//     hPred_NJ2->SetBinError(i,Pred_NJ2_err[i-1]);
-//     hPred_NJ3->SetBinError(i,Pred_NJ3_err[i-1]);
-//     if (i<=3) { // same prediciton at low mht
-//       hPredE_NJ1->SetBinContent(i,Pred_NJ1[i-1]);
-//       hPredE_NJ2->SetBinContent(i,Pred_NJ2[i-1]);
-//       hPredE_NJ3->SetBinContent(i,Pred_NJ3[i-1]);
-//       hPredE_NJ1->SetBinError(i,Pred_NJ1_err[i-1]);
-//       hPredE_NJ2->SetBinError(i,Pred_NJ2_err[i-1]);
-//       hPredE_NJ3->SetBinError(i,Pred_NJ3_err[i-1]);
-//     }
-//   }
-  
-//   SetPredictionBinContentAndError(4, hPredE_NJ1, hPred_NJ1, ratios[0], rerrors[0], 1, 2);
-//   SetPredictionBinContentAndError(4, hPredE_NJ2, hPred_NJ2, ratios[1], rerrors[1], 1, 2);
-//   SetPredictionBinContentAndError(4, hPredE_NJ3, hPred_NJ3, ratios[1], rerrors[1], 1, 2);
-//   SetPredictionBinContentAndError(5, hPredE_NJ1, hPred_NJ1, ratios[2], rerrors[2], 3, 3);
-//   SetPredictionBinContentAndError(5, hPredE_NJ2, hPred_NJ2, ratios[3], rerrors[3], 3, 3);
-//   SetPredictionBinContentAndError(5, hPredE_NJ3, hPred_NJ3, ratios[3], rerrors[3], 3, 3);
-//   SetPredictionBinContentAndError(6, hPredE_NJ1, hPred_NJ1, ratios[4], rerrors[4], 2, 3);
-//   SetPredictionBinContentAndError(6, hPredE_NJ2, hPred_NJ2, ratios[4], rerrors[4], 2, 3);
-//   SetPredictionBinContentAndError(6, hPredE_NJ3, hPred_NJ3, ratios[4], rerrors[4], 2, 3);
-
-//   set_style(hObs_NJ1,"data_obs");
-//   set_style(hObs_NJ2,"data_obs");
-//   set_style(hObs_NJ3,"data_obs");
-//   set_style(hPred_NJ1,"pred");
-//   set_style(hPred_NJ2,"pred");
-//   set_style(hPred_NJ3,"pred");
-//   set_style(hPredE_NJ1,"pred");
-//   set_style(hPredE_NJ2,"pred");
-//   set_style(hPredE_NJ3,"pred");
-   
-//   hObs_NJ1->Write();
-//   hObs_NJ2->Write();
-//   hObs_NJ3->Write();
-//   hPred_NJ1->Write();
-//   hPred_NJ2->Write();
-//   hPred_NJ3->Write();
-//   hPredE_NJ1->Write();
-//   hPredE_NJ2->Write();
-//   hPredE_NJ3->Write();
-
-//   TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
-//   setTDRStyle(tdrStyle);
-//   tdrStyle->cd();
-//   MakeClosurePlot(hObs_NJ1, hPred_NJ1, "NJ1");
-//   MakeClosurePlot(hObs_NJ2, hPred_NJ2, "NJ2");
-//   MakeClosurePlot(hObs_NJ3, hPred_NJ3, "NJ3");
-
-//   MakeClosurePlot(hObs_NJ1, hPredE_NJ1, "NJ1_ext");
-//   MakeClosurePlot(hObs_NJ2, hPredE_NJ2, "NJ2_ext");
-//   MakeClosurePlot(hObs_NJ3, hPredE_NJ3, "NJ3_ext");
-
-//   PrintEventsTable(hObs_NJ1, hPred_NJ1, hPredE_NJ1);
-//   PrintClosureTable(hObs_NJ1, hPred_NJ1, hPredE_NJ1);
-//   PrintEventsTable(hObs_NJ2, hPred_NJ2, hPredE_NJ2);
-//   PrintClosureTable(hObs_NJ2, hPred_NJ2, hPredE_NJ2);
-//   PrintEventsTable(hObs_NJ3, hPred_NJ3, hPredE_NJ3);
-//   PrintClosureTable(hObs_NJ3, hPred_NJ3, hPredE_NJ3);
-  
-//   ofile->Close();
-// }
