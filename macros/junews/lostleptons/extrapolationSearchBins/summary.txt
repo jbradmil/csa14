@@ -1,0 +1,6 @@
+This is the "master" copy.  I've basically taken Owen's code, adapted it for the TreeMaker, and written a few scripts to do closure test.  To change cuts, etc., copy this directory, then adapt the code.
+
+Instructions:
+
+doAll.C
+DoClosureTests.C
