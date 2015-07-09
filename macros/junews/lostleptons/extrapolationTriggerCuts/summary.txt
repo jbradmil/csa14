@@ -1,0 +1,6 @@
+Best copy as of 07/08/15.  Using realistic trigger selection, took out binning of cdtt in WpT, extrapolating from MHT 300-500 to higher values...
+
+Instructions:
+
+doAll.C
+DoClosureTests.C
