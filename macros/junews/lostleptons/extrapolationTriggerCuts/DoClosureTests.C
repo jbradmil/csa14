@@ -80,16 +80,16 @@ void PrintEventsTable(TH1D* hObs, TH1D* hPred, TH1D* hPredE) {
   for (int i=1; i<=6; i++) {
     if (i>3) {
       double err_red = (hPred->GetBinContent(i)>0) ? (hPred->GetBinError(i)/hPred->GetBinContent(i)) / (hPredE->GetBinError(i)/hPredE->GetBinContent(i)) : err_red = 1 / (hPredE->GetBinError(i)/hPredE->GetBinContent(i));
-      if (hPred->GetBinContent(i)>=10)	fprintf(ofile, "Box %d & $%3.1f\\pm%3.1f$ & $%3.1f\\pm%3.1f$ & $%3.0f$  \\\\ \n", i,
+      if (hPred->GetBinContent(i)>=10)	fprintf(ofile, "Box %d & $%3.1f\\pm%3.1f$ & $%3.1f\\pm%3.1f$ & $%3.1f\\pm%3.1f$  \\\\ \n", i,
 						hPred->GetBinContent(i), hPred->GetBinError(i),
 						hPredE->GetBinContent(i), hPredE->GetBinError(i),
-						hObs->GetBinContent(i));
-      else fprintf(ofile, "Box %d & $%3.2f\\pm%3.2f$ & $%3.2f\\pm%3.2f$ & $%3.0f$ \\\\ \n", i,
+						hObs->GetBinContent(i), hObs->GetBinError(i));
+      else fprintf(ofile, "Box %d & $%3.2f\\pm%3.2f$ & $%3.2f\\pm%3.2f$ & $%3.2f\\pm%3.2f$ \\\\ \n", i,
 		   hPred->GetBinContent(i), hPred->GetBinError(i),
 		   hPredE->GetBinContent(i), hPredE->GetBinError(i),
-		   hObs->GetBinContent(i));
+		   hObs->GetBinContent(i), hObs->GetBinError(i));
     } else {
-      fprintf(ofile, "Box %d & \\multicolumn{2}{c|}{$%3.1f\\pm%3.1f$} & $%3.0f$ \\\\ \n", i, hPred->GetBinContent(i), hPred->GetBinError(i), hObs->GetBinContent(i) );
+      fprintf(ofile, "Box %d & \\multicolumn{2}{c|}{$%3.1f\\pm%3.1f$} & $%3.1f\\pm%3.1f$ \\\\ \n", i, hPred->GetBinContent(i), hPred->GetBinError(i), hObs->GetBinContent(i), hObs->GetBinError(i) );
     }
     if (i==3) fprintf(ofile, "\\hline \n");
   }
@@ -309,6 +309,7 @@ TH1D* GetExpecHist(TString expec_file, TString hname, TCut cuts) {
   const Int_t nx = 6;
   TString boxes[nx] = {"Box 1","Box 2","Box 3","Box 4", "Box 5", "Box 6"};
   TH1D* hist = new TH1D(hname, "", nx, 0, nx);
+  hist->Sumw2();
   for (int i=1;i<=nx;i++) {
     hist->GetXaxis()->SetBinLabel(i,boxes[i-1].Data());
   }
